@@ -22,7 +22,8 @@
        case 'step2':
          drupal_set_title(t('Create a new account'));
          $output  = drupal_get_form('fbconnect_registerForm');
-         $output .= theme('fb_connected_friends', fbconnect_get_connected_friends($fbuid));
+         $output .= t('Facebook friend already registered');
+         $output .= theme('render_friends_list_fbconnect', fbconnect_get_connected_friends($fbuid));
        break;
      }    
      return $output;

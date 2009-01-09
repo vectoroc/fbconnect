@@ -140,9 +140,9 @@ function fbconnect_insert_user_info($user, $field_to_import = NULL) {
     $values[] = (is_array($value)) ? serialize($value) : $value;
     $s[] = "'%s'";
   }
-  // Sauvegard des informations importé de facebook.
+  // Save user information imported from Facebook 
   db_query('INSERT INTO {fbconnect_profile} ('. implode(', ', $fields) .') VALUES ('. implode(', ', $s) .')', $values);
-  // Mise à jour du timer.(cache de 24h).
+  // Update the 24h cache timer
   db_query('UPDATE {fbconnect_users} SET timestamp = %d WHERE uid = %d', time(), $user->uid);
 }
 
@@ -654,7 +654,20 @@ function fbconnect_theme() {
     'block_fbconnect' => array(
       'arguments' => array('data' => NULL, 'account' => NULL)
     ),
+    'render_friends_list_fbconnect' => array(
+      'arguments' => array('data' => NULL)
+    ),
   );
+}
+
+function theme_render_friends_list_fbconnect($data) {
+  if (!empty($data)) {
+     foreach ($data as $friend) {
+        $rows[] = array(theme('user_picture', $friend), theme('username', $friend)); 
+      }
+      $output = theme('table', NULL, $rows);
+    return $output;
+  }
 }
 
 /**
@@ -666,12 +679,7 @@ function theme_block_fbconnect($data, $account) {
     $output = '<div class="title">'. t('Welcome @username.', array('@username' => $account->name)) .'</div>';
     $output .= $data['friend_link'];
     $output .= '<div>'. t('My friends') .'</div>';
-    if ($data['friend_list']) {
-      foreach ($data['friend_list'] as $friend) {
-        $rows[] = array(theme('user_picture', $friend), theme('username', $friend)); 
-      }
-      $output .= theme('table', NULL, $rows);
-    }
+    $output .= theme('render_friends_list_fbconnect', $data['friend_list']);
     return $output;
   }
 }
