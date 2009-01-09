@@ -5,10 +5,7 @@
  * @file
  * This module allows site visitors to connect and register with facebook account
  */
- 
 
-// Facebook php client API
-include_once(drupal_get_path('module', 'fbconnect') .'/facebook-client/facebook.php');
 
 define('FBCONNECT_RENEW_CACHE', 12);
 define('FBCONNECT_USER_CACHE_EXPIRE', 24);
@@ -20,7 +17,7 @@ define('FBCONNECT_USE_FBAVATAR', 1);
 /**
  * Implementation of hook_menu().
  */
-function fbconnect_menu() { 
+function fbconnect_menu() {
   $items['admin/settings/fbconnect'] = array(
     'title' => 'Fbconnect settings', 
     'page callback' => 'drupal_get_form', 
@@ -46,15 +43,17 @@ function fbconnect_menu() {
     'access arguments' => array('access content'),
     'type' => MENU_CALLBACK,
   );
-  $items['user/%user/fbconnect'] = array(
-    'title' => 'Facebook connect',
-    'page callback' => 'fbconnect_user_identities',
-    'page arguments' => array(1),
-    'access callback' => 'user_edit_access',
-    'access arguments' => array(1),
-    'type' => MENU_LOCAL_TASK,
-    'file' => 'fbconnect.pages.inc',
-  );
+  if (facebook_client()) {
+    $items['user/%user/fbconnect'] = array(
+      'title' => 'Facebook connect',
+      'page callback' => 'fbconnect_user_identities',
+      'page arguments' => array(1),
+      'access callback' => 'user_edit_access',
+      'access arguments' => array(1),
+      'type' => MENU_LOCAL_TASK,
+      'file' => 'fbconnect.pages.inc',
+    );
+  }
   $items['fbconnect/logout'] = array(
     'page callback' => 'fbconnect_logout_page',
     'type' => MENU_CALLBACK,
@@ -180,7 +179,9 @@ function fbconnect_block($op = 'list', $delta = 0, $edit = array()) {
 
     case 'view':
       global $user;
-      $blocks['content'] = theme('block_fbconnect', fbconnect_block_render(), $user);
+      if (user_is_logged_in() && fbconnect_get_fbuid()) {
+        $blocks['content'] = theme('block_fbconnect', fbconnect_block_render(), $user);
+      }
     return $blocks;
   }
 }
@@ -189,7 +190,6 @@ function fbconnect_block($op = 'list', $delta = 0, $edit = array()) {
  * Render data for fbconnect block
  */
 function fbconnect_block_render() {  
-  if (user_is_logged_in() && fbconnect_get_fbuid()) {
     $fbuid = fbconnect_get_fbuid();
     // Check for a cached version of this block. 
     $cid = 'fbconnect:userblock:fbuid:'. $fbuid;
@@ -204,14 +204,21 @@ function fbconnect_block_render() {
     $data['friend_list'] = $content;
     $data['friend_link'] = fbconnect_render_facebook_favicon().l(t('Invite your Facebook friends'), 'fbconnect/invite/friends');
     return $data;
-  }
 }
   
 /**
  * Implementation of hook_init().
  */
 function fbconnect_init() {
-  global $user;
+  global $user;  
+  // Facebook php client API
+  $facebook_librairy_path = drupal_get_path('module', 'fbconnect') .'/facebook-client/facebook.php';
+  if (!file_exists($facebook_librairy_path)) {
+    drupal_set_message('Facebook PHP library not found check see Fbconnect README.TXT', 'warning');
+    return;
+  }
+  include_once($facebook_librairy_path);
+  
   // Renders the JS necessary for any Facebook interaction to work.
   _fbconnect_render_js();
   $fbuid = fbconnect_get_fbuid();
@@ -229,7 +236,7 @@ function fbconnect_init() {
   if (!$uid && arg(0) != 'fbconnect' && arg(1) != 'register') {
     drupal_goto('fbconnect/register/step1');
   }
-  elseif ($uid){
+  elseif ($uid) {
     $user = user_load($uid);
     $data['login'] = time();
     // Update du champs login de la table users
@@ -514,11 +521,11 @@ function fbconnect_register($uid, $fbuid) {
  */
 function fbconnect_get_config() {
   $fb_config['api_key'] = variable_get('fbconnect_api_key', NULL);
-  $fb_config['secret_api_key'] = variable_get('fbconnect_secret_api_key', NULL);
-  
+  $fb_config['secret_api_key'] = variable_get('fbconnect_secret_api_key', NULL);  
   if (!$fb_config['api_key'] || !$fb_config['secret_api_key']) {
     return;
-  }   
+  }
+
   return $fb_config;
 }
 
@@ -562,14 +569,14 @@ function fbconnect_render_button($size='medium') {
  *   Facebook Api object
  */
 function facebook_client() {
-  static $facebook = NULL;   
+  static $facebook = NULL;    
     if ($fb_config = fbconnect_get_config()) {
-      if ($facebook === NULL) {
+      if ($facebook === NULL && class_exists('Facebook')) {
         // Get instance of facebook object.
         $facebook = new Facebook($fb_config['api_key'], $fb_config['secret_api_key']);
         if (!$facebook instanceof Facebook) {
             watchdog('fbconnect', 'Could not create facebook client object', WATCHDOG_WARNING);
-            return;      
+          return;      
         }
       }
     }
@@ -736,8 +743,7 @@ function _fbconnect_render_js() {
   global $base_url;
   if (arg(0) == 'fbconnect' && arg(1) == 'logout') {
     $onload_js = 'FB.Connect.logout(function() { window.location = "'. $base_url .'"; });';
-  }
-  
+  }  
   if ($_SESSION['fbconnect_feed_prompt']) {
     $sitename = variable_get('fbconnect_invitef_type', variable_get('site_name', ''));
     
@@ -754,9 +760,7 @@ function _fbconnect_render_js() {
        "node-url" : '. drupal_to_js($_SESSION['fbconnect_feed_prompt']['node_url']) .'});';
        unset($_SESSION['fbconnect_feed_prompt']);
     }
-  }
-
-  
+  }  
   if (facebook_client()) {
    $already_logged_in = fbconnect_get_fbuid() ? "true" : "false";
    $onload_js .= sprintf("facebook_onload(%s);", $already_logged_in);
