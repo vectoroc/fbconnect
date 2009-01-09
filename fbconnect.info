@@ -1,0 +1,6 @@
+;$Id$
+name= Fbconnect
+description = Allows users to connect with Facebook account
+core = 6.x
+package = "Facebook connect"
+php = 5.2

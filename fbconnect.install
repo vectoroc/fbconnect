@@ -1,0 +1,255 @@
+<?php
+// $Id$
+
+/**
+ * @file
+ * fbconnect install uninstall
+ */
+
+/** 
+ * Implementation of hook_install(). 
+ */ 
+function fbconnect_install() { 
+  //Use schema API to create database table. 
+  drupal_install_schema('fbconnect');
+  // Facebook user table fields
+  $facebook_fields['options'] = array(
+    'name' => t('Facebook name'),
+    'affiliations' => t('Affiliations'),
+    'religion' => t('Religious Views'),
+    'birthday' => t('Birthday'),
+    'sex' => t('Sex'),
+    'about_me' => t('About me'),
+    'hometown_location' => t('Hometown location'),
+    'current_location' => t('Current location'),
+    'meeting_sex' => t('Meeting sex'),
+    'meeting_for' => t('Meeting for'),
+    'relationship_status' => t('Relationship status'),
+    'political' => t('Political'),
+    'activities' => t('Activities'),
+    'interests' => t('Interests'),
+    'music' => t('Favourite Music'),
+    'tv' => t('Favourite TV'),
+    'movies' => t('Favourite Films'),
+    'books' => t('Favourite Books'),
+    'quotes' => t('Favourite Quotations'),
+    'hs_info' => t('High school information'),
+    'education_history' => t('Education history'),
+    'work_history' => t('Work history'),
+    'locale' => t('Locale : the two-letter country code'),
+  );   
+  variable_set('facebook_user_fields', $facebook_fields['options']);
+}
+ 
+/** 
+ * Implementation of hook_uninstall(). 
+ */ 
+function fbconnect_uninstall() { 
+  //Use schema API to delete database table. 
+  drupal_uninstall_schema('fbconnect');
+  //Delete our module's variable from the variables table. 
+  variable_del('fbconnect_api_key');
+  variable_del('fbconnect_secret_api_key'); 
+  variable_del('fbconnect_callback_url');
+  variable_del('fbconnect_field_to_import');  
+  variable_del('fbconnect_invitef_content');
+  variable_del('fbconnect_invitef_type');
+  variable_del('fbconnect_invitef_redirect');  
+  variable_del('fbconnect_registered_feed');
+}
+
+/** 
+ * Implementation of hook_schema(). 
+ */ 
+function fbconnect_schema() { 
+  $schema['fbconnect_users'] = array( 
+    'description' => t('Stores users Drupal & Facebook UID.'), 
+      'fields' => array( 
+      'uid' => array( 
+        'type' => 'int', 
+        'unsigned' => TRUE, 
+        'not null' => TRUE, 
+        'default' => 0, 
+        'description' => t('The drupal uid.'),
+      ), 
+      'fbuid' => array( 
+        'type' => 'int', 
+        'unsigned' => TRUE, 
+        'not null' => TRUE, 
+        'default' => 0, 
+        'description' => t('The facebook uid.'),
+        ),
+      'timestamp' => array( 
+        'type' => 'int', 
+        'unsigned' => TRUE, 
+        'not null' => TRUE, 
+        'default' => 0, 
+        ),
+        'import_setting' => array(
+          'type' => 'text',
+          'not null' => FALSE,
+        ),
+        'avatar' => array(
+          'type' => 'int', 
+          'unsigned' => TRUE, 
+          'not null' => TRUE,
+          'size' => 'tiny',
+          'default' => 1,
+        ),
+        'visibility' => array( 
+          'type' => 'int', 
+          'unsigned' => TRUE, 
+          'not null' => TRUE,
+          'size' => 'tiny',
+          'default' => 1, 
+        ),
+      ), 
+      'primary key' => array( 
+      'fbuid' 
+    ), 
+  );
+
+  $schema['fbconnect_profile'] = array( 
+    'description' => t('Stores users profile information imported form facebook.'), 
+      'fields' => array( 
+        'uid' => array( 
+          'type' => 'int', 
+          'unsigned' => TRUE, 
+          'not null' => TRUE, 
+          'default' => 0, 
+          'description' => t('The drupal uid.'),
+        ),
+        'name' => array( 
+          'type' => 'varchar',
+          'length' => 60, 
+          'not null' => TRUE, 
+          'default' => '', 
+          'description' => t('The full name of the user'),
+        ),
+        'religion' => array(
+          'type' => 'varchar',
+          'length' => 255,
+          'not null' => TRUE,
+          'default' => '',
+          'description' => t('The religion of the user'),
+        ),
+        'birthday' => array(
+          'type' => 'varchar',
+          'length' => 30,
+          'not null' => TRUE,
+          'default' => '',
+          'description' => t('The birthday of the user'),
+        ),
+        'sex' => array(
+          'type' => 'varchar',
+          'length' => 10,
+          'not null' => TRUE,
+          'default' => '',
+          'description' => t('The sex of the user'),
+        ),
+        'relationship_status' => array(
+          'type' => 'varchar',
+          'length' => 30,
+          'not null' => TRUE,
+          'default' => '',
+          'description' => t('The type of relationship for the use'),
+        ),
+        'political' => array(
+          'type' => 'varchar',
+          'length' => 50,
+          'not null' => TRUE,
+          'default' => '',
+          'description' => t('The political views of the user'),
+        ),
+        'activities' => array(
+          'type' => 'text',
+          'not null' => FALSE,
+          'description' => t('The activities of the user'),
+        ),
+        'interests' => array(
+          'type' => 'text',
+          'not null' => FALSE,
+          'description' => t('The interests of the user'),
+        ),
+        'music' => array(
+          'type' => 'text',
+          'not null' => FALSE,
+          'description' => t('The favorite music of the user'),
+        ),
+        'tv' => array(
+          'type' => 'text',
+          'not null' => FALSE,
+          'description' => t('The favorite television shows of the user'),
+        ),
+        'movies' => array(
+          'type' => 'text',
+          'not null' => FALSE,
+          'description' => t('The favorite movies of the user'),
+        ),
+        'books' => array(
+          'type' => 'text',
+          'not null' => FALSE,
+          'description' => t('The favorite books of the user'),
+        ),
+        'quotes' => array(
+          'type' => 'text',
+          'not null' => FALSE,
+          'description' => t('The favorite quotes of the user'),
+        ),
+        'about_me' => array(
+          'type' => 'text',
+          'not null' => FALSE,
+          'description' => t('More information about the user'),
+        ),
+        'locale' => array(
+          'type' => 'char',
+          'length' => 12,
+          'not null' => TRUE,
+          'default' => '',
+          'description' => t('The two-letter country code for the user locale. Codes used are the ISO 3166 alpha 2 code list.'),
+        ),
+        'affiliations' => array(
+           'type' => 'text',
+           'size' => 'medium',
+           'description' => t('The networks to which the user being queried belongs'),
+         ),
+         'current_location' => array(
+           'type' => 'text',
+           'not null' => FALSE,
+           'description' => t('The current location of the user'),
+         ),
+         'hs_info' => array(
+           'type' => 'text',
+           'not null' => FALSE,
+           'description' => t('Information about high school of the user'),
+         ),
+         'education_history' => array(
+           'type' => 'text',
+           'not null' => FALSE,
+           'description' => t('Post-high school information for the user'),
+         ),
+         'hometown_location' => array(
+           'type' => 'text',
+           'not null' => FALSE,
+           'description' => t('The home town (and state) of the user'),
+         ),
+         'meeting_sex' => array(
+           'type' => 'text',
+           'not null' => FALSE,
+           'description' => t('The sex of the person the user wants to meet'),
+         ),
+         'meeting_for' => array(
+           'type' => 'text',
+           'not null' => FALSE,
+           'description' => t('The reason the user wants to meet someone'),
+         ),
+         'work_history' => array(
+           'type' => 'text',
+           'not null' => FALSE,
+           'description' => t('The work history of the user'),
+         ),
+    ), 
+    'primary key' => array('uid'), 
+  ); 
+  return $schema; 
+}
