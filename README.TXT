@@ -16,17 +16,16 @@ None.
 
 
 -- INSTALLATION --
-
-	1. Log in to the Facebook Developer application: http://www.facebook.com/developers/
-	2. Create a new application, more info: http://developers.facebook.com/get_started.php
-	3. Upload the `fbconnect` folder into your module directory
-	4. Activate the module through the modules menu
-	5. Configure the module through the 'Fbconnect settings' section of the 'Site configuration' menu
-	6. Use the Facebook App info to configure the module. (API key, Secret API key).
-	7. Create a new feed template for after registration feed, or leave the default id bundle. http://developers.facebook.com/tools.php?feed
-	8. Activate the Facebook Connector block from the 'build/block' menu.
-	9. Modify your page.tpl.php file in your theme folder.
-	Add the facebook xmlns : <html xmlns="http://www.w3.org/1999/xhtml" xmlns:fb="http://www.facebook.com/2008/fbml">
+	1. Upload the `fbconnect` folder into your module directory
+	2. Download the PHP libraries at http://svn.facebook.com/svnroot/platform/clients/packages/facebook-platform.tar.gz. and put it into the facebook-client folder.	It should be like this (your_path_to_modules_/fbconnect/facebook-client/facebook.php)
+	3. Log in to the Facebook Developer application: http://www.facebook.com/developers/
+	4. Create a new application, more info: http://developers.facebook.com/get_started.php
+	5. Activate the module through the modules menu
+	6. Configure the module through the 'Fbconnect settings' section of the 'Site configuration' menu
+	7. Use the Facebook App info to configure the module. (API key, Secret API key).
+	8. Create a new feed template for after registration feed, or leave the default id bundle. http://developers.facebook.com/tools.php?feed
+	9. Activate the Facebook Connector block from the 'build/block' menu.
+	10. Modify your page.tpl.php file in your theme folder.	Add the facebook xmlns for rendering FBML in IE : <html xmlns="http://www.w3.org/1999/xhtml" xmlns:fb="http://www.facebook.com/2008/fbml">
 
 
 -- CONFIGURATION --
