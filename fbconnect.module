@@ -143,7 +143,7 @@ function fbconnect_insert_user_info($user, $field_to_import = NULL) {
   // Sauvegard des informations importé de facebook.
   db_query('INSERT INTO {fbconnect_profile} ('. implode(', ', $fields) .') VALUES ('. implode(', ', $s) .')', $values);
   // Mise à jour du timer.(cache de 24h).
-  db_query('UPDATE {fbconnect_users} SET timestamp = %d', time());
+  db_query('UPDATE {fbconnect_users} SET timestamp = %d WHERE uid = %d', time(), $user->uid);
 }
 
 /**
@@ -735,15 +735,15 @@ function _fbconnect_render_js() {
     
     if ($_SESSION['fbconnect_feed_prompt']['type'] == 'registration' && arg(0) != 'fbconnect') {
       $onload_js .= 'facebook_publish_feed_story('. variable_get('fbconnect_reg_feed_bundle_id', FBCONNECT_REG_FEED_BUNDLEID) .',
-      {"site-name":"'.  $sitename .'", "site-url" : "'. $base_url .'"});';
+      {"site-name": '.  drupal_to_js($sitename) .', "site-url" : "'. $base_url .'"});';
       unset($_SESSION['fbconnect_feed_prompt']);
     }
     elseif ($_SESSION['fbconnect_feed_prompt']['type'] == 'comment') {
       $onload_js .= 'facebook_publish_feed_story('. variable_get('fbconnect_comment_feed_bundle_id', FBCONNECT_COMMENT_FEED_BUNDLEID) .',
-      {"site-name":"'.  $sitename .'",
+      {"site-name":'.  drupal_to_js($sitename) .',
        "site-url" : "'. $base_url .'",
-       "node-title" : "'. $_SESSION['fbconnect_feed_prompt']['node_title'] .'",
-       "node-url" : "'. $_SESSION['fbconnect_feed_prompt']['node_url'] .'"});';
+       "node-title" : '. drupal_to_js($_SESSION['fbconnect_feed_prompt']['node_title']) .',
+       "node-url" : '. drupal_to_js($_SESSION['fbconnect_feed_prompt']['node_url']) .'});';
        unset($_SESSION['fbconnect_feed_prompt']);
     }
   }
