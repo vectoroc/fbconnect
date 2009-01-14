@@ -1,6 +1,6 @@
 /*    HTTP Host:  www.facebook.com                                             */
-/*    Generated:  December 8th 2008 10:40:00 AM PST                            */
-/*      Machine:  10.16.100.129                                                */
+/*    Generated:  January 14th 2009 4:04:13 AM PST                             */
+/*      Machine:  10.16.102.132                                                */
 
 /*
  * FeatureLoader.js.php is designed to be the minimal set of code necessary to
@@ -63,11 +63,7 @@ FB.Bootstrap = {
     // by the time this callback is executed, FB.Facebook.init
     // must have been called or else
     FB.Bootstrap.requireFeatures(FB.Bootstrap.features, function() {
-        if (!FB.Facebook.get_initialized().get_isReady()) {
-          throw("FB.ensureInit was called without initializing Facebook libraries. Did you call FB.init?");
-        }
-
-        callback();
+        FB.Facebook.get_initialized().waitForValue(true, callback);
       });
   },
 
@@ -92,13 +88,14 @@ FB.Bootstrap = {
    *  @param api_key       your API key provided by the developer app
    *  @param xd_receiver   The cross-domain receiver file on your domain.
    *                       Suggest using an absolute URL like "/xd_receiver.htm"
+   *  @param appSettings   Optional application settings.
    */
-  init : function(api_key, xd_receiver) {
+  init : function(api_key, xd_receiver, appSettings) {
     // bind to the onload handler
     FB.Bootstrap.requireFeatures(FB.Bootstrap.features, function() {
         if (FB.Facebook) {
           // init has changed definition by now
-          FB.Facebook.init(api_key, xd_receiver);
+          FB.Facebook.init(api_key, xd_receiver, appSettings);
         }
       });
   },
@@ -191,11 +188,11 @@ FB.Bootstrap = {
  */
 window.FB_RequireFeatures        = FB.Bootstrap.requireFeatures;
 window.FB.init                   = FB.Bootstrap.init;
-window.FB.ensureInit             = FB.Bootstrap.ensureInit,
+window.FB.ensureInit             = FB.Bootstrap.ensureInit;
 
 /*
  * Execute functions that are only effective if executed at page load time.
  */
 FB.Bootstrap.createHiddenDiv();
 FB.Bootstrap.detectDOMContentReady();
-FB.Bootstrap.loadResourceMaps({"Base":{"src":"http:\/\/static.ak.fbcdn.net\/rsrc.php\/z88Z2\/lpkg\/br34ulub\/fr_FR\/141\/134772\/js\/connect.js.pkg.php","dependencies":null},"Common":{"src":"http:\/\/static.ak.fbcdn.net\/rsrc.php\/z88Z2\/lpkg\/br34ulub\/fr_FR\/141\/134772\/js\/connect.js.pkg.php","dependencies":["Base"]},"XdComm":{"src":"http:\/\/static.ak.fbcdn.net\/rsrc.php\/z88Z2\/lpkg\/br34ulub\/fr_FR\/141\/134772\/js\/connect.js.pkg.php","dependencies":["Common"]},"CacheData":{"src":"http:\/\/static.ak.fbcdn.net\/rsrc.php\/z8H9R\/l\/ck0tst4k\/nu_ll\/117867\/js\/api_lib\/v0.4\/CacheData.js","dependencies":["Common","XdComm"]},"Api":{"src":"http:\/\/static.ak.fbcdn.net\/rsrc.php\/z88Z2\/lpkg\/br34ulub\/fr_FR\/141\/134772\/js\/connect.js.pkg.php","dependencies":["XdComm"]},"CanvasUtil":{"src":"http:\/\/static.ak.fbcdn.net\/rsrc.php\/z88Z2\/lpkg\/br34ulub\/fr_FR\/141\/134772\/js\/connect.js.pkg.php","dependencies":["Common","XdComm"]},"Connect":{"src":"http:\/\/static.ak.fbcdn.net\/rsrc.php\/z88Z2\/lpkg\/br34ulub\/fr_FR\/141\/134772\/js\/connect.js.pkg.php","dependencies":["CanvasUtil","Api"],"styleSheets":["http:\/\/static.ak.fbcdn.net\/rsrc.php\/z25ED\/l\/rjn5h2zn\/fr_FR\/132011\/css\/fb_connect.css"]},"XFBML":{"src":"http:\/\/static.ak.fbcdn.net\/rsrc.php\/z88Z2\/lpkg\/br34ulub\/fr_FR\/141\/134772\/js\/connect.js.pkg.php","dependencies":["CanvasUtil","Api","Connect"]},"Integration":{"src":"http:\/\/static.ak.fbcdn.net\/rsrc.php\/z5TFV\/l\/d2moxi08\/nu_ll\/132011\/js\/api_lib\/v0.4\/Integration.js","dependencies":["Connect"]}}, {"base_url_format":"http:\/\/{0}.facebook.com\/","api_channel":133168,"api_server":133168,"www_channel":132011,"xd_comm_swf_url":"http:\/\/static.ak.fbcdn.net\/swf\/XdComm.swf?6:132011","login_img_dark_small_short":"http:\/\/static.ak.fbcdn.net\/images\/fbconnect\/login-buttons\/connect_dark_small_short.gif?6:121638","login_img_dark_medium_short":"http:\/\/static.ak.fbcdn.net\/images\/fbconnect\/login-buttons\/connect_dark_medium_short.gif?6:121638","login_img_dark_medium_long":"http:\/\/static.ak.fbcdn.net\/images\/fbconnect\/login-buttons\/connect_dark_medium_long.gif?6:121638","login_img_dark_large_short":"http:\/\/static.ak.fbcdn.net\/images\/fbconnect\/login-buttons\/connect_dark_large_short.gif?6:121776","login_img_dark_large_long":"http:\/\/static.ak.fbcdn.net\/images\/fbconnect\/login-buttons\/connect_dark_large_long.gif?6:121638","login_img_light_small_short":"http:\/\/static.ak.fbcdn.net\/images\/fbconnect\/login-buttons\/connect_light_small_short.gif?6:121638","login_img_light_medium_short":"http:\/\/static.ak.fbcdn.net\/images\/fbconnect\/login-buttons\/connect_light_medium_short.gif?6:121776","login_img_light_medium_long":"http:\/\/static.ak.fbcdn.net\/images\/fbconnect\/login-buttons\/connect_light_medium_long.gif?6:121776","login_img_light_large_short":"http:\/\/static.ak.fbcdn.net\/images\/fbconnect\/login-buttons\/connect_light_large_short.gif?6:121776","login_img_light_large_long":"http:\/\/static.ak.fbcdn.net\/images\/fbconnect\/login-buttons\/connect_light_large_long.gif?6:121638","login_img_white_small_short":"http:\/\/static.ak.fbcdn.net\/images\/fbconnect\/login-buttons\/connect_white_small_short.gif?6:121638","login_img_white_medium_short":"http:\/\/static.ak.fbcdn.net\/images\/fbconnect\/login-buttons\/connect_white_medium_short.gif?6:121638","login_img_white_medium_long":"http:\/\/static.ak.fbcdn.net\/images\/fbconnect\/login-buttons\/connect_white_medium_long.gif?6:121638","login_img_white_large_short":"http:\/\/static.ak.fbcdn.net\/images\/fbconnect\/login-buttons\/connect_white_large_short.gif?6:121638","login_img_white_large_long":"http:\/\/static.ak.fbcdn.net\/images\/fbconnect\/login-buttons\/connect_white_large_long.gif?6:121638","logout_img_small":"http:\/\/static.ak.fbcdn.net\/images\/fbconnect\/logout-buttons\/logout_small.gif?6:132011","logout_img_medium":"http:\/\/static.ak.fbcdn.net\/images\/fbconnect\/logout-buttons\/logout_medium.gif?6:132011","logout_img_large":"http:\/\/static.ak.fbcdn.net\/images\/fbconnect\/logout-buttons\/logout_large.gif?6:132011"});
+FB.Bootstrap.loadResourceMaps({"Base":{"src":"http:\/\/static.ak.fbcdn.net\/rsrc.php\/z3Z0P\/lpkg\/8i84c2hf\/en_US\/141\/138369\/js\/connect.js.pkg.php","dependencies":null},"Common":{"src":"http:\/\/static.ak.fbcdn.net\/rsrc.php\/z3Z0P\/lpkg\/8i84c2hf\/en_US\/141\/138369\/js\/connect.js.pkg.php","dependencies":["Base"]},"XdComm":{"src":"http:\/\/static.ak.fbcdn.net\/rsrc.php\/z3Z0P\/lpkg\/8i84c2hf\/en_US\/141\/138369\/js\/connect.js.pkg.php","dependencies":["Common"]},"CacheData":{"src":"http:\/\/static.ak.fbcdn.net\/rsrc.php\/z2O2X\/l\/ck0tst4k\/nu_ll\/117867\/js\/api_lib\/v0.4\/CacheData.js","dependencies":["Common","XdComm"]},"Api":{"src":"http:\/\/static.ak.fbcdn.net\/rsrc.php\/z3Z0P\/lpkg\/8i84c2hf\/en_US\/141\/138369\/js\/connect.js.pkg.php","dependencies":["XdComm"]},"CanvasUtil":{"src":"http:\/\/static.ak.fbcdn.net\/rsrc.php\/z3Z0P\/lpkg\/8i84c2hf\/en_US\/141\/138369\/js\/connect.js.pkg.php","dependencies":["Common","XdComm"]},"Connect":{"src":"http:\/\/static.ak.fbcdn.net\/rsrc.php\/z3Z0P\/lpkg\/8i84c2hf\/en_US\/141\/138369\/js\/connect.js.pkg.php","dependencies":["CanvasUtil","Api"],"styleSheets":["http:\/\/static.ak.fbcdn.net\/rsrc.php\/zEB0B\/l\/tuzygy0b\/en_US\/136733\/css\/fb_connect.css"]},"XFBML":{"src":"http:\/\/static.ak.fbcdn.net\/rsrc.php\/z3Z0P\/lpkg\/8i84c2hf\/en_US\/141\/138369\/js\/connect.js.pkg.php","dependencies":["CanvasUtil","Api","Connect"]},"Integration":{"src":"http:\/\/static.ak.fbcdn.net\/rsrc.php\/z5GAF\/l\/d2moxi08\/nu_ll\/132011\/js\/api_lib\/v0.4\/Integration.js","dependencies":["Connect"]}}, {"base_url_format":"http:\/\/{0}.facebook.com\/","api_channel":139437,"api_server":139437,"www_channel":139438,"xd_comm_swf_url":"http:\/\/static.ak.fbcdn.net\/swf\/XdComm.swf?7:132011","login_img_dark_small_short":"http:\/\/static.ak.fbcdn.net\/images\/fbconnect\/login-buttons\/connect_dark_small_short.gif?7:121638","login_img_dark_medium_short":"http:\/\/static.ak.fbcdn.net\/images\/fbconnect\/login-buttons\/connect_dark_medium_short.gif?7:121638","login_img_dark_medium_long":"http:\/\/static.ak.fbcdn.net\/images\/fbconnect\/login-buttons\/connect_dark_medium_long.gif?7:121638","login_img_dark_large_short":"http:\/\/static.ak.fbcdn.net\/images\/fbconnect\/login-buttons\/connect_dark_large_short.gif?7:121776","login_img_dark_large_long":"http:\/\/static.ak.fbcdn.net\/images\/fbconnect\/login-buttons\/connect_dark_large_long.gif?7:121638","login_img_light_small_short":"http:\/\/static.ak.fbcdn.net\/images\/fbconnect\/login-buttons\/connect_light_small_short.gif?7:121638","login_img_light_medium_short":"http:\/\/static.ak.fbcdn.net\/images\/fbconnect\/login-buttons\/connect_light_medium_short.gif?7:121776","login_img_light_medium_long":"http:\/\/static.ak.fbcdn.net\/images\/fbconnect\/login-buttons\/connect_light_medium_long.gif?7:121776","login_img_light_large_short":"http:\/\/static.ak.fbcdn.net\/images\/fbconnect\/login-buttons\/connect_light_large_short.gif?7:121776","login_img_light_large_long":"http:\/\/static.ak.fbcdn.net\/images\/fbconnect\/login-buttons\/connect_light_large_long.gif?7:121638","login_img_white_small_short":"http:\/\/static.ak.fbcdn.net\/images\/fbconnect\/login-buttons\/connect_white_small_short.gif?7:121638","login_img_white_medium_short":"http:\/\/static.ak.fbcdn.net\/images\/fbconnect\/login-buttons\/connect_white_medium_short.gif?7:121638","login_img_white_medium_long":"http:\/\/static.ak.fbcdn.net\/images\/fbconnect\/login-buttons\/connect_white_medium_long.gif?7:121638","login_img_white_large_short":"http:\/\/static.ak.fbcdn.net\/images\/fbconnect\/login-buttons\/connect_white_large_short.gif?7:121638","login_img_white_large_long":"http:\/\/static.ak.fbcdn.net\/images\/fbconnect\/login-buttons\/connect_white_large_long.gif?7:121638","logout_img_small":"http:\/\/static.ak.fbcdn.net\/images\/fbconnect\/logout-buttons\/logout_small.gif?7:132011","logout_img_medium":"http:\/\/static.ak.fbcdn.net\/images\/fbconnect\/logout-buttons\/logout_medium.gif?7:132011","logout_img_large":"http:\/\/static.ak.fbcdn.net\/images\/fbconnect\/logout-buttons\/logout_large.gif?7:132011"});

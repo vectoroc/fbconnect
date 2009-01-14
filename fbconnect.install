@@ -33,10 +33,6 @@ function fbconnect_install() {
     'movies' => t('Favourite Films'),
     'books' => t('Favourite Books'),
     'quotes' => t('Favourite Quotations'),
-    'hs_info' => t('High school information'),
-    'education_history' => t('Education history'),
-    'work_history' => t('Work history'),
-    'locale' => t('Locale : the two-letter country code'),
   );   
   variable_set('facebook_user_fields', $facebook_fields['options']);
 }
@@ -201,13 +197,6 @@ function fbconnect_schema() {
           'not null' => FALSE,
           'description' => t('More information about the user'),
         ),
-        'locale' => array(
-          'type' => 'char',
-          'length' => 12,
-          'not null' => TRUE,
-          'default' => '',
-          'description' => t('The two-letter country code for the user locale. Codes used are the ISO 3166 alpha 2 code list.'),
-        ),
         'affiliations' => array(
            'type' => 'text',
            'size' => 'medium',
@@ -217,16 +206,6 @@ function fbconnect_schema() {
            'type' => 'text',
            'not null' => FALSE,
            'description' => t('The current location of the user'),
-         ),
-         'hs_info' => array(
-           'type' => 'text',
-           'not null' => FALSE,
-           'description' => t('Information about high school of the user'),
-         ),
-         'education_history' => array(
-           'type' => 'text',
-           'not null' => FALSE,
-           'description' => t('Post-high school information for the user'),
          ),
          'hometown_location' => array(
            'type' => 'text',
@@ -242,11 +221,6 @@ function fbconnect_schema() {
            'type' => 'text',
            'not null' => FALSE,
            'description' => t('The reason the user wants to meet someone'),
-         ),
-         'work_history' => array(
-           'type' => 'text',
-           'not null' => FALSE,
-           'description' => t('The work history of the user'),
          ),
     ), 
     'primary key' => array('uid'), 
