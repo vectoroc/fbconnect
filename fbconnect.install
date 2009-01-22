@@ -9,7 +9,7 @@
 /** 
  * Implementation of hook_install(). 
  */ 
-function fbconnect_install() { 
+function fbconnect_install() {
   //Use schema API to create database table. 
   drupal_install_schema('fbconnect');
   // Facebook user table fields
@@ -45,13 +45,17 @@ function fbconnect_uninstall() {
   drupal_uninstall_schema('fbconnect');
   //Delete our module's variable from the variables table. 
   variable_del('fbconnect_api_key');
-  variable_del('fbconnect_secret_api_key'); 
-  variable_del('fbconnect_callback_url');
-  variable_del('fbconnect_field_to_import');  
+  variable_del('fbconnect_secret_api_key');
   variable_del('fbconnect_invitef_content');
   variable_del('fbconnect_invitef_type');
-  variable_del('fbconnect_invitef_redirect');  
-  variable_del('fbconnect_registered_feed');
+  variable_del('fbconnect_button_type');
+  variable_del('fbconnect_reg_feed_id');
+  variable_del('fbconnect_com_feed_id');
+  variable_del('fbconnect_reg_feed');
+  variable_del('fbconnect_invitef_redirect');
+  variable_del('fbconnect_import');
+  variable_del('fbconnect_field_to_import');
+  variable_del('facebook_user_fields');
 }
 
 /** 

@@ -9,7 +9,7 @@
 /** 
  * Form builder. Configure fbconnect. 
  * 
- * @ingroup forms 
+ * @ingroup forms
  * @see system_settings_form(). 
  */
 function fbconnect_admin_settings() {
@@ -76,7 +76,7 @@ function fbconnect_admin_settings() {
        '#title' => t('Comment feed bundle ID'),
        '#default_value' => variable_get('fbconnect_com_feed_id', FBCONNECT_COMMENT_FEED_BUNDLEID),
     );
-    $form['story_feed']['fbconnect_reg_feed'] = array(
+    $form['feed']['fbconnect_reg_feed'] = array(
        '#type' => 'checkbox',
        '#title' => t('Display story feed prompt after user registration'),      
        '#default_value' => variable_get('fbconnect_reg_feed', array('register_feed')),
@@ -89,11 +89,21 @@ function fbconnect_admin_settings() {
    );
    $form['import'] = array(
       '#type' => 'fieldset',
-      '#title' => t('Information to import'),
+      '#title' => t('Import settings'),
+      '#collapsible' => FALSE,
+   );
+   $form['import']['fbconnect_import'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Activate Facebook informations import'),      
+      '#default_value' => variable_get('fbconnect_import', array('fbconnect_import')),
+   );
+   $form['import']['fields'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Importation settings'),
       '#collapsible' => TRUE,
       '#collapsed' => TRUE,
-   );   
-   $form['import']['fbconnect_field_to_import'] = array(
+   );
+   $form['import']['fields']['fbconnect_field_to_import'] = array(
       '#type' => 'checkboxes',
       '#options' => variable_get('facebook_user_fields', NULL),
       '#default_value' => variable_get('fbconnect_field_to_import', array_keys(variable_get('facebook_user_fields', NULL))),
