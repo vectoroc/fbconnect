@@ -4,3 +4,10 @@ description = Allows users to connect with Facebook account
 core = 6.x
 package = "Facebook connect"
 php = 5.2
+
+; Information added by drupal.org packaging script on 2009-01-22
+version = "6.x-1.0-beta5"
+core = "6.x"
+project = "fbconnect"
+datestamp = "1232636122"
+

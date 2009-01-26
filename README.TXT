@@ -3,7 +3,6 @@
 
 -- SUMMARY --
 
-
 This module roughly acts like the OpenId Drupal 6.x core module (it gives you the ability to log in the Drupal site with your Facebook email and password after linking both accounts) with some extra features:
 
 - Facebook and Drupal accounts synchronization: After logging through Facebook Connect, users can create a local Drupal account, 
@@ -21,14 +20,12 @@ This module roughly acts like the OpenId Drupal 6.x core module (it gives you th
 
 -- IMPORTED INFORMATION --
 
-
 Facebook Connect's terms of use provide that profile information imported from Facebook should not be stored over 24 hours (http://developers.facebook.com/terms.php).
 
 In order to comply with this legal rule, profile data are automatically deleted by cron after 24 hours. If the user reconnects 12 to 24 hours following the latest import, data are updated and the 24-hour timer is reset. 
 
 
 -- FACEBOOK CONNECT TAB -- 
-
 
 This module adds a new Facebook Connect tab in the user's profile page. This tab allows to change: 
 
@@ -46,7 +43,6 @@ Values can be changed only if a Facebook session is active.
 
 -- REQUIREMENTS --
 
-
 PHP 5.2 or higher versions. 
 Drupal 6.x. 
 Facebook PHP Library: http://svn.facebook.com/svnroot/platform/clients/packages/facebook-platform.tar.gz 
@@ -54,7 +50,6 @@ Facebook API key: http://www.facebook.com/developers/
 
 
 -- INSTALLATION --
-
 
 	1. Upload the 'fbconnect' folder into your module directory, 
 	2. Download the Facebook PHP libraries from http://svn.facebook.com/svnroot/platform/clients/packages/facebook-platform.tar.gz. 
@@ -68,12 +63,10 @@ Facebook API key: http://www.facebook.com/developers/
 
 -- KNOWN ISSUES -- 
 
-
-Drupal's global cache seems to conflict with fbconnect's Javascript: it should be disabled before operating the module. 
-
+Drupal's global cache seems to conflict with fbconnect's Javascript: it should be disabled before operating the module.
+Facebook PHP library encounter some problems if the cURL extension is not activated.
 
 -- MISCELLANEOUS --
-
 
 Story feed: 
 
@@ -86,3 +79,10 @@ The second feed ('comment feed') will be prompted after submitting the comment f
 This block can be enabled in Drupal's blocks administration menu. It displays a welcome message, a link to the Facebook friends invitation page and a list of the user's Facebook friends holding an account on the website. The user's friends' profile pictures are also displayed if user_pictures is enabled. 
 
 In order to preserve performance, this block will be cached by default for 1 hour, even if Drupal's blocks cache is disabled. This block is visible only if the user is connected and a Facebook session is active. 
+
+
+-- AUTHOR --
+
+Xinhui Xu 
+xinhui.xu [at] lanetscouade [dot] com
+http://www.lanetscouade.com/

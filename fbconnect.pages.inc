@@ -94,7 +94,7 @@ function fbconnect_registerForm() {
 function fbconnect_registerForm_validate($form, &$form_state) {
  switch (arg(2)) {
    case 'import':
-     if ($fields = array_filter($form_state['values']['field_import'], 'fbconnect_import_filter')) {
+     if ($fields = array_filter((array)$form_state['values']['field_import'], 'fbconnect_import_filter')) {
       $_SESSION['fb_reg_import'] = $fields;
      }
    break;
@@ -150,23 +150,21 @@ function fbconnect_registerForm_submit($form, &$form_state) {
    }
    global $user;
    $fbuid = fbconnect_get_fbuid();
-   // Insert new user in fbconnect_users table.
    fbconnect_register($user->uid, $fbuid);
    // Update user visibility, default = 1
    if ($form_state['values']['visibility'] == 0) {
     fbconnect_set_user_visibility($user, $form_state['values']['visibility']);
    }
-   // Store e-mail
    $extra_data['mail'] = $extra_data['init'] = $form_state['values']['mail'];
+   $extra_data['login'] = time();
    // Save facebook picture as avatar.
    if (variable_get('user_pictures', 0)) {
      $picture = fbconnect_get_fb_avatar($fbuid);
      if ($picture) {
-       $extra_data['picture'] = $picture;      
+       $extra_data['picture'] = $picture;
      }
    }
    user_save($user, $extra_data);
-   // An array of fields to query
    if ($_SESSION['fb_reg_import']) {
      fbconnect_insert_user_info($user, $_SESSION['fb_reg_import']);
    }
@@ -193,8 +191,7 @@ function fbconnect_user_identities($account) {
   drupal_set_title(check_plain($account->name));
   $header = array(t('Facebook Connect identities'));
   $rows = array();  
-  $rows[] = array(t('This website supports Facebook Connect and allow you to log in with your Facebook account.'));
-  
+  $rows[] = array(t('This website supports Facebook Connect and allow you to log in with your Facebook account.'));  
   if ($account->fbuid) {    
     $rows[] = array(t('Your account is linked with your Facebook account.'));
     $rows[] = array(t('Your Facebook user id : @fbuid', array('@fbuid' => $account->fbuid))); 
@@ -206,7 +203,7 @@ function fbconnect_user_identities($account) {
     if (!fbconnect_get_fbuid()) {
       $rows[] = array(t('Open a Facebook session for more settings options.'));
       $rows[] = array(fbconnect_render_button());
-    }    
+    }
     $output = theme('table', $header, $rows);
     $output .= drupal_get_form('fbconnect_user_settingsForm');
     return $output;
@@ -220,8 +217,7 @@ function fbconnect_user_identities($account) {
   $rows[] = array(t('Facebook session detected, please confirm that you wish to link your @sitename account and Facebook account.',
    array('@sitename' => variable_get('site_name', t('this website')))));
   $output = theme('table', $header, $rows);
-  $output .= drupal_get_form('fbconnect_associationForm');
-  
+  $output .= drupal_get_form('fbconnect_associationForm');  
   return $output;
 }
 
@@ -247,7 +243,6 @@ function fbconnect_associationForm() {
  */
 function fbconnect_user_settingsForm() {
   $user = user_load(array('uid' => arg(1)));
-
   $form['view'] = array(
     '#type' => 'fieldset',
     '#collapsible' => FALSE,
@@ -259,11 +254,11 @@ function fbconnect_user_settingsForm() {
   $form['view']['visibility'] = array(
     '#type' => 'checkbox',
     '#title' => t('Let my Facebook friends see me on @sitename', 
-      array('@sitename' => variable_get('site_name', 'this website'))),
+    array('@sitename' => variable_get('site_name', 'this website'))),
     '#description' => t('My Facebook friends will be able to see that I own an account on this website.'),
     '#default_value' => $user->fb_visibility,
   );
-  
+
   // This fields is visible only if we got a active Facebook session.
   if (fbconnect_get_fbuid() > 0) {
     // If user avatar is actived
@@ -282,7 +277,8 @@ function fbconnect_user_settingsForm() {
       );
     }
     // Importation settings
-    if (variable_get('fbconnect_import', array('fbconnect_import'))) {    
+    $fields = array_filter(variable_get('fbconnect_field_to_import', ''), 'fbconnect_import_filter');
+    if (variable_get('fbconnect_import', array('fbconnect_import')) && $fields) {
       $form['import'] = array(
         '#type' => 'fieldset',
         '#collapsible' => FALSE,
@@ -295,21 +291,27 @@ function fbconnect_user_settingsForm() {
         '#default_value' => ($default_value) ? $default_value : array(''),
       );
     }
-  }  
-  if ($form) {  
-    $form['submit'] = array(
-      '#type' => 'submit',
-      '#value' => t('Save settings'),
-    );
-    return $form;
   }
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save settings'),
+  );
+  return $form;
 }
 
 /**
  * Handle post-validation user_settingsForm submission. 
  */
 function fbconnect_user_settingsForm_submit($form, &$form_state) {
-  $user = user_load(array('uid' => arg(1)));
+  $user = user_load(array('uid' => arg(1)));  
+  // Visibility settings
+  if ($form_state['values']['visibility_hid'] != $form_state['values']['visibility']) {
+    fbconnect_set_user_visibility($user, $form_state['values']['visibility']);
+  }
+  if (fbconnect_get_fbuid() == 0) {
+    return;
+  }
+  if (variable_get('user_pictures', 0)) {  
     fbconnect_user_avatar_setting($user, $form_state['values']['fb_avatar']);        
     if ($form_state['values']['fb_avatar'] == 1) {
       fbconnect_refresh_user_avatar($user->fbuid, $user->uid);
@@ -320,12 +322,9 @@ function fbconnect_user_settingsForm_submit($form, &$form_state) {
         db_query("UPDATE {users} SET picture = '' WHERE uid = %d", $user->uid);
       }
     }
-  // Visibility settings
-  if ($form_state['values']['visibility_hid'] != $form_state['values']['visibility']) {
-    fbconnect_set_user_visibility($user, $form_state['values']['visibility']);
   }
-  if (variable_get('fbconnect_import', array('fbconnect_import'))) {  
-    if ($fields = array_filter($form_state['values']['import_setting'], 'fbconnect_import_filter')) {
+  if (variable_get('fbconnect_import', array('fbconnect_import'))) {
+    if ($fields = array_filter((array)$form_state['values']['import_setting'], 'fbconnect_import_filter')) {
       fbconnect_insert_user_info($user, $fields);
     }
     else {
@@ -340,20 +339,18 @@ function fbconnect_user_settingsForm_submit($form, &$form_state) {
  */ 
 function fbconnect_associationForm_submit($form, &$form_state) {
   if ($fbuid = fbconnect_get_fbuid()) {
-    // Case, association cocher
     if ($form_state['values']['link'] == 1) {
       $user = user_load(array('uid' => arg(1)));
       if (fbconnect_register($user->uid, $fbuid)) {
         drupal_set_message(t('Congratulations! Your account is now linked to your Facebook account'), 'status');
         watchdog('fbconnect', 'User uid: %user is now associated with the fbuid: %fbuid.', 
-          array('%user' => $user->uid, '%fbuid' => $fbuid));        
+        array('%user' => $user->uid, '%fbuid' => $fbuid));        
       }
-      else{
+      else {
         drupal_set_message(t('Association failed'), 'error');
         watchdog('fbconnect', 'User association failed for uid: %user - fbuid: %fbuid.', 
-          array('%user' => $user->uid, '%fbuid' => $fbuid));        
+        array('%user' => $user->uid, '%fbuid' => $fbuid));        
       }
     }
   }
-  return;
 }
