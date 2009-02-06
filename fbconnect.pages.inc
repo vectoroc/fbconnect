@@ -47,7 +47,7 @@ function fbconnect_registerForm() {
       $form['imp']['field_import'] = array(
         '#type' => 'checkboxes',
         '#options' => fbconnect_available_import_fields($fbuid),
-        '#default_value' => variable_get('fbconnect_field_to_import', ''),
+        '#default_value' => variable_get('fbconnect_field_to_import', NULL),
         '#description' => t('Select the public Facebook profile information you wish to import.
         This information will be displayed on your public profile.'),
       );
@@ -288,7 +288,7 @@ function fbconnect_user_settingsForm() {
         '#type' => 'checkboxes',
         '#description' => t('This information is displayed on my profile.'),
         '#options' => fbconnect_available_import_fields(fbconnect_get_fbuid()),
-        '#default_value' => ($default_value) ? $default_value : array(''),
+        '#default_value' => ($default_value) ? $default_value : NULL,
       );
     }
   }
