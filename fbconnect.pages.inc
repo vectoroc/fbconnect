@@ -16,11 +16,11 @@ function fbconnect_register_page() {
      case 'import':
        drupal_set_title(t('Import your profile information from Facebook'));  
        $output = fbconnect_render_avatar($fbuid);
-       $output .= drupal_get_form('fbconnect_registerForm');
+       $output .= drupal_get_form('fbconnect_register_form');
      break;
      case 'create':
        drupal_set_title(t('Create a new account'));
-       $output  = drupal_get_form('fbconnect_registerForm');
+       $output  = drupal_get_form('fbconnect_register_form');
        if ($friends = fbconnect_get_connected_friends($fbuid)) {
         $output .= t('Facebook friend already registered');
         $output .= theme('render_friends_list_fbconnect', $friends);
@@ -34,7 +34,7 @@ function fbconnect_register_page() {
  /**
   * This form is display when we register a new user with facebook account
   */
-function fbconnect_registerForm() {
+function fbconnect_register_form() {
  $fbuid = fbconnect_get_fbuid();
  switch (arg(2)) {
    case 'import':
@@ -91,7 +91,7 @@ function fbconnect_registerForm() {
 /** 
  * Validate the register form. 
  */ 
-function fbconnect_registerForm_validate($form, &$form_state) {
+function fbconnect_register_form_validate($form, &$form_state) {
  switch (arg(2)) {
    case 'import':
      if ($fields = array_filter((array)$form_state['values']['field_import'], 'fbconnect_import_filter')) {
@@ -132,7 +132,7 @@ function fbconnect_registerForm_validate($form, &$form_state) {
 /** 
  * Handle post-validation register form submission. 
  */ 
-function fbconnect_registerForm_submit($form, &$form_state) {
+function fbconnect_register_form_submit($form, &$form_state) {
  switch (arg(2)) {
    case 'import':
    $form_state['redirect'] = 'fbconnect/register/create';
