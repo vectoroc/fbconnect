@@ -1,3 +1,4 @@
+// $Id$
 /*
  * Our <fb:login-button> specifies this function in its onlogin attribute,
  * which is triggered after the user authenticates the app in the Connect

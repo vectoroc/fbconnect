@@ -69,17 +69,19 @@ function fbconnect_get_fb_avatar($fbuid) {
   // Get facebook user picture's url.
   $pic_url = fbconnect_get_info_from_fb($fbuid, $size);
   $result = drupal_http_request($pic_url[$size]);
+  
   if ($result->code != 200) {
     watchdog('fbconnect', 'Failed importing facebook user avatar for @fbuid, code : @code', 
     array('@fbuid' => $fbuid, '@code' => $result->code));
     return;
-  }
+  }  
   if ($result->headers['Content-Type'] != 'image/jpeg') {
     watchdog('fbconnect', 'Failed importing facebook user avatar, invalid content-type.');
     return;
-  }  
+  }
+    
   $filename = 'picture-fb_'. $fbuid .'.jpg';
-  $dest = file_directory_path();
+  $dest = file_directory_path();  
   if (variable_get('user_picture_path', '')) {
     $dest .= '/'. variable_get('user_picture_path', '');
   }
@@ -116,6 +118,7 @@ function fbconnect_insert_user_info($user, $field_to_import = NULL) {
   }  
   $fbuid = fbconnect_get_fbuid();  
   $fb_user_profile = fbconnect_get_info_from_fb($fbuid, implode(',', $field_to_import));
+  
   if (count($field_to_import) != count($fb_user_profile)) {
     watchdog('fbconnect', 'Error importing from facebook for fbuid : %fbuid', array('%fbuid' => $fbuid));
     drupal_set_message(t('Error importing from facebook'), 'error');
@@ -147,13 +150,11 @@ function fbconnect_logout_page() {
 }
 
 /**
- * Retour la configuration, avatar de l'utilisateur.
- * Si on passe une valeur en parametre,
- * la fonction stock la nouvelle valeur.
+ * Return the user avatar settings.
  */
 function fbconnect_user_avatar_setting($user, $value = NULL) {
-  if (is_numeric($value)) {
-    return db_query('UPDATE {fbconnect_users} SET avatar = %d WHERE uid = %d', $value, $user->uid);
+  if ($value) {
+    return db_query('UPDATE {fbconnect_users} SET avatar = %d WHERE uid = %d', (int)$value, $user->uid);
   }
  return db_result(db_query('SELECT avatar FROM {fbconnect_users} WHERE uid = %d', $user->uid));
 }
@@ -169,8 +170,8 @@ function fbconnect_block($op = 'list', $delta = 0, $edit = array()) {
     return $blocks;
 
     case 'view':
-      global $user;
       if (user_is_logged_in() && fbconnect_get_fbuid()) {
+        global $user;
         $blocks['content'] = fbconnect_block_render($user);
       }
     return $blocks;
@@ -253,6 +254,8 @@ function fbconnect_init() {
     if (variable_get('fbconnect_import', array('fbconnect_import')) && ($user->fb_updatetime < time() - FBCONNECT_RENEW_CACHE * 3600)) {
       fbconnect_insert_user_info($user);
     }
+    // Refresh the page.
+    drupal_add_js('window.location = ""', 'inline', 'footer');
   }
 }
 
@@ -395,7 +398,8 @@ function fbconnect_available_import_fields($fbuid) {
  */
 function fbconnect_get_info_from_fb($fbuid, $fields = NULL) {
   if (!$fields) {
-    $fields = implode(', ', array_filter((array)variable_get('fbconnect_field_to_import', ''), 'fbconnect_import_filter'));
+    $import_settings = variable_get('fbconnect_field_to_import', '');
+    $fields = implode(', ', array_filter((array)$import_settings, 'fbconnect_import_filter'));
   }  
   if (facebook_client() && $fields) {
     try {
@@ -409,7 +413,7 @@ function fbconnect_get_info_from_fb($fbuid, $fields = NULL) {
 }
 
 function fbconnect_import_filter($var) {
-  return ($var) ? $var : NULL;
+  return (is_string($var)) ? $var : NULL;
 }
 
 /**
@@ -544,10 +548,10 @@ function facebook_client() {
         'jsonwrapper/JSON/JSON.php'
       );
       
-      foreach ($lib_files as $file_path) {
-        if (!file_exists($lib_path.$file_path)) {
+      foreach ($lib_files as $files) {
+        if (!file_exists($lib_path.$files)) {
           drupal_set_message(t('Fbconnect : Facebook PHP library file @file not found see readme.txt', 
-            array('@file' => $file_path)), 'status', FALSE);
+            array('@file' => $files)), 'status', FALSE);
           return;
         }
       }
@@ -571,8 +575,7 @@ function fbconnect_get_connected_friends($fbuid) {
     try {
     $rows = facebook_client()->api_client->fql_query($query);
     } catch (Exception $e) {
-      watchdog('fbconnect', 'Exception thrown while using FQL: %code',
-        array('%code' => $e->getMessage()), WATCHDOG_WARNING);
+      watchdog('fbconnect', 'Exception thrown while using FQL: %code', array('%code' => $e->getMessage()), WATCHDOG_WARNING);
     }
     
     if (empty($rows)) {
@@ -600,7 +603,7 @@ function fbconnect_set_user_visibility($user, $visibility) {
 }
 
 /**
- * Render the invite friends iframe.
+ * Render the facebook friends invite form.
  */
 function fbconnect_render_friends_invite_form() {
   global $base_url;
@@ -653,7 +656,7 @@ function theme_render_friends_list_fbconnect($data) {
   if (!empty($data)) {
      foreach ($data as $account) {
         if ($account->picture && file_exists($account->picture)) {
-          $picture = theme_image($account->picture);
+          $picture = theme('user_picture', $account);
         }
         $rows[] = array(($picture) ? $picture : ' ' , theme('username', $account)); 
       }
@@ -696,7 +699,7 @@ function fbconnect_render_fb_favicon() {
  * @return formated HTML
  */
 function theme_fb_user_profile($data, $account) {
-if (!empty($data) && !empty($account)) {
+ if (!empty($data) && !empty($account)) {
     $label = variable_get('facebook_user_fields', '');
     foreach ($data as $key => $value) {
       if (is_array($value)) {

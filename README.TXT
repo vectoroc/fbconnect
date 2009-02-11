@@ -67,9 +67,7 @@ Facebook API key: http://www.facebook.com/developers/
 
 
 -- KNOWN ISSUES -- 
-
-
-Drupal's global cache seems to conflict with fbconnect's Javascript: it should be disabled before operating the module. 
+This module comes into conflict with the gmap module.
 
 
 -- MISCELLANEOUS --
