@@ -11,24 +11,16 @@
  * Called when user perform facebook registration
  */
 function fbconnect_register_page() {
- if (($fbuid = fbconnect_get_fbuid()) && !user_is_logged_in()) {   
-   switch (arg(2)) {
-     case 'import':
-       drupal_set_title(t('Import your profile information from Facebook'));  
-       $output = fbconnect_render_avatar($fbuid);
-       $output .= drupal_get_form('fbconnect_register_form');
-     break;
-     case 'create':
-       drupal_set_title(t('Create a new account'));
-       $output  = drupal_get_form('fbconnect_register_form');
-       if ($friends = fbconnect_get_connected_friends($fbuid)) {
-        $output .= t('Facebook friend already registered');
-        $output .= theme('render_friends_list_fbconnect', $friends);
-       }
-     break;
-   }    
-   return $output;
- }
+  if ($fbuid = fbconnect_get_fbuid()) {   
+    drupal_set_title(t('Create a new account'));
+    $output  = drupal_get_form('fbconnect_register_form');
+
+    if ($friends = fbconnect_get_connected_friends($fbuid)) {
+      $output .= t('Facebook friend already registered');
+      $output .= theme('render_friends_list_fbconnect', $friends);
+    }   
+    return $output;
+  }
 }
 
  /**
@@ -36,55 +28,36 @@ function fbconnect_register_page() {
   */
 function fbconnect_register_form() {
  $fbuid = fbconnect_get_fbuid();
- switch (arg(2)) {
-   case 'import':
-    // Display the form if the facebook importation settings is activated
-    if (variable_get('fbconnect_import', array('fbconnect_import'))) {
-      $form['imp'] = array(
-        '#type' => 'fieldset',
-        '#collapsible' => FALSE,
-      );
-      $form['imp']['field_import'] = array(
-        '#type' => 'checkboxes',
-        '#options' => fbconnect_available_import_fields($fbuid),
-        '#default_value' => variable_get('fbconnect_field_to_import', NULL),
-        '#description' => t('Select the public Facebook profile information you wish to import.
-        This information will be displayed on your public profile.'),
-      );
-    }
-   break;
-   case 'create':
-     $form['reg'] = array(
-       '#type' => 'fieldset',
-       '#collapsible' => FALSE,
-     );
-     $form['reg']['username'] = array(
-       '#type' => 'textfield',
-       '#title' => t('Username'),
-       '#required' => TRUE,
-       '#default_value' => fbconnect_get_fbname($fbuid),
-       '#description' => t('Spaces are allowed; punctuation is not allowed except for periods, hyphens, and underscores.'),
-     );
-     $form['reg']['mail'] = array(
-       '#type' => 'textfield',
-       '#title' => t('E-mail address'),
-       '#required' => TRUE,
-       '#description' => t('A valid e-mail address. All e-mails from the system will be sent to this address.')
-     );
-     $form['reg']['visibility'] = array(
-       '#type' => 'checkbox',
-       '#title' => t('Let my Facebook friends see me on @sitename', 
-          array('@sitename' => variable_get('site_name', 'this website'))),
-       '#description' => t('My Facebook friends will be able to see that I own an account on @sitename.',
-        array('@sitename' => variable_get('site_name', t('this website')))),
-       '#default_value' => 1,
-     );
-   break;
- }
+ $form['reg'] = array(
+   '#type' => 'fieldset',
+   '#collapsible' => FALSE,
+ );
+ $form['reg']['username'] = array(
+   '#type' => 'textfield',
+   '#title' => t('Username'),
+   '#required' => TRUE,
+   '#default_value' => fbconnect_get_fbname($fbuid),
+   '#description' => t('Spaces are allowed; punctuation is not allowed except for periods, hyphens, and underscores.'),
+ );
+ $form['reg']['mail'] = array(
+   '#type' => 'textfield',
+   '#title' => t('E-mail address'),
+   '#required' => TRUE,
+   '#description' => t('A valid e-mail address. All e-mails from the system will be sent to this address.')
+ );
+ $form['reg']['visibility'] = array(
+   '#type' => 'checkbox',
+   '#title' => t('Let my Facebook friends see me on @sitename', 
+      array('@sitename' => variable_get('site_name', t('this website')))),
+   '#description' => t('My Facebook friends will be able to see that I own an account on @sitename.',
+      array('@sitename' => variable_get('site_name', t('this website')))),
+   '#default_value' => 1,
+ );
  $form['submit'] = array( 
  '#type' => 'submit',
  '#value' => t('Submit') 
- ); 
+ );
+ 
  return $form; 
 }
 
@@ -92,107 +65,90 @@ function fbconnect_register_form() {
  * Validate the register form. 
  */ 
 function fbconnect_register_form_validate($form, &$form_state) {
- switch (arg(2)) {
-   case 'import':
-     if ($fields = array_filter((array)$form_state['values']['field_import'], 'fbconnect_import_filter')) {
-      $_SESSION['fb_reg_import'] = $fields;
-     }
-   break;
-   case 'create':
-     // Validate the username
-     $name = $form_state['values']['username'];
-     if (user_validate_name($name)) {
-       form_set_error('username', user_validate_name($name));
-     }
-     else if (db_result(db_query("SELECT COUNT(*) FROM {users} WHERE LOWER(name) = LOWER('%s')", $name)) > 0) {
-       form_set_error('username', t('The name %name is already taken.', array('%name' => $name)));
-     }
-     else if (drupal_is_denied('user', $name)) {
-       form_set_error('username', t('The name %name is a reserved username.', array('%name' => $name)));
-     }
-     // Validate e-mail
-     $mail = $form_state['values']['mail'];
-     if (user_validate_mail($mail)) {
-       form_set_error('mail', user_validate_mail($mail));
-     }
-     else if (db_result(db_query("SELECT COUNT(*) FROM {users} WHERE LOWER(mail) = LOWER('%s')", $mail)) > 0) {
-       form_set_error('mail', t('The e-mail address %email is already registered. <a href="@password">Have you forgotten your password?</a>',
-        array('%email' => $mail, '@password' => url('user/password'))));
-     }
-     else if (drupal_is_denied('mail', $mail)) {
-       form_set_error('mail', t('The e-mail address %email has been denied access.', array('%email' => $mail)));
-     }
-   break;
- }
-} 
+  // Validate the username
+  $name = $form_state['values']['username'];
+  if (user_validate_name($name)) {
+   form_set_error('username', user_validate_name($name));
+  }
+  else if (db_result(db_query("SELECT COUNT(*) FROM {users} WHERE LOWER(name) = LOWER('%s')", $name)) > 0) {
+   form_set_error('username', t('The name %name is already taken.', array('%name' => $name)));
+  }
+  else if (drupal_is_denied('user', $name)) {
+   form_set_error('username', t('The name %name is a reserved username.', array('%name' => $name)));
+  }
+  // Validate e-mail
+  $mail = $form_state['values']['mail'];
+  if (user_validate_mail($mail)) {
+   form_set_error('mail', user_validate_mail($mail));
+  }
+  else if (db_result(db_query("SELECT COUNT(*) FROM {users} WHERE LOWER(mail) = LOWER('%s')", $mail)) > 0) {
+   form_set_error('mail', t('The e-mail address %email is already registered. <a href="@password">Have you forgotten your password?</a>',
+    array('%email' => $mail, '@password' => url('user/password'))));
+  }
+  else if (drupal_is_denied('mail', $mail)) {
+   form_set_error('mail', t('The e-mail address %email has been denied access.', array('%email' => $mail)));
+  }
+}
 
 /** 
  * Handle post-validation register form submission. 
  */ 
 function fbconnect_register_form_submit($form, &$form_state) {
- switch (arg(2)) {
-   case 'import':
-   $form_state['redirect'] = 'fbconnect/register/create';
-   return;
+  $visible = $form_state['values']['visibility'];
+  $name    = $form_state['values']['username'];
 
-   case 'create':
-   $visible = $form_state['values']['visibility'];
-   $name    = $form_state['values']['username'];
-   
-   // If sucess, this function will return NULL
-   $register_result = user_external_login_register($name, 'fbconnect');
-   // In case of registration failed.
-   if ($register_result != NULL) {
-     watchdog('fbconnect', 'User external register failed for %user.', array('%user' => $name));
-     drupal_set_message(t('Register error'), 'error');
-     $form_state['redirect'] = '';
-     return;
-   }
-   
-   global $user;
-   $fbuid = fbconnect_get_fbuid();
-   fbconnect_register($user->uid, $fbuid);   
-   // Update user visibility, default = 1
-   if (!$visible) {
-    fbconnect_set_user_visibility($user, $visible);
-   }
-   
-   $extra_data['mail'] = $extra_data['init'] = $form_state['values']['mail'];
-   $extra_data['login'] = time();   
-   // Save facebook picture as avatar.
-   if (variable_get('user_pictures', 0)) {
-     $picture = fbconnect_get_fb_avatar($fbuid);
-     if ($picture) {
-       $extra_data['picture'] = $picture;
-     }
-   }
-   user_save($user, $extra_data);
-   
-   if ($_SESSION['fb_reg_import']) {
-     // Saving import settings.
-     fbconnect_insert_user_info($user, $_SESSION['fb_reg_import']);
-     unset($_SESSION['fb_reg_import']);     
-   }
-   
-   // If the user chose to be visible, and the registration feed parameter is enabled.
-   // We store a value in the session variable, 
-   // this variable will be read by the _fbconnect_render_js function.
-   if (variable_get('fbconnect_reg_feed', 1) && $visible) {
-     $_SESSION['fbconnect_feed']['type'] = 'registration';
-   }
-   // The user has chosen to be visible, just redirect to the friends invite page.
-   if ($visible) {
-     $form_state['redirect'] = 'fbconnect/invite/friends';
-     $sitename = variable_get('site_name', t('this website'));
-     $welcome_msg = t('Registration successful. You may now invite friends to join you on @site',  array('@site' => $sitename));
-     drupal_set_message($welcome_msg, 'status');
-   }
-   else {
-     drupal_set_message(t('Registration successful.'));  
-     $form_state['redirect'] = '';        
-   }
+  // If sucess, this function will return NULL
+  $register_result = user_external_login_register($name, 'fbconnect');
+  // In case of registration failed.
+  if ($register_result != NULL) {
+   watchdog('fbconnect', 'User external register failed for %user.', array('%user' => $name));
+   drupal_set_message(t('Register error'), 'error');
+   $form_state['redirect'] = '';
    return;
- }
+  }
+   
+  global $user;
+  $fbuid = fbconnect_get_fbuid();
+  fbconnect_register($user->uid, $fbuid);   
+  // Update user visibility, default = 1
+  if (!$visible) {
+    fbconnect_set_user_visibility($user, $visible);
+  }
+
+  $extra_data['mail'] = $extra_data['init'] = $form_state['values']['mail'];
+  $extra_data['login'] = time();   
+  // Save facebook picture as avatar.
+  if (variable_get('user_pictures', 0)) {
+    $picture = fbconnect_get_fb_avatar($fbuid);
+    if ($picture) {
+      $extra_data['picture'] = $picture;
+    }
+  }
+  user_save($user, $extra_data);
+
+  if ($_SESSION['fb_reg_import'] && module_exists('fbconnect_profile')) {
+    // Saving import settings.
+    fbconnect_profile_insert_user_info($user, $_SESSION['fb_reg_import']);
+    unset($_SESSION['fb_reg_import']);
+  }
+
+  // If the user chose to be visible, and the registration feed parameter is enabled.
+  // We store a value in the session variable, 
+  // this variable will be read by the _fbconnect_render_js function.
+  if (variable_get('fbconnect_reg_feed', 1) && $visible) {
+    $_SESSION['fbconnect_feed']['type'] = 'registration';
+  }
+  // The user has chosen to be visible, just redirect to the friends invite page.
+  if ($visible) {
+    $form_state['redirect'] = 'fbconnect/invite/friends';
+    $sitename = variable_get('site_name', t('this website'));
+    $welcome_msg = t('Registration successful. You may now invite friends to join you on @site',  array('@site' => $sitename));
+    drupal_set_message($welcome_msg, 'status');
+  }
+  else {
+    drupal_set_message(t('Registration successful.'));  
+    $form_state['redirect'] = '';        
+  }
 }
 
 /**
@@ -209,7 +165,7 @@ function fbconnect_user_identities($account) {
     $rows[] = array(t('Your account is linked with your Facebook account.'));
     $rows[] = array(t('Your Facebook user id : @fbuid', array('@fbuid' => $account->fbuid))); 
        
-    if ((fbconnect_get_fbuid() > 0) && $account->fbuid != fbconnect_get_fbuid()) {
+    if (fbconnect_get_fbuid() && $account->fbuid != fbconnect_get_fbuid()) {
       drupal_set_message('Invalid Facebook session, you\'re not authorized to modify the parameters.');
       return theme('table', $header, $rows);
     }    
@@ -267,6 +223,7 @@ function fbconnect_user_settings_form() {
   $form['view'] = array(
     '#type' => 'fieldset',
     '#collapsible' => FALSE,
+    '#weight' => -2,
   );  
   $form['visibility_hid'] = array(
     '#type' => 'hidden',
@@ -281,37 +238,21 @@ function fbconnect_user_settings_form() {
   );
 
   // This fields is visible only if we got a active Facebook session.
+  // Whether user picture is enabled, 
+  // users can choose to use his facebook avatar as avatar
   if (fbconnect_get_fbuid()) {
-    // Whether user picture is enabled, 
-    // users can choose to use his facebook avatar as avatar
     if (variable_get('user_pictures', 0)) {
       $form['avatar'] = array(
         '#type' => 'fieldset',
         '#collapsible' => FALSE,
-      );      
+        '#weight' => -3,
+      );
       $form['avatar']['fb_avatar'] = array(
         '#type' => 'checkbox',
         '#title' => t('Use my Facebook picture on @sitename', 
           array('@sitename' => variable_get('sitename', t('this website')))),
         '#description' => t('Your picture will be updated every 24 hours.'),
         '#default_value' => fbconnect_user_avatar_setting($user),
-      );
-    }    
-    // Importation settings
-    $fields = array_filter(variable_get('fbconnect_field_to_import', ''), 'fbconnect_import_filter');
-    
-    // If the site administrator enabled profile import, these fields will be display.
-    if (variable_get('fbconnect_import', array('fbconnect_import')) && $fields) {
-      $form['import'] = array(
-        '#type' => 'fieldset',
-        '#collapsible' => FALSE,
-      );
-      $default_value = fbconnect_get_user_import_setting($user);    
-      $form['import']['import_setting'] = array(
-        '#type' => 'checkboxes',
-        '#description' => t('This information is displayed on my profile.'),
-        '#options' => fbconnect_available_import_fields(fbconnect_get_fbuid()),
-        '#default_value' => ($default_value) ? $default_value : NULL,
       );
     }
   }
@@ -347,16 +288,6 @@ function fbconnect_user_settings_form_submit($form, &$form_state) {
         db_query("UPDATE {users} SET picture = '' WHERE uid = %d", $user->uid);
         db_query("UPDATE {fbconnect_users} SET avatar = %d WHERE uid = %d", 0, $user->uid);
       }
-    }
-  }
-  
-  if (variable_get('fbconnect_import', array('fbconnect_import'))) {
-    if ($fields = array_filter((array)$form_state['values']['import_setting'], 'fbconnect_import_filter')) {
-      fbconnect_insert_user_info($user, $fields);
-    }
-    else {
-      db_query("UPDATE {fbconnect_users} SET import_setting = '' WHERE uid = %d", $user->uid);
-      db_query('DELETE FROM {fbconnect_profile} WHERE uid = %d', $user->uid);
     }
   }
 }

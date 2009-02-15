@@ -1,0 +1,75 @@
+<?php
+// $Id$
+
+/**
+ * @file
+ * Implementation of hook_install().
+ */
+function fbconnect_profile_install() {
+  drupal_install_schema('fbconnect_profile');
+  $facebook_fields = array(
+    'name'                => t('Facebook name'),
+    'affiliations'        => t('Affiliations'),
+    'religion'            => t('Religious Views'),
+    'birthday'            => t('Birthday'),
+    'sex'                 => t('Sex'),
+    'about_me'            => t('About me'),
+    'hometown_location'   => t('Hometown location'),
+    'current_location'    => t('Current location'),
+    'meeting_sex'         => t('Meeting sex'),
+    'meeting_for'         => t('Meeting for'),
+    'relationship_status' => t('Relationship status'),
+    'political'           => t('Political'),
+    'activities'          => t('Activities'),
+    'interests'           => t('Interests'),
+    'music'               => t('Favourite Music'),
+    'tv'                  => t('Favourite TV'),
+    'movies'              => t('Favourite Films'),
+    'books'               => t('Favourite Books'),
+    'quotes'              => t('Favourite Quotations'),
+  );
+  variable_set('facebook_user_fields', $facebook_fields);
+  
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function fbconnect_profile_uninstall() {
+  drupal_uninstall_schema('fbconnect_profile');
+  variable_del('facebook_user_fields');
+  variable_del('fbconnect_profile_fields');
+}
+
+/** 
+ * Implementation of hook_schema(). 
+ */ 
+function fbconnect_profile_schema() {
+  $schema['fbconnect_profile'] = array( 
+    'fields' => array( 
+      'uid'                 => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0),
+      'name'                => array('type' => 'varchar', 'length' => 60, 'not null' => TRUE, 'default' => ''),
+      'religion'            => array('type' => 'varchar', 'length' => 255, 'not null' => TRUE, 'default' => ''),
+      'birthday'            => array('type' => 'varchar', 'length' => 30, 'not null' => TRUE, 'default' => '', ),
+      'sex'                 => array('type' => 'varchar', 'length' => 10, 'not null' => TRUE, 'default' => ''),
+      'relationship_status' => array('type' => 'varchar', 'length' => 30, 'not null' => TRUE, 'default' => ''),
+      'political'           => array('type' => 'varchar', 'length' => 50, 'not null' => TRUE, 'default' => ''),
+      'activities'          => array('type' => 'text', 'not null' => FALSE),
+      'interests'           => array('type' => 'text', 'not null' => FALSE),
+      'music'               => array('type' => 'text', 'not null' => FALSE),
+      'tv'                  => array('type' => 'text', 'not null' => FALSE),
+      'movies'              => array('type' => 'text', 'not null' => FALSE),
+      'books'               => array('type' => 'text', 'not null' => FALSE),
+      'quotes'              => array('type' => 'text', 'not null' => FALSE),
+      'about_me'            => array('type' => 'text', 'not null' => FALSE),
+      'affiliations'        => array('type' => 'text', 'size' => 'medium'),
+      'current_location'    => array('type' => 'text', 'not null' => FALSE),
+      'hometown_location'   => array('type' => 'text', 'not null' => FALSE),
+      'meeting_sex'         => array('type' => 'text', 'not null' => FALSE),
+      'meeting_for'         => array('type' => 'text', 'not null' => FALSE),
+    ), 
+    'primary key' => array('uid'), 
+  );
+  
+  return $schema;
+}

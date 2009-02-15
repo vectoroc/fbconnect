@@ -24,25 +24,21 @@ function fbconnect_menu() {
     'access arguments' => array('administer site configuration'),
     'type' => MENU_NORMAL_ITEM,
     'file' => 'fbconnect.admin.inc',
-    'description' => 'Configure how Facebook Connect behave.',
   );
-  $items['fbconnect/register/import'] = array(
-    'page callback' => 'fbconnect_register_page',
-    'type' => MENU_CALLBACK,
-    'access arguments' => array('access content'),
-    'file' => 'fbconnect.pages.inc',
-  );
+
   $items['fbconnect/register/create'] = array(
     'page callback' => 'fbconnect_register_page',
+    'access callback' => 'user_is_anonymous',
     'type' => MENU_CALLBACK,
-    'access arguments' => array('access content'),
     'file' => 'fbconnect.pages.inc',
   );
+  
   $items['fbconnect/invite/friends'] = array(
     'page callback' => 'fbconnect_render_friends_invite_form',
-    'access arguments' => array('access content'),
+    'access callback' => 'user_is_logged_in',
     'type' => MENU_CALLBACK,
   );
+  
   $items['user/%user/fbconnect'] = array(
     'title' => 'Facebook connect',
     'page callback' => 'fbconnect_user_identities',
@@ -51,11 +47,13 @@ function fbconnect_menu() {
     'access arguments' => array(1),
     'type' => MENU_LOCAL_TASK,
     'file' => 'fbconnect.pages.inc',
-    );
+  );
+    
   $items['fbconnect/logout'] = array(
+    'title' => 'Log out from facebook',
     'page callback' => 'fbconnect_logout_page',
+    'access callback' => 'user_is_logged_in',
     'type' => MENU_CALLBACK,
-    'access arguments' => array('access content'),
   );
   return $items; 
 }
@@ -90,63 +88,12 @@ function fbconnect_get_fb_avatar($fbuid) {
 }
 
 /**
- * Recupere les parametres d'importation de l'utilisateur
- */
-function fbconnect_get_user_import_setting($user) {
-  $data = db_result(db_query('SELECT import_setting FROM {fbconnect_users} WHERE uid = %d', $user->uid));
-  if ($data != NULL) {
-     return unserialize($data);
-  }
-}
-/**
- * Enregistre les informations du profile facebook.
- * Une session Facebook doit etre active.
- *
- * @param Object $user
- *   Drupal user object
- * @param Array $field_to_import
- */
-function fbconnect_insert_user_info($user, $field_to_import = NULL) {
-  if ($field_to_import == NULL) {
-    $field_to_import = fbconnect_get_user_import_setting($user);
-  }
-  elseif ($field_to_import) {
-    db_query("UPDATE {fbconnect_users} SET import_setting = '%s' WHERE uid = %d", serialize($field_to_import), $user->uid);
-  }  
-  if (!$field_to_import) {
-    return;
-  }  
-  $fbuid = fbconnect_get_fbuid();  
-  $fb_user_profile = fbconnect_get_info_from_fb($fbuid, implode(',', $field_to_import));
-  
-  if (count($field_to_import) != count($fb_user_profile)) {
-    watchdog('fbconnect', 'Error importing from facebook for fbuid : %fbuid', array('%fbuid' => $fbuid));
-    drupal_set_message(t('Error importing from facebook'), 'error');
-    return;               
-  }
-  // Drupal uid
-  $fields[] = 'uid';
-  $values[] = $user->uid;
-  $s[] = "%d";
-  
-  foreach ($fb_user_profile as $key => $value) {
-    $fields[] = $key;
-    $values[] = (is_array($value)) ? serialize($value) : $value;
-    $s[] = "'%s'";
-  }
-  // Save user information imported from Facebook 
-  db_query('REPLACE INTO {fbconnect_profile} ('. implode(', ', $fields) .') VALUES ('. implode(', ', $s) .')', $values);
-  // Update the 24h cache timer and save fields settings.
-  db_query("UPDATE {fbconnect_users} SET timestamp = %d, import_setting = '%s' WHERE uid = %d", time(), serialize($field_to_import), $user->uid);
-}
-
-/**
  * Menu callback.
  * Called when user loggout from drupal
  */
 function fbconnect_logout_page() {
-   // We load an empty page, the facebook JS API will render the logout message
-   return '&nbsp;';
+  // We load an empty page, the facebook JS API will render the logout message
+  return '&nbsp;';
 }
 
 /**
@@ -156,7 +103,7 @@ function fbconnect_user_avatar_setting($user, $value = NULL) {
   if ($value) {
     return db_query('UPDATE {fbconnect_users} SET avatar = %d WHERE uid = %d', (int)$value, $user->uid);
   }
- return db_result(db_query('SELECT avatar FROM {fbconnect_users} WHERE uid = %d', $user->uid));
+  return db_result(db_query('SELECT avatar FROM {fbconnect_users} WHERE uid = %d', $user->uid));
 }
 
 /**
@@ -241,21 +188,22 @@ function fbconnect_init() {
   }
   // Verify that the user is associated with a uid in the database  
   $uid = _is_fbconnect_user($fbuid);
+  
   if (!$uid) {
-    $fields = array_filter(variable_get('fbconnect_field_to_import', ''), 'fbconnect_import_filter');
-    $path = (variable_get('fbconnect_import', array('fbconnect_import')) && $fields) ? 'fbconnect/register/import' : 'fbconnect/register/create';
+    if (module_exists('fbconnect_profile')) {
+      $fields = array_filter(variable_get('fbconnect_field_to_import', ''), 'fbconnect_import_filter');
+      $path = 'fbconnect/register/import';
+    }
+    else {
+      $path = 'fbconnect/register/create';      
+    }
     drupal_goto($path);
   }
   elseif ($uid) {
-    global $user;  
+    global $user;
     $user = user_load($uid);
-    db_query('UPDATE {users} SET login = %d WHERE uid = %d', time(), $user->uid);
-    // Cache timer 12 hours
-    if (variable_get('fbconnect_import', array('fbconnect_import')) && ($user->fb_updatetime < time() - FBCONNECT_RENEW_CACHE * 3600)) {
-      fbconnect_insert_user_info($user);
-    }
-    // Refresh the page.
-    drupal_add_js('window.location = ""', 'inline', 'footer');
+    db_query('UPDATE {users} SET login = %d WHERE uid = %d', time(), $user->uid); 
+    drupal_add_js('window.location = ""', 'inline', 'footer'); // Page refresh.
   }
 }
 
@@ -277,7 +225,7 @@ function fbconnect_form_alter(&$form, $form_state, $form_id) {
     return;
   }
 
-  if ($form_id == 'comment_form' && variable_get('fbconnect_com_feed', '')) {
+  if ($form_id == 'comment_form' && variable_get('fbconnect_com_feed', NULL)) {
     $form['fbconnect_feed'] = array(
       '#type' => 'checkbox',
       '#title' => fbconnect_render_fb_favicon().t('Publish Facebook story feed'),
@@ -312,15 +260,7 @@ function fbconnect_refresh_user_avatar($fbuid, $uid) {
  * Impletementation of hook_cron
  */
 function fbconnect_cron() {
-  fbconnect_clear_cache();
-  cache_clear_all();
-}
-
-/**
- * Delete user facebook information from cache table.
- */
-function fbconnect_clear_cache() {
-  $expire = time() - FBCONNECT_USER_CACHE_EXPIRE * 3600;    
+  $expire = time() - FBCONNECT_USER_CACHE_EXPIRE * 3600;
   // Update user picture
   if (variable_get('user_pictures', 0)) {
     $result = db_query('SELECT uid, fbuid FROM {fbconnect_users} WHERE timestamp < %d AND avatar = %d', $expire, FBCONNECT_USE_FBAVATAR);
@@ -331,10 +271,7 @@ function fbconnect_clear_cache() {
       }
     }
   }
-  
-  $query = 'DELETE {fbconnect_profile} FROM {fbconnect_profile} INNER JOIN {fbconnect_users}
-    WHERE {fbconnect_users}.uid = {fbconnect_profile}.uid AND timestamp < %d';
-  db_query($query, $expire);
+  cache_clear_all();
 }
 
 /**
@@ -353,13 +290,6 @@ function fbconnect_user($op, &$edit, &$account, $category = NULL) {
         db_query('DELETE FROM {fbconnect_users} WHERE uid = %d', $account->uid);
         db_query('DELETE FROM {fbconnect_profile} WHERE uid = %d', $account->uid);        
       }
-    break;    
-    case 'view':
-      $account->content['fbconnect']['profile'] = array(
-        '#type' => 'user_profile_item',
-        '#value' => theme('fb_user_profile', fbconnect_get_user_profile($account->uid), $account),
-        '#weight' => 0,
-      );
     break;
     case 'logout':
       // Redirect to session destroy page.
@@ -370,37 +300,13 @@ function fbconnect_user($op, &$edit, &$account, $category = NULL) {
   }
 }
 
-/**
- * Validate user information available from facebook
- *
- * @return array
- */
-function fbconnect_available_import_fields($fbuid) {
-  if ($result = fbconnect_get_info_from_fb($fbuid)) {
-    $import_options = variable_get('facebook_user_fields', '');
-    foreach ($result as $key => $value) {      
-      if ($value) {
-        if (is_array($value)) {
-          $available_import[$key] .= $import_options[$key];
-          continue;          
-        }
-        $available_import[$key] .= $import_options[$key] .' : '. check_plain($value);
-      }
-    }
-    return $available_import;
-  }
-}
 
 /**
  * Query information from facebook user table.
  *
  * @return array
  */
-function fbconnect_get_info_from_fb($fbuid, $fields = NULL) {
-  if (!$fields) {
-    $import_settings = variable_get('fbconnect_field_to_import', '');
-    $fields = implode(', ', array_filter((array)$import_settings, 'fbconnect_import_filter'));
-  }  
+function fbconnect_get_info_from_fb($fbuid, $fields) {
   if (facebook_client() && $fields) {
     try {
       $result = facebook_client()->api_client->fql_query("SELECT $fields FROM user WHERE uid = $fbuid");
@@ -410,10 +316,6 @@ function fbconnect_get_info_from_fb($fbuid, $fields = NULL) {
         array('%code' => $e->getMessage()), WATCHDOG_WARNING);
     }
   }
-}
-
-function fbconnect_import_filter($var) {
-  return (is_string($var)) ? $var : NULL;
 }
 
 /**
@@ -434,40 +336,15 @@ function fbconnect_get_fbname($fbuid) {
 }
 
 /**
- * Query fbconnect user information.
- *
- * @return array
- */
-function fbconnect_get_user_profile($uid) {
-  $result = db_fetch_array(db_query('SELECT * FROM {fbconnect_profile} WHERE uid = %d', $uid));              
-  if ($result) {
-    $serialized = array('affiliations', 'hometown_location', 'current_location', 'meeting_sex', 'meeting_for');    
-    $data = array();
-    foreach ($result as $key => $value) {
-      if ($key == 'uid') {
-        continue;
-      }
-      else if (in_array($key, $serialized) && $value) {
-        $data[$key] = unserialize($value);
-      }
-      else if ($value) {
-        $data[$key] = $value; 
-      }
-    }
-    return $data;
-  }
-}
-
-/**
  * Check facebook session.
  *
  * @return integer
  *   facebook user id
  */
 function fbconnect_get_fbuid() {
-    if (facebook_client()) {
-      return facebook_client()->get_loggedin_user();
-    }
+  if (facebook_client()) {
+    return facebook_client()->get_loggedin_user();
+  }
 }
 
 /**
@@ -480,6 +357,10 @@ function fbconnect_get_fbuid() {
 function _is_fbconnect_user($fbuid) {
   $data = db_fetch_array(db_query('SELECT uid FROM {fbconnect_users} WHERE fbuid = %d', $fbuid));
   return ($data) ? $data : FALSE;
+}
+
+function fbconnect_import_filter($var) {
+  return (is_string($var)) ? $var : NULL;
 }
 
 /**
@@ -640,9 +521,6 @@ function fbconnect_render_friends_invite_form() {
  */
 function fbconnect_theme() {
   return array(
-    'fb_user_profile' => array(
-      'arguments' => array('data' => NULL, 'account' => NULL)
-    ),
     'block_fbconnect' => array(
       'arguments' => array('data' => NULL, 'account' => NULL)
     ),
@@ -689,36 +567,6 @@ function fbconnect_render_fb_favicon() {
   return theme_image(drupal_get_path('module', 'fbconnect') .'/images/favicon.gif');
 }
 
-/**
- * Return themed user profile
- *
- * @param array $data
- *   An array containing the data to display
- * @param object $account
- *   Drupal user object
- * @return formated HTML
- */
-function theme_fb_user_profile($data, $account) {
- if (!empty($data) && !empty($account)) {
-    $label = variable_get('facebook_user_fields', '');
-    foreach ($data as $key => $value) {
-      if (is_array($value)) {
-        switch ($key) {
-          case 'affiliations':
-            $output .= '<dt>'. $label[$key] .': </dt><dd>'. $value[0]['name'] .'</dd>';
-          break;                  
-          case 'hometown_location':
-            $output .= '<dt>'. $label[$key] .': </dt><dd>'. $value['city'] .', '. $value['state'] .', '. $value['country'] .'</dd>';
-          break;
-        }
-      }
-      else {
-        $output .= '<dt>'. $label[$key] .': </dt><dd>'. $value .'</dd>';
-      }
-    }
-    return '<dl class="facebook_info">'. $output .'</dl><div class="clear"></div>';
-  }
-}
 
 /**
  * This function manage all javascripts used by this module.
@@ -748,7 +596,7 @@ function _fbconnect_render_js() {
   }
   
   if ($_SESSION['fbconnect_feed']) {
-      $sitename = drupal_to_js(variable_get('fbconnect_invitef_type', variable_get('site_name', '')));
+      $sitename = drupal_to_js(variable_get('fbconnect_invitef_type', variable_get('site_name', NULL)));
       
     if ($_SESSION['fbconnect_feed']['type'] == 'registration' && arg(0) != 'fbconnect') {
       $bundle_id = variable_get('fbconnect_reg_feed_id', FBCONNECT_REG_FEED_BUNDLEID);
