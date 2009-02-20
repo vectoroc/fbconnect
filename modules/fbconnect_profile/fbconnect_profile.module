@@ -24,12 +24,15 @@ function fbconnect_profile_menu() {
  * This function build the user import page.
  */
 function fbconnect_profile_import_page() {
-  if ($fbuid = fbconnect_get_fbuid()) {
-    drupal_set_title(t('Import your profile information from Facebook'));
-    $output  = fbconnect_render_avatar($fbuid);
-    $output .= drupal_get_form('fbconnect_profile_import_form');
-    return $output;
+  if (!$fbuid = fbconnect_get_fbuid()) {
+    drupal_set_message(t('Your Facebook session has expired, try to reconnect'));
+    drupal_goto();
   }
+  
+  drupal_set_title(t('Import your profile information from Facebook'));
+  $output  = fbconnect_render_avatar($fbuid);
+  $output .= drupal_get_form('fbconnect_profile_import_form');
+  return $output;  
 }
 
 /**
@@ -148,6 +151,9 @@ function fbconnect_profile_user_settings_submit($form, &$form_state) {
     db_query("UPDATE {fbconnect_users} SET import_setting = '' WHERE uid = %d", $user->uid);
     db_query('DELETE FROM {fbconnect_profile} WHERE uid = %d', $user->uid);
   }
+    
+  drupal_set_message('Your Facebook connect settings have been saved.');
+  drupal_goto('user/'. $user->uid);
 }
 
 

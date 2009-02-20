@@ -11,23 +11,30 @@
  * Called when user perform facebook registration
  */
 function fbconnect_register_page() {
-  if ($fbuid = fbconnect_get_fbuid()) {   
-    drupal_set_title(t('Create a new account'));
-    $output  = drupal_get_form('fbconnect_register_form');
-
-    if ($friends = fbconnect_get_connected_friends($fbuid)) {
-      $output .= t('Facebook friend already registered');
-      $output .= theme('render_friends_list_fbconnect', $friends);
-    }   
-    return $output;
+  if (!$fbuid = fbconnect_get_fbuid()) {
+    drupal_set_message(t('Your Facebook session has expired, try to reconnect'));
+    drupal_goto();
   }
+  
+  drupal_set_title(t('Connect with Facebook'));
+  $help_box = t('In order to finalize your registration please choose a username and type in your e-mail address.');
+  $output  = '<div class="fb-help">'. $help_box .'</div>';
+  $output .= drupal_get_form('fbconnect_register_form');
+  
+  if ($friends = fbconnect_get_connected_friends($fbuid)) {
+    $title = t('My Facebook friends already registered');
+    $output .= theme('render_friends_list_fbconnect', $friends, $title);
+  }
+  return $output;  
 }
 
  /**
   * This form is display when we register a new user.
   */
 function fbconnect_register_form() {
- $fbuid = fbconnect_get_fbuid();
+ $fbuid    = fbconnect_get_fbuid();
+ $sitename = variable_get('site_name', t('this website'));
+ 
  $form['reg'] = array(
    '#type' => 'fieldset',
    '#collapsible' => FALSE,
@@ -48,9 +55,9 @@ function fbconnect_register_form() {
  $form['reg']['visibility'] = array(
    '#type' => 'checkbox',
    '#title' => t('Let my Facebook friends see me on @sitename', 
-      array('@sitename' => variable_get('site_name', t('this website')))),
+      array('@sitename' => $sitename)),
    '#description' => t('My Facebook friends will be able to see that I own an account on @sitename.',
-      array('@sitename' => variable_get('site_name', t('this website')))),
+      array('@sitename' => $sitename)),
    '#default_value' => 1,
  );
  $form['submit'] = array( 
@@ -147,7 +154,7 @@ function fbconnect_register_form_submit($form, &$form_state) {
   }
   else {
     drupal_set_message(t('Registration successful.'));  
-    $form_state['redirect'] = '';        
+    $form_state['redirect'] = '';
   }
 }
 
@@ -199,7 +206,7 @@ function fbconnect_association_form() {
   $form['link'] = array(
     '#type' => 'checkbox',
     '#title' => t('Link my account on @sitename and my Facebook account', 
-      array('@sitename' => variable_get('sitename', t('this website')))),
+      array('@sitename' => variable_get('site_name', t('this website')))),
     '#default_value' => 1,
   );
   
@@ -252,7 +259,7 @@ function fbconnect_user_settings_form() {
         '#title' => t('Use my Facebook picture on @sitename', 
           array('@sitename' => variable_get('sitename', t('this website')))),
         '#description' => t('Your picture will be updated every 24 hours.'),
-        '#default_value' => fbconnect_user_avatar_setting($user),
+        '#default_value' => fbconnect_user_avatar_setting($user->uid),
       );
     }
   }
@@ -277,18 +284,24 @@ function fbconnect_user_settings_form_submit($form, &$form_state) {
   }
   
   if (variable_get('user_pictures', 0)) {
-    fbconnect_user_avatar_setting($user, $form_state['values']['fb_avatar']);        
+    fbconnect_user_avatar_setting($user->uid, $form_state['values']['fb_avatar']);        
     if ($form_state['values']['fb_avatar'] == 1) {
       fbconnect_refresh_user_avatar($user->fbuid, $user->uid);
     }
     else {
-      $avatar_setting = fbconnect_user_avatar_setting($user);
+      $avatar_setting = fbconnect_user_avatar_setting($user->uid);
       if ($avatar_setting && $user->picture) {
         file_delete($user->picture);
         db_query("UPDATE {users} SET picture = '' WHERE uid = %d", $user->uid);
         db_query("UPDATE {fbconnect_users} SET avatar = %d WHERE uid = %d", 0, $user->uid);
       }
     }
+  }
+  
+  // Redirect to user profile.
+  if (!module_exists('fbconnect_profile')) {
+    drupal_set_message('Your Facebook connect settings have been saved.');
+    drupal_goto('user/'. $user->uid);
   }
 }
 
@@ -305,13 +318,13 @@ function fbconnect_association_form_submit($form, &$form_state) {
       
       if (fbconnect_register($user->uid, $fbuid)) {
         drupal_set_message(t('Congratulations! Your account is now linked to your Facebook account'), 'status');
-        watchdog('fbconnect', 'User uid: %user is now associated with the fbuid: %fbuid.', 
-        array('%user' => $user->uid, '%fbuid' => $fbuid));        
+        watchdog('fbconnect', 'User uid: !user is now associated with the fbuid: !fbuid.',
+        array('!user' => $user->uid, '!fbuid' => $fbuid));        
       }
       else {
         drupal_set_message(t('Association failed'), 'error');
         watchdog('fbconnect', 'User association failed for uid: %user - fbuid: %fbuid.', 
-        array('%user' => $user->uid, '%fbuid' => $fbuid));        
+          array('!user' => $user->uid, '!fbuid' => $fbuid));        
       }
     }
   }
