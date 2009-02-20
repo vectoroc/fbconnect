@@ -284,17 +284,14 @@ function fbconnect_user_settings_form_submit($form, &$form_state) {
   }
   
   if (variable_get('user_pictures', 0)) {
-    fbconnect_user_avatar_setting($user->uid, $form_state['values']['fb_avatar']);        
     if ($form_state['values']['fb_avatar'] == 1) {
+      fbconnect_user_avatar_setting($user->uid, $form_state['values']['fb_avatar']);
       fbconnect_refresh_user_avatar($user->fbuid, $user->uid);
     }
     else {
-      $avatar_setting = fbconnect_user_avatar_setting($user->uid);
-      if ($avatar_setting && $user->picture) {
-        file_delete($user->picture);
-        db_query("UPDATE {users} SET picture = '' WHERE uid = %d", $user->uid);
-        db_query("UPDATE {fbconnect_users} SET avatar = %d WHERE uid = %d", 0, $user->uid);
-      }
+      fbconnect_user_avatar_setting($user->uid, $form_state['values']['fb_avatar']);
+      file_delete($user->picture);
+      db_query("UPDATE {users} SET picture = '' WHERE uid = %d", $user->uid);
     }
   }
   
