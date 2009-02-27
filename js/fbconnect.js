@@ -4,24 +4,8 @@
  * which is triggered after the user authenticates the app in the Connect
  * dialog and the Facebook session has been set in the cookies.
  */
-function facebook_onlogin_ready() {  
-  FB.ensureInit(function() {
-       FB.Facebook.get_sessionState().waitUntilReady(function(session) {
-           var is_now_logged_into_facebook = session ? true : false;           
-           if (is_now_logged_into_facebook) {
-             $('#fbconnect-autoconnect-form').submit();
-           }
-       });
-   });
-}
-
-/*
- * Prompts the user to grant a permission to the application.
- */
-function facebook_prompt_permission(permission) {
-  FB.ensureInit(function() {
-    FB.Connect.showPermissionDialog(permission);
-  });
+function facebook_onlogin_ready() {
+ $('#fbconnect-autoconnect-form').submit();
 }
 
 /*

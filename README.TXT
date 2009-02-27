@@ -67,8 +67,6 @@ Facebook API key: http://www.facebook.com/developers/
 
 
 -- KNOWN ISSUES -- 
-This module comes into conflict with the gmap module.
-
 
 -- MISCELLANEOUS --
 

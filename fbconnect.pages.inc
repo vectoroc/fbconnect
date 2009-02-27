@@ -6,6 +6,21 @@
  * User page callbacks for the fbconnect module.
  */
  
+function fbconnect_prompt_page() {
+  drupal_set_title('Facebook Connect');
+  $reg_msg  = t('Don\'t have a account? Create an account now');
+  $link_msg = t('I already have an account, I\'d like to use Facebook Connect features.');
+  
+  $step = (module_exists('fbconnect_profile')) ? 'import' : 'create';
+  
+  $reg_choice  = l($reg_msg, 'fbconnect/register/'. $step);
+  $link_choice = l($link_msg, 'user', array('query' => 'destination=fbconnect'));
+
+  $output  = theme('box', $reg_choice);
+  $output .= theme('box', $link_choice);
+  return $output;
+}
+ 
 /**
  * Menu callback.
  * Called when user perform facebook registration
@@ -135,7 +150,7 @@ function fbconnect_register_form_submit($form, &$form_state) {
 
   if ($_SESSION['fb_reg_import'] && module_exists('fbconnect_profile')) {
     // Saving import settings.
-    fbconnect_profile_insert_user_info($user, $_SESSION['fb_reg_import']);
+    fbconnect_profile_insert_user_info($user->uid, $_SESSION['fb_reg_import']);
     unset($_SESSION['fb_reg_import']);
   }
 
@@ -170,7 +185,6 @@ function fbconnect_user_identities($account) {
   
   if ($account->fbuid) {    
     $rows[] = array(t('Your account is linked with your Facebook account.'));
-    $rows[] = array(t('Your Facebook user id : @fbuid', array('@fbuid' => $account->fbuid))); 
        
     if (fbconnect_get_fbuid() && $account->fbuid != fbconnect_get_fbuid()) {
       drupal_set_message('Invalid Facebook session, you\'re not authorized to modify the parameters.');
@@ -231,11 +245,7 @@ function fbconnect_user_settings_form() {
     '#type' => 'fieldset',
     '#collapsible' => FALSE,
     '#weight' => -2,
-  );  
-  $form['visibility_hid'] = array(
-    '#type' => 'hidden',
-    '#default_value' => $user->fb_visibility,
-  );  
+  );
   $form['view']['visibility'] = array(
     '#type' => 'checkbox',
     '#title' => t('Let my Facebook friends see me on @sitename', 
@@ -275,23 +285,22 @@ function fbconnect_user_settings_form() {
  */
 function fbconnect_user_settings_form_submit($form, &$form_state) {
   $user = user_load(array('uid' => arg(1)));  
-
-  if ($form_state['values']['visibility_hid'] != $form_state['values']['visibility']) {
-    fbconnect_set_user_visibility($user, $form_state['values']['visibility']);
-  }  
-  if (!fbconnect_get_fbuid()) {
-    return;
+  $form_value_visi = $form_state['values']['visibility'];
+  
+  if ($user->fb_visibility != $form_value_visi) {
+    fbconnect_set_user_visibility($user, $form_value_visi);
   }
   
   if (variable_get('user_pictures', 0)) {
-    if ($form_state['values']['fb_avatar'] == 1) {
-      fbconnect_user_avatar_setting($user->uid, $form_state['values']['fb_avatar']);
+    $db_value = fbconnect_user_avatar_setting($user->uid);
+    $form_value = $form_state['values']['fb_avatar'];
+    
+    if ($form_value && fbconnect_get_fbuid()) {
       fbconnect_refresh_user_avatar($user->fbuid, $user->uid);
     }
-    else {
-      fbconnect_user_avatar_setting($user->uid, $form_state['values']['fb_avatar']);
-      file_delete($user->picture);
-      db_query("UPDATE {users} SET picture = '' WHERE uid = %d", $user->uid);
+    if ($form_value != $db_value) {
+      // Update avatar settings.
+      fbconnect_user_avatar_setting($user->uid, $form_value);
     }
   }
   

@@ -81,38 +81,5 @@ function fbconnect_admin_settings() {
     '#default_value' => variable_get('fbconnect_com_feed_id', FBCONNECT_COMMENT_FEED_BUNDLEID),
   );
 
-  $form['#submit'][] = 'fbconnect_admin_settings_submit';
   return system_settings_form($form);
-}
-
-/**
- *  Get the facebook application settings.
- */
-function fbconnect_get_app_settings($properties) {
-  try {
-    return facebook_client()->api_client->admin_getAppProperties((array)$properties);
-  } catch (Exception $e) {
-      watchdog('fbconnect', 'Exception thrown while calling admin_getAppProperties: %code',
-        array('%code' => $e->getMessage()), WATCHDOG_WARNING);
-  }
-}
-
-/**
- *  Check my application setup.
- */
-function fbconnect_admin_settings_submit($form, &$form_state) {
-  if (facebook_client()) {
-    $res = fbconnect_get_app_settings(array('callback_url', 'dev_mode')); 
-    if (!$res['callback_url']) {
-      $msg = t('Fbconnect, You must provide a valid callback_url! 
-      check your facebook application settings.');
-      drupal_set_message($msg, 'warning');
-    }
-    if ($res['dev_mode'] == 1) {
-      $msg  = t('Fbconnect, Your application is set on Sandbox Mode, 
-      users can not use Facebook Connect function on your site. 
-      You can deactivate it in your Facebook application settings');
-      drupal_set_message($msg, 'warning');
-    }
-  }
 }

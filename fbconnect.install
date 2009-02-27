@@ -45,3 +45,15 @@ function fbconnect_schema() {
     
   return $schema; 
 }
+
+/**
+ *
+ */
+function fbconnect_update_6001() {
+  variable_set('fbconnect_reg_feed_id', 47875658217);
+  variable_set('fbconnect_com_feed_id', 47874003217);
+  if (variable_get('fbconnect_import', 0)) {
+    $ret[] = update_sql("UPDATE {system} SET status = 1, schema_version = 6001 WHERE name = 'fbconnect_profile'");
+  }
+  return $ret;
+}
