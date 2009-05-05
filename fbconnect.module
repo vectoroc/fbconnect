@@ -269,8 +269,18 @@ function fbconnect_form_alter(&$form, $form_state, $form_id) {
     return;
   }
   
-  // Render fbconnect on login form.
-  if ($form_id == 'user_login_block' || $form_id == 'user_login') {
+  // Render fbconnect on login page.
+  if ($form_id == 'user_login') {
+    $form['fbconnect_button'] = array(
+      '#prefix' => '<div id="fbconnect">',
+      '#value' => fbconnect_render_button(),
+      '#suffix' => '</div>',
+      '#weight' => 1,
+    );
+  }
+  
+  // Render fbconnect on login block.
+  if ($form_id == 'user_login_block') {
     $items[] = array('data' => fbconnect_render_button());
     $form['fbconnect_button'] = array(
       '#value' => theme('item_list', $items),
@@ -457,7 +467,8 @@ function fbconnect_import_filter($var) {
  *   Facebook user id
  */
 function fbconnect_register($uid, $fbuid) {
-  return db_query("REPLACE {fbconnect_users} (uid, fbuid, timestamp) VALUES (%d, %d, %d) ", $uid, $fbuid, time());
+  db_query('DELETE FROM {fbconnect_users} WHERE uid = %d AND fbuid = %d', $uid, $fbuid);
+  return db_query('INSERT INTO {fbconnect_users} (uid, fbuid, timestamp) VALUES (%d, %d, %d)', $uid, $fbuid, time());
 }
 
 /**
@@ -576,7 +587,7 @@ function fbconnect_render_friends_invite_form() {
   }
   
   global $base_url;
-  $url       = check_url($base_url);
+  $url       = url('user/login', array('absolute' => TRUE));
   $sitename  = check_plain(variable_get('site_name', t('this website')));
   
   $actiontxt = t('Please select the Facebook friends you want to tell about @sitename.', array('@sitename' => $sitename));
