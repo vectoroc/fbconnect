@@ -60,10 +60,11 @@ Facebook API key: http://www.facebook.com/developers/
 	2. Download the Facebook PHP libraries from http://svn.facebook.com/svnroot/platform/clients/packages/facebook-platform.tar.gz. 
 	    Copy the facebook-platform/php folder content to the facebook-client repertory, 
 	3. Create a new application: http://www.facebook.com/developers/createapp.php (more information here: http://developers.facebook.com/get_started.php). Do not forget to define the callback URL (generally your website's domain name), 
-	4. Activate the module through your website's modules administration pages, 
-	5. Configure the module through the 'Fbconnect' section of the 'Site configuration' menu, using the information provided by Facebook (API key, Secret API key), 
-	6. Activate the 'fbconnect friend list' block from the 'build/block' menu, 
-	7. Edit the page.tpl.php file in your theme folder. Add the facebook xmlns for rendering FBML with Internet Explorer : <html xmlns="http://www.w3.org/1999/xhtml" xmlns:fb="http://www.facebook.com/2008/fbml">. 
+  4. In The FB Application configuration, under 'authentication' set your Post-Authorize Callback URL should be : http://yourdomain.com/sites/all/modules/fbconnect/xd_receiver.html (or wherever your fbconnect/xd_receiver.html file resides)
+	5. Activate the module through your website's modules administration pages, 
+	6. Configure the module through the 'Fbconnect' section of the 'Site configuration' menu, using the information provided by Facebook (API key, Secret API key), 
+	7. Activate the 'fbconnect friend list' block from the 'build/block' menu, 
+	8. Edit the page.tpl.php file in your theme folder. Add the facebook xmlns for rendering FBML with Internet Explorer : <html xmlns="http://www.w3.org/1999/xhtml" xmlns:fb="http://www.facebook.com/2008/fbml">. 
 
 
 -- KNOWN ISSUES -- 
