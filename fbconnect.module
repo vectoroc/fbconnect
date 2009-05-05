@@ -607,7 +607,9 @@ function fbconnect_render_friends_invite_form() {
                       content="'. $content .'">	
                       <fb:multi-friend-selector
                       showborder="false"
-                      actiontext="'. $actiontxt .'">
+                      actiontext="'. $actiontxt .'"
+                      max="35"
+                      bypass="cancel" />
                     </fb:request-form>
                   </fb:fbml>
                 </script>
