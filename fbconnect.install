@@ -1,5 +1,5 @@
 <?php
-// $Id$
+// $Id $
 
 /**
  * @file
@@ -15,16 +15,20 @@ function fbconnect_install() {
 function fbconnect_uninstall() { 
   drupal_uninstall_schema('fbconnect');
   // Delete our module's variable from the variables table. 
-  variable_del('fbconnect_api_key');
-  variable_del('fbconnect_secret_api_key');  
-  variable_del('fbconnect_invitef_content');
-  variable_del('fbconnect_invitef_type');  
-  variable_del('fbconnect_button_type');  
+  variable_del('fbconnect_key');
+  variable_del('fbconnect_skey');  
+  variable_del('fbconnect_invite_msg');
+  variable_del('fbconnect_invite_name');  
+  variable_del('fbconnect_button');  
+  variable_del('fbconnect_invite_dest');
+  
+  variable_del('fbconnect_base_domaine');
+  variable_del('fbconnect_connect_url');
+  variable_del('fbconnect_fast_reg');
+  
+
   variable_del('fbconnect_reg_feed_id');
   variable_del('fbconnect_com_feed_id');
-  variable_del('fbconnect_reg_feed');
-  variable_del('fbconnect_com_feed');
-  variable_del('fbconnect_invitef_redirect');
 }
 
 /** 
@@ -36,9 +40,6 @@ function fbconnect_schema() {
       'uid'            => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0), 
       'fbuid'          => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0),
       'timestamp'      => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0),
-      'import_setting' => array('type' => 'text', 'not null' => FALSE),
-      'avatar'         => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'size' => 'tiny', 'default' => 1),
-      'visibility'     => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'size' => 'tiny', 'default' => 1),
     ), 
     'primary key' => array('fbuid'), 
   );
@@ -49,11 +50,10 @@ function fbconnect_schema() {
 /**
  *
  */
-function fbconnect_update_6001() {
-  variable_set('fbconnect_reg_feed_id', 47875658217);
-  variable_set('fbconnect_com_feed_id', 47874003217);
-  if (variable_get('fbconnect_import', 0)) {
-    $ret[] = update_sql("UPDATE {system} SET status = 1, schema_version = 6001 WHERE name = 'fbconnect_profile'");
-  }
+function fbconnect_update_6002() {
+  variable_set('fbconnect_reg_feed_id', FBCONNECT_REG_FEED_BUNDLEID);
+  variable_set('fbconnect_com_feed_id', FBCONNECT_COMMENT_FEED_BUNDLEID);
+  $ret[] = update_sql("ALTER TABLE  {fbconnect_users} DROP  `import_setting` ,  DROP  `avatar` ,  DROP  `visibility`");
+  $ret[] = update_sql("UPDATE {system} SET schema_version = 6002 WHERE name = 'fbconnect'");
   return $ret;
 }
