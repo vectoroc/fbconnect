@@ -1,7 +1,0 @@
-;$Id$
-name= Fbconnect Profile
-description = Allows users to import their personal information from Facebook.
-dependencies[] = fbconnect
-package = Facebook connect
-php = 5.2
-core = 6.x
