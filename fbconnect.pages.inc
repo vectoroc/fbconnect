@@ -6,20 +6,29 @@
  * Called when user perform facebook registration
  */
 function fbconnect_prompt_page() {
+  $links = fbconnect_prompt_page_links();
+  $output = array();
+  foreach ($links as $link) {
+    array_push($output, theme('box', $link));
+  }
+
+  return join("\n", $output);   
+}
+
+function fbconnect_prompt_page_links() {
   $reg_msg  = t('Click here to create a new account with Facebook connect');
   $link_msg = t('Click here to connect your existing account with Facebook');  
   
   $reg_choice  = l($reg_msg, 'fbconnect/register/create');
   $link_choice = l($link_msg, 'user', array('query' => 'destination=fbconnect'));
-
-  return theme('box', $reg_choice).theme('box', $link_choice);   
+  return array($reg_choice, $link_choice);
 }
 
 /**
  * Menu callback.
  * Called when user perform facebook registration
  */
-function fbconnect_register_page() {
+function fbconnect_register_page($form_state = array()) {
   $site  = variable_get('site_name', t('this website'));
   $fbuid = fbconnect_get_fbuid();
   $data  = fbconnect_get_info_from_fb($fbuid, 'name, proxied_email');    
@@ -38,7 +47,7 @@ function fbconnect_register_page() {
     $form['fb_avatar'] = array(
       '#type' => 'checkbox',
       '#title' => t('Use my Facebook picture as user picture'),
-      '#description' => t('Your picture will be updated every 24 hours.'),
+      '#description' => t('Your picture will be loaded from facebook.'),
       '#default_value' => 1,
     );  
   }
@@ -84,13 +93,7 @@ function fbconnect_register_form_submit($form, &$form_state) {
    
    fbconnect_register($user->uid, $fbuid);
    
-   // Save facebook picture as avatar.
-   if ($form_state['values']['fb_avatar'] && variable_get('user_pictures', 0)) {     
-     if ($picture = fbconnect_get_fb_avatar($fbuid)) {
-       $data['picture']   = $picture;
-       $data['fb_avatar'] = 1;
-     }
-   }
+   $data['fb_avatar']  = $form_state['values']['fb_avatar'];
    $data['fb_visible'] = $form_state['values']['fb_visible'];
    $data['fbuid']      = $fbuid;
    
@@ -105,13 +108,21 @@ function fbconnect_register_form_submit($form, &$form_state) {
 function fbconnect_user_identities($user) {
   $fbuid = fbconnect_get_fbuid();
   $uid   = _is_fbconnect_user($fbuid);
-
+  
   if ($user->uid == $uid) { 
     return drupal_get_form('fbconnect_user_settings_form');
   }
+  elseif ($uid && $user->uid != $uid) {
+    return t(
+      "Actual Facebook account is already connected with another account on your site.\n"
+     ."Before connect your new account to Facebook account you should unconnect old account."
+    );
+  }
   else {
-    return t('Your account is not linked with a Facebook account or you are not authorized to edit the Facebook connect settings of this account.');
-  } 
+    return '<div> Click here to connect your Facebook account </div><div class="fbconnect-button">'
+         . fbconnect_render_button()
+         . '</div>';
+  }
 }
 
 /**
@@ -137,11 +148,24 @@ function fbconnect_user_settings_form() {
     $form['fb_avatar'] = array(
       '#type' => 'checkbox',
       '#title' => t('Use my Facebook picture as user picture'),
-      '#description' => t('Your picture will be updated every 24 hours.'),
       '#default_value' => $user->fb_avatar,
     );
   
   }
+  
+  $form['operations'] = array(
+    '#title' => t('Unconnect Facebook account'),
+    '#description' => 'Click here if you want unconnect Facebook account',
+    '#type' => 'fieldset',
+    '#collapsed' => true,
+    '#collapsible' => true,
+  );
+  
+  $form['operations']['unlink'] = array(
+    '#type' => 'submit',
+    '#value' => t('Unconnect'),
+  ); 
+  
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Save settings'),
@@ -157,12 +181,15 @@ function fbconnect_user_settings_form_submit($form, &$form_state) {
   $fbuid   = fbconnect_get_fbuid(); 
   $visible = $form_state['values']['visibility'];
   $avatar  = $form_state['values']['fb_avatar'];
-
+  $op      = $form_state['values']['op'];
+  
   $data['fb_visible'] = $form_state['values']['fb_visible'];
   $data['fb_avatar']  = $form_state['values']['fb_avatar'];
   
-  if ($data['fb_avatar'] && ($user->fbuid == $fbuid)) {
-    db_query("UPDATE {users} SET picture = '%s' WHERE uid = %d", fbconnect_get_fb_avatar($fbuid), $user->uid);    
+  if ($op == t('Unconnect')) {
+    fbconnect_unregister($fbuid);
+    $data['fb_visible'] = null;
+    $data['fb_avatar'] = null;
   }
   
   if ($data) user_save($user, $data);

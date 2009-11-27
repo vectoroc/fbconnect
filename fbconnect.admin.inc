@@ -50,6 +50,13 @@ function fbconnect_admin_settings() {
     '#description' => t('Unable this mode will bypass drupal\'s standard registration form.'),
   );
   
+  $form['fbconnect_auto_login_logout'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Auto login/logout'),
+    '#default_value' => variable_get('fbconnect_auto_login_logout', false),
+    '#description' => t('Auto login to drupal/logout from facebook. Enable this if you don\'t want to logout automatically from facebook.'),
+  );
+  
   $form['fbconnect_invite_msg'] = array(
     '#type' => 'textfield',
     '#title' => t('Invite message'),      
@@ -70,11 +77,11 @@ function fbconnect_admin_settings() {
 
   if (fbconnect_get_config()) {  
     $button = array(
-      'small_short'  => fbconnect_render_button('small', 'short'),
-      'medium_short' => fbconnect_render_button('medium', 'short'),
-      'medium_long'  => fbconnect_render_button('medium', 'long'),
-      'large_short'  => fbconnect_render_button('large', 'short'),
-      'large_long'   => fbconnect_render_button('large', 'long'),
+      'small_short'  => fbconnect_render_button(array('size' => 'small' , 'length' => 'short', 'onclick' => 'return false;')),
+      'medium_short' => fbconnect_render_button(array('size' => 'medium', 'length' => 'short', 'onclick' => 'return false;')),
+      'medium_long'  => fbconnect_render_button(array('size' => 'medium', 'length' => 'long', 'onclick' => 'return false;')),
+      'large_short'  => fbconnect_render_button(array('size' => 'large' , 'length' => 'short', 'onclick' => 'return false;')),
+      'large_long'   => fbconnect_render_button(array('size' => 'large' , 'length' => 'long', 'onclick' => 'return false;')),
     );
 
     $form['fbconnect_button'] = array(
@@ -94,6 +101,12 @@ function fbconnect_admin_settings() {
     '#title' => t('Comment feed bundle ID'),
     '#default_value' => variable_get('fbconnect_com_feed_id', FBCONNECT_COMMENT_FEED_BUNDLEID),
   );
+  
+  $form['fbconnect_debug'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Debug mode'),      
+    '#default_value' => variable_get('fbconnect_debug', false),
+  );
 
   $form = system_settings_form($form);
   $form['#submit'][] = 'fbconnect_set_appproperties';
@@ -111,8 +124,9 @@ function fbconnect_set_appproperties($form, &$form_state) {
   }
   
   $properties = array(
-    'connect_url' => $form_state['values']['fbconnect_connect_url'],
-    'base_domain' => $form_state['values']['fbconnect_base_domaine'],
+    'connect_url'   => $form_state['values']['fbconnect_connect_url'],
+    'base_domain'   => $form_state['values']['fbconnect_base_domaine'],
+    'uninstall_url' => url('fbconnect/post-remove', array('absolute' => true)),
   );
   try {
     $res = facebook_client()->api_client->admin_setAppProperties($properties);

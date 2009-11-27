@@ -38,7 +38,7 @@ function fbconnect_schema() {
   $schema['fbconnect_users'] = array( 
     'fields' => array( 
       'uid'            => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0), 
-      'fbuid'          => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0),
+      'fbuid'          => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0, 'size' => 'big'),
       'timestamp'      => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0),
     ), 
     'primary key' => array('fbuid'), 
@@ -56,4 +56,33 @@ function fbconnect_update_6002() {
   $ret[] = update_sql("ALTER TABLE  {fbconnect_users} DROP  `import_setting` ,  DROP  `avatar` ,  DROP  `visibility`");
   $ret[] = update_sql("UPDATE {system} SET schema_version = 6002 WHERE name = 'fbconnect'");
   return $ret;
+}
+
+/**
+ * Alter fbuid field to allow for 64-bit facebook ids
+ */
+function fbconnect_update_6003() {
+  $ret = array();
+  db_drop_primary_key($ret, 'fbconnect_users');
+  db_change_field($ret, 'fbconnect_users', 'fbuid', 'fbuid',
+    array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0, 'size' => 'big'),
+    array('primary key' => array('fbuid'))
+  );
+  return $ret;
+}
+
+
+/**
+ * Extend maximum email length to 320 chars
+ */
+function fbconnect_update_6004() {
+  $res = array();
+  $scheme = user_schema();
+  $scheme['users']['fields']['mail']['length'] = 320;
+  db_change_field($res, 'users', 'mail', 'mail', $scheme['users']['fields']['mail']);
+  return $res;
+}
+
+function fbconnect_schema_alter(&$schema) {
+  $schema['users']['field']['mail']['length'] = 320;
 }
