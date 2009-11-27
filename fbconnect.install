@@ -1,0 +1,59 @@
+<?php
+// $Id $
+
+/**
+ * @file
+ * Implementation of hook_install().
+ */
+function fbconnect_install() {
+  drupal_install_schema('fbconnect'); 
+}
+ 
+/** 
+ * Implementation of hook_uninstall(). 
+ */ 
+function fbconnect_uninstall() { 
+  drupal_uninstall_schema('fbconnect');
+  // Delete our module's variable from the variables table. 
+  variable_del('fbconnect_key');
+  variable_del('fbconnect_skey');  
+  variable_del('fbconnect_invite_msg');
+  variable_del('fbconnect_invite_name');  
+  variable_del('fbconnect_button');  
+  variable_del('fbconnect_invite_dest');
+  
+  variable_del('fbconnect_base_domaine');
+  variable_del('fbconnect_connect_url');
+  variable_del('fbconnect_fast_reg');
+  
+
+  variable_del('fbconnect_reg_feed_id');
+  variable_del('fbconnect_com_feed_id');
+}
+
+/** 
+ * Implementation of hook_schema(). 
+ */ 
+function fbconnect_schema() { 
+  $schema['fbconnect_users'] = array( 
+    'fields' => array( 
+      'uid'            => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0), 
+      'fbuid'          => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0),
+      'timestamp'      => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0),
+    ), 
+    'primary key' => array('fbuid'), 
+  );
+    
+  return $schema; 
+}
+
+/**
+ *
+ */
+function fbconnect_update_6002() {
+  variable_set('fbconnect_reg_feed_id', FBCONNECT_REG_FEED_BUNDLEID);
+  variable_set('fbconnect_com_feed_id', FBCONNECT_COMMENT_FEED_BUNDLEID);
+  $ret[] = update_sql("ALTER TABLE  {fbconnect_users} DROP  `import_setting` ,  DROP  `avatar` ,  DROP  `visibility`");
+  $ret[] = update_sql("UPDATE {system} SET schema_version = 6002 WHERE name = 'fbconnect'");
+  return $ret;
+}

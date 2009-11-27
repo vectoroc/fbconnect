@@ -1,0 +1,518 @@
+<?php 
+// $Id $
+
+
+define('FBCONNECT_COMMENT_FEED_BUNDLEID', 84409393217);
+define('FBCONNECT_REG_FEED_BUNDLEID', 47875658217);
+
+
+/**
+ * Implementation of hook_menu().
+ */
+function fbconnect_menu() {
+  $items['admin/settings/fbconnect'] = array(
+    'title' => 'Facebook connect', 
+    'page callback' => 'drupal_get_form', 
+    'page arguments' => array('fbconnect_admin_settings'), 
+    'access arguments' => array('administer site configuration'),
+    'file' => 'fbconnect.admin.inc',
+  );
+  
+  $items['fbconnect/register/prompt'] = array(
+    'title' => 'Facebook connect',  
+    'page callback' => 'fbconnect_prompt_page',
+    'access callback' => 'user_is_anonymous',
+    'type' => MENU_CALLBACK,
+    'file' => 'fbconnect.pages.inc',
+  );
+  
+  $items['fbconnect/register/create'] = array(
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('fbconnect_register_page'),
+    'access callback' => 'user_is_anonymous',
+    'type' => MENU_CALLBACK,
+    'file' => 'fbconnect.pages.inc',
+  );
+  
+  $items['fbconnect/invite/friends'] = array(
+    'title' => t('Invite my Facebook friends'),
+    'page callback' => 'fbconnect_render_friends_invite_form',
+    'access callback' => 'user_is_logged_in',
+    'type' => MENU_CALLBACK,
+    'file' => 'fbconnect.pages.inc',    
+  );
+
+  $items['user/%user/fbconnect'] = array(
+    'title' => 'Facebook Connect',
+    'page callback' => 'fbconnect_user_identities',
+    'page arguments' => array(1),
+    'access callback' => 'user_edit_access',
+    'access arguments' => array(1),
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'fbconnect.pages.inc',
+  );
+  
+  return $items;
+}
+
+
+/**
+ * Implementation of hook_block().
+ */
+function fbconnect_block($op = 'list', $delta = 0, $edit = array()) {
+  switch ($op) {
+    case 'list':
+      $blocks[0]['info']  = t('Fbconnect friend');
+      $blocks[0]['cache'] = BLOCK_NO_CACHE;
+    return $blocks;
+
+    case 'view':
+    /*
+      TODO revoir la visi du bloc,
+      session fb ne correspond pas au global $user.
+    */
+     $fbuid  = fbconnect_get_fbuid();
+            
+     if (user_is_logged_in() && $fbuid) {
+       $cid    = 'fbconnect:'. $fbuid;
+       $cached = cache_get($cid, 'cache_block');
+       
+       if ($cached->data) {
+        $content = $cached->data;
+       }
+       else {            
+         $friends = fbconnect_get_connected_friends($fbuid);      
+         if ($friends) {
+           foreach ($friends as $friend) {
+             $row[] = theme('username', $friend);
+           }
+           $content = theme('item_list', $row);
+           cache_set($cid, $content, 'cache_block' , time() + 3600);          
+         }
+       }
+      
+       $blocks['title']   = t('Facebook friends');
+       $blocks['content'] = l('Invite friends', 'fbconnect/invite/friends').$content;
+     }
+    return $blocks;
+  }
+}
+
+/**
+ * Get facebook friend who has_added_app.
+ */
+function fbconnect_get_connected_friends($fbuid) {
+  if (facebook_client()) {
+    $query = 'SELECT uid, has_added_app FROM user WHERE uid IN '.
+      '(SELECT uid2 FROM friend WHERE uid1 = '. $fbuid .')';
+    try {
+    $rows = facebook_client()->api_client->fql_query($query);
+    }
+    catch (Exception $e) {
+      watchdog('fbconnect', 'Exception thrown while using fbconnect_get_connected_friends: @code', array('@code' => $e->getMessage()), WATCHDOG_WARNING);
+    }
+
+    if ($rows) {
+      foreach ($rows as $row) {
+        if ($row['has_added_app']) {
+          $fbid[] = $row['uid'];
+        }
+      }
+      
+      if ($fbid) {    
+        $res = db_query('SELECT uid FROM {fbconnect_users} WHERE fbuid IN ('. implode($fbid, ',') .')');
+        while ($tab = db_fetch_array($res)) {
+          $user = user_load($tab['uid']);
+          if ($user->fb_visible) {
+            $friends[] = $user;
+          }   
+        }    
+       
+       return $friends;
+      }
+    }
+  }
+}
+
+/**
+ *  Redirects the user to the account linking page.
+ */
+function fbconnect_redirect_submit($form, &$form_state) {
+  $form_state['redirect'] = 'user/'. $GLOBALS['user']->uid .'/fbconnect';
+  drupal_get_messages('status');
+  $fbuid = fbconnect_get_fbuid();
+  if ($fbuid) {
+    global $user;
+    $data['fbuid'] = $fbuid;
+    $user = user_save($user, $data);
+    
+    if (fbconnect_register($user->uid, $fbuid)) {
+      drupal_set_message('Your Fabook connect link is now activate');
+    }
+    else {
+      drupal_set_message('Error linking your account.');
+      watchdog('fbconnect', 'Error linking account for @fbuid, code : @uid', array('@fbuid' => $fbuid, '@uid' => $user->uid));
+    }
+  }
+}
+
+/**
+ * Impletementation of hook_form_alter.
+ */
+function fbconnect_form_alter(&$form, $form_state, $form_id) {  
+  if ($form_id == 'user_login' && $_GET['destination'] == 'fbconnect') {
+    unset($_REQUEST['destination']);
+    
+    drupal_set_message(t('Please log in, in order to link your account with Facebook Connect'));
+    $form['#submit'][] = 'fbconnect_redirect_submit';
+  }
+  
+  // Render fbconnect on login block.
+  if ($form_id == 'user_login_block' || $form_id == 'user_login') {
+    if ($_GET['destination'] != 'fbconnect') {
+      list($size, $length) = explode('_', variable_get('fbconnect_button', NULL));    
+      $items[] = array('data' => t('Sign in using Facebook ').fbconnect_render_button($size, $length), 'class' => 'fbconnect-button');
+      $form['fbconnect_button'] = array(
+        '#value' => theme('item_list', $items),
+        '#weight' => 1,
+      );
+    }
+  }
+  
+  // Warning msg on user edit.
+  if ($form_id == 'user_profile_form' && variable_get('user_pictures', 0)) {
+    $user = user_load(arg(1));
+    if ($user->fb_avatar) {
+      $form['picture']['fb_avatar'] = array(
+        '#value' => t('You are currently using your Facebook picture, if you delete or load a new picture, your facebook picture will no longer be updated.'),
+        '#weight' => 0,
+      );
+      $form['#submit'][] = 'fbconnect_user_edit_submit';          
+    }
+  }
+  
+  // Facebook feed checkbox on comment form.
+  if ($form_id == 'comment_form' && fbconnect_get_fbuid()) {
+    $favicon = '<img src="http://wiki.developers.facebook.com/images/1/17/Connect_light_small_short.gif" />';
+    $form['fbconnect_feed'] = array(
+      '#type' => 'checkbox',
+      '#title' => $favicon. t(' Publish To Facebook'),
+      '#default_value' => 1,
+      '#weight' => 0,
+    );
+    $form['#submit'][] = 'fbconnect_comment_feed_submit';
+  }
+}
+
+/**
+ * Stock informations used by the facebook feed javascript function.
+ */
+function fbconnect_comment_feed_submit($form, &$form_state) {
+  if ($form_state['values']['fbconnect_feed']) {
+   $node = node_load($form_state['values']['nid']);
+   
+   $_SESSION['fbconnect_feed'] = array(
+      'type' => 'comment',
+      'comment' => drupal_to_js($form_state['values']['comment']),
+      'title' => drupal_to_js($node->title),
+      'nodeurl' => drupal_to_js(url('node/'.$node->nid, array('absolute' => TRUE))),
+   );
+  }
+}
+
+/**
+ * If the user deletes the photo or load a new picture, 
+ * we deactivate the automatic import of the Facebook avatar.
+ */
+function fbconnect_user_edit_submit($form, &$form_state) {
+  if ($form_state['values']['picture_delete'] || $form_state['values']['picture']) {
+    $user = user_load(arg(1));
+    $data['fb_avatar'] = 0;
+    user_save($user, $data);
+    drupal_set_message('Auto import of your facebook picture has been disabled');
+  }
+}
+
+/**
+ * Render a custom button to log in via Facebook.
+ */
+function fbconnect_render_button($size = 'medium', $length = 'short') {
+  return '<fb:login-button onlogin="facebook_onlogin_ready();" size="'. $size .'" background="dark" length="'.$length.'">
+          </fb:login-button>';
+}
+
+/**
+ * Get the facebook client object for easy access.
+ * @return object
+ *   Facebook Api object
+ */
+function facebook_client() {
+  static $fb = NULL;
+  if (!$fb instanceof Facebook) {
+    if ($conf = fbconnect_get_config()) {
+      $lib_path = drupal_get_path('module', 'fbconnect') .'/facebook-client/';
+      $lib_files = array(
+        'facebook.php',
+        'facebook_desktop.php',
+        'jsonwrapper/jsonwrapper_inner.php',    
+        'jsonwrapper/jsonwrapper.php',
+        'jsonwrapper/JSON/JSON.php'
+      );
+      
+      foreach ($lib_files as $file) {
+        $file = $lib_path.$file;
+        if (!file_exists($file)) {
+          drupal_set_message(t('Fbconnect : Facebook PHP library file @file not found see README.TXT', array('@file' => $file)), 'status', FALSE);
+          return FALSE;
+        }
+      }
+      // Include facebook.php
+      include_once($lib_path.$lib_files[0]);
+      if (class_exists('Facebook')) {
+        $fb = new Facebook($conf['api_key'], $conf['secret_api_key']);
+      }
+    }
+  }
+  return $fb;
+}
+
+/**
+ * Get fbconnect config parameter
+ *
+ * @return array
+ */
+function fbconnect_get_config() {
+  $config['api_key'] = variable_get('fbconnect_key', NULL);
+  $config['secret_api_key'] = variable_get('fbconnect_skey', NULL);
+  
+  if ($config['api_key'] && $config['secret_api_key']) {
+    return $config;
+  }
+}
+
+/**
+ * Check facebook session.
+ *
+ * @return integer
+ *   facebook user id
+ */
+function fbconnect_get_fbuid() {
+  if (facebook_client()) {
+    return facebook_client()->get_loggedin_user();
+  }
+}
+
+/**
+ * Implementation of hook_init().
+ */
+function fbconnect_init() {
+  fbconnect_render_js();
+  // During registration the cache is disabled
+  if (arg(0) == 'fbconnect' && arg(1) == 'register') {
+    $GLOBALS['conf']['cache'] = FALSE;
+  }
+}
+
+/**
+ * This function manage all javascripts used by this module.
+ */
+function fbconnect_render_js() {
+  global $base_url;
+  $module_path = drupal_get_path('module', 'fbconnect');
+  $escaped_urL = drupal_to_js($base_url);
+   
+  drupal_add_js('function facebook_onlogin_ready() {$("#fbconnect-autoconnect-form").submit();}', 'inline', 'footer');
+
+  if ($param = fbconnect_get_config()) {
+    $xd_path = drupal_to_js(base_path().$module_path .'/xd_receiver.html');
+    drupal_add_js('FB.Bootstrap.requireFeatures(["Connect","XFBML"], function() {
+      FB.Facebook.init("'. $param['api_key'] .'", '. $xd_path .'); 
+    });','inline', 'footer');
+  }
+
+
+  if (fbconnect_get_fbuid() && $_GET['fblogout']) {
+    drupal_add_js('$(document).ready(function() {
+      FB.Bootstrap.requireFeatures(["Connect"], function() {
+        FB.Connect.logoutAndRedirect('. $escaped_urL .');
+      });
+    });', 'inline', 'footer');
+  }
+  
+  if ($_SESSION['fbconnect_feed']) {
+    $site = drupal_to_js(variable_get('site_name', $base_url));
+    $feed = $_SESSION['fbconnect_feed'];
+    
+    switch ($feed['type']) {
+      case 'comment' :
+        $bundle_id = variable_get('fbconnect_com_feed_id', FBCONNECT_COMMENT_FEED_BUNDLEID);
+        $feed_js   = 'var template_data = {"sitename":'. $site .',
+                        "siteurl" : '. $escaped_urL .',
+                        "title" : '. $feed['title'] .',
+                        "article_url" : '. $feed['nodeurl'] .'
+                      };';
+        $feed_js  .= 'var body = '. $feed['comment'] .';';
+      break;
+      
+      case 'register' :
+        $bundle_id = variable_get('fbconnect_reg_feed_id', FBCONNECT_REG_FEED_BUNDLEID);          
+        $feed_js   = 'var template_data = {"sitename":'. $site .', "siteurl" : '. $escaped_urL .'};'; 
+        $feed_js  .= 'var body = null;'; 
+        /*
+          TODO ajouter un champ body utile
+        */     
+      break;
+    }
+    
+    drupal_add_js('$(document).ready(function() {
+      FB.Bootstrap.requireFeatures(["Connect"], function() { ' .$feed_js. '
+          FB.Connect.showFeedDialog('. $bundle_id .', template_data, null, body);
+      });
+    });', 'inline', 'footer');
+    
+    unset($_SESSION['fbconnect_feed']);
+  }
+}
+
+/**
+ * Implementation of hook_footer().
+ */
+function fbconnect_footer() {
+  $url = 'http://static.ak.connect.facebook.com/js/api_lib/v0.4/FeatureLoader.js.php';
+  $footer = '<script type="text/javascript" src="'. $url .'"></script>';
+  // Display the autoconnect form.
+  $footer .= drupal_get_form('fbconnect_autoconnect_form');
+  return $footer;
+}
+
+/**
+ * This form is submitted by javascript when facebook session is detected.
+ */
+function fbconnect_autoconnect_form() {
+  $form['#validate'] = array('fbconnect_autoconnect_form_validate');
+  $form['fbconnect'] = array('#type' => 'hidden');
+  return $form;
+}
+
+function fbconnect_autoconnect_form_validate($form, &$form_state) {
+  if (!user_is_logged_in()) {   
+    $fbuid = fbconnect_get_fbuid();
+    if ($fbuid) {  
+      $uid = _is_fbconnect_user($fbuid);
+    
+      if (!$uid) {
+        drupal_goto('fbconnect/register/prompt');
+      }
+      elseif ($uid) {
+       $user = user_load($uid);
+       user_external_login($user);
+       drupal_goto($_GET['q']);
+      }
+    }
+  }  
+}
+
+/**
+ * Implementation of hook_user().
+ */
+function fbconnect_user($op, &$edit, &$user, $category = NULL) {
+  switch ($op) {
+    case 'delete':
+      db_query('DELETE FROM {fbconnect_users} WHERE uid = %d', $user->uid);
+    break;
+    case 'logout':
+       if (fbconnect_get_fbuid()) {
+         drupal_goto(NULL, 'fblogout=1');
+       }
+     break;
+  }
+}
+
+/**
+ * Check if user already registered in the fbconnect_users table
+ *
+ * @param Int $fbuid
+ *   Facebook user id
+ * @return array
+ */
+function _is_fbconnect_user($fbuid) {
+  return db_result(db_query('SELECT u.uid FROM {users} u INNER JOIN {fbconnect_users} f ON u.uid = f.uid WHERE fbuid = %d AND u.status = 1', $fbuid));
+}
+
+/**
+ * Store user into table fbconnect
+ *
+ * @param Int $uid
+ *   Drupal user id
+ * @param Int $fbuid
+ *   Facebook user id
+ */
+function fbconnect_register($uid, $fbuid) {
+  db_query('DELETE FROM {fbconnect_users} WHERE uid = %d', $uid);
+  return db_query('INSERT INTO {fbconnect_users} (uid, fbuid, timestamp) VALUES (%d, %d, %d)', $uid, $fbuid, time());
+}
+
+/**
+ * Get user picture from Facebook.
+ * @param Int $fbuid
+ */
+function fbconnect_get_fb_avatar($fbuid) {
+  $size = 'pic_with_logo';
+  // Get facebook user picture's url.
+  $pic_url = fbconnect_get_info_from_fb($fbuid, $size);
+  if ($pic_url) {
+    $result = drupal_http_request($pic_url[$size]);
+  
+    if ($result->code != 200) {
+      watchdog('fbconnect', 'Failed importing facebook user avatar for @fbuid, code : @code', 
+      array('@fbuid' => $fbuid, '@code' => $result->code));
+      return FALSE;
+    }  
+    
+    $filename = 'picture-fb_'. $fbuid .'.jpg';
+    $dest = file_directory_path();  
+    if (variable_get('user_picture_path', '')) {
+      $dest .= '/'. variable_get('user_picture_path', '');
+    }
+    $dest .= '/'. $filename;
+    
+    $file = file_save_data($result->data, $dest, FILE_EXISTS_REPLACE);
+    // Resizing
+    list($width, $height) = sscanf(variable_get('user_picture_dimensions', '85x85'), '%dx%d');
+    image_scale_and_crop($file, $dest, $width, $height);
+
+    return $file;
+  }
+}
+
+/**
+ * Impletementation of hook_cron
+ */
+function fbconnect_cron() {
+  if (variable_get('user_pictures', 0)) {
+    $expire = time() - (24 * 3600);  
+    $result = db_query('SELECT fbuid FROM {fbconnect_users} WHERE timestamp < %d', $expire);
+    
+    while ($tab = db_fetch_array($result)) {
+      fbconnect_get_fb_avatar($tab['fbuid']);
+      db_query('UPDATE {fbconnect_users} SET timestamp = %d', time());
+    }
+  }
+}
+
+
+/**
+ * Query information from facebook user table.
+ *
+ * @return array
+ */
+function fbconnect_get_info_from_fb($fbuid, $fields) {
+  if (facebook_client() && $fields) {
+    try {
+      $result = facebook_client()->api_client->fql_query("SELECT $fields FROM user WHERE uid = $fbuid");
+      return $result[0];
+    } catch (Exception $e) {
+      watchdog('fbconnect', 'Exception thrown while using fbconnect_get_info_from_fb : @code', array('@code' => $e->getMessage()), WATCHDOG_WARNING);
+    }
+  }
+}

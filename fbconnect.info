@@ -1,0 +1,15 @@
+; $Id: fbconnect.info,v 1.5 2009/06/03 13:51:06 lanets Exp $
+name= Fbconnect
+description = Allows users to connect with Facebook account
+core = 6.x
+package = "Facebook connect"
+php = 5.2
+core = "6.x"
+
+
+; Information added by drupal.org packaging script on 2009-06-10
+version = "6.x-1.0-beta8"
+core = "6.x"
+project = "fbconnect"
+datestamp = "1244663746"
+
