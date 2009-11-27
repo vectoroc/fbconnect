@@ -191,10 +191,12 @@ function fbconnect_form_alter(&$form, $form_state, $form_id) {
   if ($form_id == 'user_login_block' || $form_id == 'user_login') {
     if ($_GET['destination'] != 'fbconnect') {
       
-      $items[] = array('data' => t('Sign in using Facebook ').fbconnect_render_button(), 'class' => 'fbconnect-button');
       $form['fbconnect_button'] = array(
-        '#value' => theme('item_list', $items),
+        '#type' => 'item',
+        '#description' => t('Sign in using Facebook'),
+        '#value' => fbconnect_render_button(),
         '#weight' => 1,
+        '#id' => 'fbconnect_button',
       );
     }
   }
