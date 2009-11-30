@@ -1,5 +1,5 @@
 Drupal.behaviors.fbconnect = function(context) {
-	if (Drupal.settings.fbconnect && Drupal.settings.fbconnect.api_key) {
+	if (window.FB && Drupal.settings.fbconnect && Drupal.settings.fbconnect.api_key) {
 		FB.Bootstrap.requireFeatures(["Connect","XFBML"], function() {
 			FB.Facebook.init(
 				Drupal.settings.fbconnect.api_key, 

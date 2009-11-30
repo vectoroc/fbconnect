@@ -275,7 +275,7 @@ function fbconnect_render_button($attr = array()) {
 
 /**
  * Get the facebook client object for easy access.
- * @return object
+ * @return Facebook
  *   Facebook Api object
  */
 function facebook_client() {
@@ -320,6 +320,12 @@ function fbconnect_get_config() {
 	  $config['api_key'] = variable_get('fbconnect_key', NULL);
 	  $config['secret_api_key'] = variable_get('fbconnect_skey', NULL);
 	  $config['xd_path'] = 'fbconnect/receiver';
+	  
+	  $url = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on')
+         ? "https://ssl.connect.facebook.com/js/api_lib/v0.4/FeatureLoader.js.php"
+         : "http://static.ak.connect.facebook.com/js/api_lib/v0.4/FeatureLoader.js.php" ;
+         
+    $config['featureLoader_url'] = $url; 
 	  $config['debug'] = variable_get('fbconnect_debug', false);
 	  $config['auto_login_logout'] = variable_get('fbconnect_auto_login_logout', false);
 	
@@ -370,15 +376,6 @@ function fbconnect_render_js() {
     drupal_add_js($module_path. '/fbconnect.js');
   }
 
-
-  //  if ($config['auto_login_logout'] && fbconnect_get_fbuid() && $_GET['fblogout']) {
-  //    drupal_add_js('$(document).ready(function() {
-  //      FB.Bootstrap.requireFeatures(["Connect"], function() {
-  //        FB.Connect.logoutAndRedirect('. $escaped_urL .');
-  //      });
-  //    });', 'inline', 'footer');
-  //  }
-
   if ($_SESSION['fbconnect_feed']) {
     $site = drupal_to_js(variable_get('site_name', $base_url));
     $feed = $_SESSION['fbconnect_feed'];
@@ -404,6 +401,7 @@ function fbconnect_render_js() {
         break;
     }
 
+    // TODO check working this
     if ($config['auto_login_logout']) {
       drupal_add_js('$(document).ready(function() {
 	      FB.Bootstrap.requireFeatures(["Connect"], function() { ' .$feed_js. '
@@ -420,14 +418,12 @@ function fbconnect_render_js() {
  * Implementation of hook_footer().
  */
 function fbconnect_footer() {
-  $url = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on')
-  ? "https://ssl.connect.facebook.com/js/api_lib/v0.4/FeatureLoader.js.php"
-  : "http://static.ak.connect.facebook.com/js/api_lib/v0.4/FeatureLoader.js.php" ;
-
-  $footer = '<script type="text/javascript" src="'. $url .'"></script>';
-  // Display the autoconnect form.
-  $footer .= drupal_get_form('fbconnect_autoconnect_form');
-  return $footer;
+  if ($config = fbconnect_get_config()) {
+    $footer = '<script type="text/javascript" src="'. $config['featureLoader_url'] .'"></script>';
+    // Display the autoconnect form.
+    $footer .= drupal_get_form('fbconnect_autoconnect_form');
+    return $footer;
+  }
 }
 
 /**
@@ -562,7 +558,18 @@ function fbconnect_register($uid, $fbuid) {
  * @return A
  */
 function fbconnect_unregister($fbuid) {
-  return db_query('DELETE FROM {fbconnect_users} WHERE fbuid = %d', $fbuid);
+  if ($fbuid) {
+    $fb = facebook_client();    
+    $fb->api_client->auth_revokeAuthorization($fbuid);
+    db_query('DELETE FROM {fbconnect_users} WHERE fbuid = %d', $fbuid);
+    watchdog('fbconnect', "Users authorization is revoked", compact('fbuid'));
+    return true;
+  }
+  
+  $msg = __FUNCTION__.' is called with wrong $fbuid argument';
+  watchdog('fbconnect', $msg, compact('fbuid'), WATCHDOG_WARNING);
+  
+  return false; 
 }
 
 /**
@@ -638,6 +645,7 @@ PIC;
  * from the linked drupal one.
  */
 function fbconnect_post_remove_callback() {
+  watchdog('fbconnect', "User with fbuid $fbuid has revoked authorization");
   if ($fb = facebook_client()) {
     $fbuid = $fb->get_loggedin_user();
     if ($fbuid && $fb->fb_params['uninstall'] == 1) {
