@@ -16,8 +16,11 @@ function fbconnect_prompt_page() {
 }
 
 function fbconnect_prompt_page_links() {
-  $reg_msg  = t('Click here to create a new account with Facebook connect');
-  $link_msg = t('Click here to connect your existing account with Facebook');  
+  $params = array(
+    '!site_name' => variable_get('site_name', NULL),
+  );
+  $reg_msg  = t('Click here to create a new !site_name account with Facebook', $params);
+  $link_msg = t('Click here to connect your existing !site_name account with Facebook', $params);  
   
   $reg_choice  = l($reg_msg, 'fbconnect/register/create');
   $link_choice = l($link_msg, 'user', array('query' => 'destination=fbconnect'));
