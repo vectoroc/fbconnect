@@ -534,7 +534,7 @@ function fbconnect_user($op, &$edit, &$user, $category = NULL) {
  * @return array
  */
 function _is_fbconnect_user($fbuid) {
-  return db_result(db_query('SELECT u.uid FROM {users} u INNER JOIN {fbconnect_users} f ON u.uid = f.uid WHERE fbuid = %d AND u.status = 1', $fbuid));
+  return db_result(db_query('SELECT u.uid FROM {users} u INNER JOIN {fbconnect_users} f ON u.uid = f.uid WHERE fbuid = %s AND u.status = 1', $fbuid));
 }
 
 /**
@@ -547,7 +547,7 @@ function _is_fbconnect_user($fbuid) {
  */
 function fbconnect_register($uid, $fbuid) {
   db_query('DELETE FROM {fbconnect_users} WHERE uid = %d', $uid);
-  return db_query('INSERT INTO {fbconnect_users} (uid, fbuid, timestamp) VALUES (%d, %d, %d)', $uid, $fbuid, time());
+  return db_query('INSERT INTO {fbconnect_users} (uid, fbuid, timestamp) VALUES (%d, %s, %d)', $uid, $fbuid, time());
 }
 
 /**
