@@ -261,11 +261,12 @@ function fbconnect_user_edit_submit($form, &$form_state) {
 function fbconnect_render_button($attr = array()) {
   list($size, $length) = explode('_', variable_get('fbconnect_button', NULL));
   $defaulr_attr = array(
-    'size' => $size, 
-    'text' => 'Connect',
-    'length' => $length,
-    'onlogin' => 'facebook_onlogin_ready();',
+    'size'       => $size, 
+    'length'     => $length,
+    'onlogin'    => 'facebook_onlogin_ready();',
     'background' => 'dark',
+    'text'       => 'Connect',
+    'v'          => 2
   ); 
   
   $attr = array_merge($defaulr_attr, $attr);
