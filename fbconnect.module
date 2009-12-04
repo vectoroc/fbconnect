@@ -538,7 +538,14 @@ function fbconnect_user($op, &$edit, &$user, $category = NULL) {
  * @return array
  */
 function _is_fbconnect_user($fbuid) {
-  return db_result(db_query('SELECT u.uid FROM {users} u INNER JOIN {fbconnect_users} f ON u.uid = f.uid WHERE fbuid = %s AND u.status = 1', $fbuid));
+  if ($fbuid) {
+    $query = <<<SQL
+      SELECT u.uid FROM {users} u 
+      INNER JOIN {fbconnect_users} f ON u.uid = f.uid 
+      WHERE fbuid = %s AND u.status = 1
+SQL;
+    return db_result(db_query($query, $fbuid));
+  }
 }
 
 /**

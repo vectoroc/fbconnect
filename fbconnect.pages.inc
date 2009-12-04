@@ -117,8 +117,10 @@ function fbconnect_user_identities($user) {
   }
   elseif ($uid && $user->uid != $uid) {
     return t(
-      "Actual Facebook account is already connected with another account on your site.\n"
-     ."Before connect your new account to Facebook account you should unconnect old account."
+      "Your current Facebook session is associated to another account on our site.\n"
+     ."You can logout of facebook and attempt to associate another Facebook account to your"
+     ."!site_name account, or you need to disconnect the current association."
+     ,array('!site_name' => variable_get('site_name', 'site'))  
     );
   }
   else {
