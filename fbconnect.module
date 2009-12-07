@@ -107,7 +107,7 @@ function fbconnect_block($op = 'list', $delta = 0, $edit = array()) {
         }
 
         $blocks['title']   = t('Facebook friends');
-        $blocks['content'] = l('Invite friends', 'fbconnect/invite/friends').$content;
+        $blocks['content'] = l(t('Invite friends'), 'fbconnect/invite/friends').$content;
       }
       return $blocks;
   }
@@ -162,10 +162,10 @@ function fbconnect_redirect_submit($form, &$form_state) {
     $user = user_save($user, $data);
 
     if (fbconnect_register($user->uid, $fbuid)) {
-      drupal_set_message('Your Facebook connect link is now activate');
+      drupal_set_message(t('Your Facebook connect link is now activate'));
     }
     else {
-      drupal_set_message('Error linking your account.');
+      drupal_set_message(t('Error linking your account.'));
       watchdog('fbconnect', 'Error linking account for @fbuid, code : @uid', array('@fbuid' => $fbuid, '@uid' => $user->uid));
     }
   }
@@ -234,9 +234,9 @@ function fbconnect_comment_feed_submit($form, &$form_state) {
     $node = node_load($form_state['values']['nid']);
      
     $_SESSION['fbconnect_feed'] = array(
-      'type' => 'comment',
+      'type'    => 'comment',
       'comment' => drupal_to_js($form_state['values']['comment']),
-      'title' => drupal_to_js($node->title),
+      'title'   => drupal_to_js($node->title),
       'nodeurl' => drupal_to_js(url('node/'.$node->nid, array('absolute' => TRUE))),
     );
   }
@@ -251,7 +251,7 @@ function fbconnect_user_edit_submit($form, &$form_state) {
     $user = user_load(arg(1));
     $data['fb_avatar'] = 0;
     user_save($user, $data);
-    drupal_set_message('Auto import of your facebook picture has been disabled');
+    drupal_set_message(t('Auto import of your facebook picture has been disabled'));
   }
 }
 
@@ -507,16 +507,6 @@ function fbconnect_exit($destination = null) {
  */
 function fbconnect_user($op, &$edit, &$user, $category = NULL) {
   switch ($op) {
-//    case 'load':
-//      $info = db_fetch_object(db_query("SELECT * FROM {fbconnect_users} WHERE uid = %d", $user->uid));
-//      if ($info) {
-//        $user->fbuid         = $info->fbuid;
-//        $user->proxied_email = $info->proxied_email;
-//        if (!$user->mail) {
-//          $user->mail = $user->proxied_email;
-//        }
-//      }
-//      break;
     case 'delete':
       db_query('DELETE FROM {fbconnect_users} WHERE uid = %d', $user->uid);
       break;
@@ -557,7 +547,9 @@ SQL;
  *   Facebook user id
  */
 function fbconnect_register($uid, $fbuid) {
-  db_query('DELETE FROM {fbconnect_users} WHERE uid = %d', $uid);
+  if (_is_fbconnect_user($fbuid)) return false;
+    
+         db_query('DELETE FROM {fbconnect_users} WHERE uid = %d', $uid);
   return db_query('INSERT INTO {fbconnect_users} (uid, fbuid, timestamp) VALUES (%d, %s, %d)', $uid, $fbuid, time());
 }
 
@@ -572,7 +564,7 @@ function fbconnect_unregister($fbuid) {
   if ($fbuid) {
     $fb = facebook_client();    
     $fb->api_client->auth_revokeAuthorization($fbuid);
-    db_query('DELETE FROM {fbconnect_users} WHERE fbuid = %d', $fbuid);
+    db_query('DELETE FROM {fbconnect_users} WHERE fbuid = %s', $fbuid);
     watchdog('fbconnect', "Users authorization is revoked", compact('fbuid'));
     return true;
   }
@@ -654,6 +646,8 @@ PIC;
 /**
  * The post-remove callback for facebook. Unlinks facebook account
  * from the linked drupal one.
+ * 
+ * @todo Test it
  */
 function fbconnect_post_remove_callback() {
   watchdog('fbconnect', "User with fbuid $fbuid has revoked authorization");

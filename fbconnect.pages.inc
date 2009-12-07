@@ -80,29 +80,34 @@ function fbconnect_register_page($form_state = array()) {
 }
 
 function fbconnect_register_form_submit($form, &$form_state) {
-   $fbuid = fbconnect_get_fbuid();
+  $fbuid = fbconnect_get_fbuid();
+  if (_is_fbconnect_user($fbuid)) {
+    $msg = t("Retrying registration. Your Facebook account already assigned to one account on our site");
+    drupal_set_message($msg, 'error');
+    watchdog('fbconnect', 'Error creating account for @fbuid', array('@fbuid' => $fbuid), WATCHDOG_ALERT);
+    drupal_goto();
+  }
    
-   if (variable_get('fbconnect_fast_reg', NULL)) {
-     $user = user_save(NULL, $form_state['values']);
-   }
-   else {
-     $user = $form_state['user'];    
-   }
-   
-   if (!$user) {
+  if (variable_get('fbconnect_fast_reg', NULL)) {
+    $user = user_save(NULL, $form_state['values']);
+  }
+  else {
+    $user = $form_state['user'];    
+  }
+  
+  if (!$user) {
     drupal_set_message(t("Error saving user account."), 'error');
     drupal_goto();
-   }
-   
-   fbconnect_register($user->uid, $fbuid);
-   
-   $data['fb_avatar']  = $form_state['values']['fb_avatar'];
-   $data['fb_visible'] = $form_state['values']['fb_visible'];
-   $data['fbuid']      = $fbuid;
-   
-   user_save($user, $data);   
-   user_external_login($user);
-   $_SESSION['fbconnect_feed']['type'] = 'register';
+  }
+  
+  fbconnect_register($user->uid, $fbuid);  
+  $data['fb_avatar']  = $form_state['values']['fb_avatar'];
+  $data['fb_visible'] = $form_state['values']['fb_visible'];
+  $data['fbuid']      = $fbuid;
+  
+  user_save($user, $data);   
+  user_external_login($user);
+  $_SESSION['fbconnect_feed']['type'] = 'register';
 }
 
 /**
@@ -124,7 +129,9 @@ function fbconnect_user_identities($user) {
     );
   }
   else {
-    return '<div> Click here to connect your Facebook account </div><div class="fbconnect-button">'
+    return '<div>'
+         . t('Click here to connect your Facebook account') 
+         . '</div><div class="fbconnect-button">'
          . fbconnect_render_button()
          . '</div>';
   }
@@ -160,7 +167,7 @@ function fbconnect_user_settings_form() {
   
   $form['operations'] = array(
     '#title' => t('Unconnect Facebook account'),
-    '#description' => 'Click here if you want unconnect Facebook account',
+    '#description' => t('Click here if you want unconnect Facebook account'),
     '#type' => 'fieldset',
     '#collapsed' => true,
     '#collapsible' => true,
@@ -198,7 +205,7 @@ function fbconnect_user_settings_form_submit($form, &$form_state) {
   }
   
   if ($data) user_save($user, $data);
-  drupal_set_message('Your configuration options have been saved.');    
+  drupal_set_message(t('Your configuration options have been saved.'));    
 }
 
 /**
