@@ -169,17 +169,23 @@ function fbconnect_user_settings_form() {
   
   }
   
-  $form['operations'] = array(
-    '#title' => t('Unconnect Facebook account'),
-    '#description' => t('Click here if you want unconnect Facebook account'),
+  $form['fbconnect'] = array(
+    '#title' => t('Facebook account'),
     '#type' => 'fieldset',
     '#collapsed' => true,
     '#collapsible' => true,
   );
   
-  $form['operations']['unlink'] = array(
+  $form['fbconnect']['profile'] = array(
+    '#type' =>  'item',
+    '#title' => t('Linked to this Facebook account'),
+    '#value' => '<fb:name uid="loggedinuser" useyou="false" linked="true"></fb:name>',
+  );
+  
+  $form['fbconnect']['unlink'] = array(
     '#type' => 'submit',
-    '#value' => t('Unconnect'),
+    '#description' => t('Click here to unlink this Facebook account'),
+    '#value' => t('Unlink'),
   ); 
   
   $form['submit'] = array(

@@ -21,10 +21,8 @@ Drupal.fbconnect.initLogoutLinks = function(context) {
 	var links = $('a[href=/logout]', context).not('.logout_link_inited');
 	links.addClass('logout_link_inited');
 	links.click(function() {
-		var t_args = {
-			'!site_name' : Drupal.settings.fbconnect.invite_name
-		};
-		
+		if (!FB.Connect.get_loggedInUser()) return;
+		var t_args = {'!site_name' : Drupal.settings.fbconnect.invite_name};
 		var buttons = [
 		    { 
 		    	'label': Drupal.t('Facebook and !site_name', t_args), 
