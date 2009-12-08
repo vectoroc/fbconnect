@@ -18,7 +18,6 @@ Drupal.behaviors.fbconnect = function(context) {
 Drupal.fbconnect = {};
 Drupal.fbconnect.initLogoutLinks = function(context) {
 	if (Drupal.settings.fbconnect.loginout_mode != 'ask') return;
-	if (!FB.Connect.get_loggedInUser()) return;
 	var links = $('a[href=/logout]', context).not('.logout_link_inited');
 	links.addClass('logout_link_inited');
 	links.click(function() {
