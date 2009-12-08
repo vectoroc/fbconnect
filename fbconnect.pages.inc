@@ -208,14 +208,14 @@ function fbconnect_user_settings_form_submit($form, &$form_state) {
   $data['fb_visible'] = $form_state['values']['fb_visible'];
   $data['fb_avatar']  = $form_state['values']['fb_avatar'];
   
-  if ($op == t('Unconnect')) {
+  if ($op == $form['fbconnect']['unlink']['#value']) {
     fbconnect_unregister($fbuid);
     $data['fb_visible'] = null;
     $data['fb_avatar'] = null;
   }
   
   if ($data) user_save($user, $data);
-  drupal_set_message(t('Your configuration options have been saved.'));    
+  drupal_set_message(t('Your configuration options have been saved.'));
 }
 
 /**
