@@ -50,11 +50,16 @@ function fbconnect_admin_settings() {
     '#description' => t('Unable this mode will bypass drupal\'s standard registration form.'),
   );
   
-  $form['fbconnect_auto_login_logout'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Auto login/logout'),
-    '#default_value' => variable_get('fbconnect_auto_login_logout', false),
-    '#description' => t('Auto login to drupal/logout from facebook. Enable this if you don\'t want to logout automatically from facebook.'),
+  $form['fbconnect_loginout_mode'] = array(
+    '#type' => 'select',
+    '#title' => t('Login/logout mode'),
+    '#options' => array(
+      'manual' => t('Manual'),
+      'ask'    => t('Ask user to logout from FB'),
+      'auto'   => t('Auto login/logout'),
+    ),
+    '#default_value' => variable_get('fbconnect_loginout_mode', false),
+    '#description' => t('Login to drupal/logout from facebook. Enable this if you don\'t want to logout automatically from facebook.'),
   );
   
   $form['fbconnect_invite_msg'] = array(

@@ -331,7 +331,7 @@ function fbconnect_get_config() {
          
     $config['featureLoader_url'] = $url; 
 	  $config['debug'] = variable_get('fbconnect_debug', false);
-	  $config['auto_login_logout'] = variable_get('fbconnect_auto_login_logout', false);
+	  $config['loginout_mode'] = variable_get('fbconnect_loginout_mode', false);
 	
 	  // allow third party modules to change settings
 	  drupal_alter('fbconnect_config', $config);	
@@ -405,8 +405,8 @@ function fbconnect_render_js() {
         break;
     }
 
-    // TODO check working this
-    if ($config['auto_login_logout']) {
+    // TODO http://drupal.org/node/617778
+    if (false) {
       drupal_add_js('$(document).ready(function() {
 	      FB.Bootstrap.requireFeatures(["Connect"], function() { ' .$feed_js. '
 	          FB.Connect.showFeedDialog('. $bundle_id .', template_data, null, body);
@@ -481,7 +481,7 @@ function fbconnect_exit($destination = null) {
     $conf = fbconnect_get_config();
     $session_key = facebook_client()->api_client->session_key;
      
-    if ($conf && $conf['auto_login_logout'] && $session_key) {
+    if ($conf && $session_key && $conf['loginout_mode'] == 'auto') {
       // Figure out where to send the user.
       if ($destination) {
         $next = url($destination, array('absolute' => TRUE));
@@ -494,10 +494,8 @@ function fbconnect_exit($destination = null) {
       else {
         $next = url('<front>', array('absolute' => TRUE));
       }
-
-      // http://forum.developers.facebook.com/viewtopic.php?id=21879
-      // Use next parameter to expire session.
-      drupal_goto("http://www.facebook.com/logout.php?app_key={$conf[api_key]}&session_key={$session_key}&next=" . $next);
+      
+      facebook_client()->logout($next);
     }
   }
 }
@@ -512,7 +510,8 @@ function fbconnect_user($op, &$edit, &$user, $category = NULL) {
       break;
     case 'logout':
       $conf = fbconnect_get_config();
-      if ($conf['auto_login_logout']) {
+      $fbuid = fbconnect_get_fbuid();
+      if ($fbuid && $conf['loginout_mode'] == 'auto') {
         global $fbconnect_logout_on_exit;
         $fbconnect_logout_on_exit = true;
       }
