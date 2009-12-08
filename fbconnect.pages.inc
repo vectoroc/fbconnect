@@ -16,8 +16,9 @@ function fbconnect_prompt_page() {
 }
 
 function fbconnect_prompt_page_links() {
+  $conf = fbconnect_get_config();
   $params = array(
-    '!site_name' => variable_get('site_name', NULL),
+    '!site_name' => $conf['invite_name'],
   );
   $reg_msg  = t('Click here to create a new !site_name account with Facebook', $params);
   $link_msg = t('Click here to connect your existing !site_name account with Facebook', $params);  
@@ -32,10 +33,11 @@ function fbconnect_prompt_page_links() {
  * Called when user perform facebook registration
  */
 function fbconnect_register_page($form_state = array()) {
-  $site  = variable_get('site_name', t('this website'));
+  $conf  = fbconnect_get_config();
   $fbuid = fbconnect_get_fbuid();
   $data  = fbconnect_get_info_from_fb($fbuid, 'name, proxied_email');    
   $form  = drupal_retrieve_form('user_register', $form_state);
+  $site  = $conf['invite_name'];
   
   drupal_prepare_form('user_register', $form, $form_state);   
   
@@ -114,6 +116,7 @@ function fbconnect_register_form_submit($form, &$form_state) {
  * Menu callback fbconnect identities
  */
 function fbconnect_user_identities($user) {
+  $conf  = fbconnect_get_config();
   $fbuid = fbconnect_get_fbuid();
   $uid   = _is_fbconnect_user($fbuid);
   
@@ -125,7 +128,7 @@ function fbconnect_user_identities($user) {
       "Your current Facebook session is associated to another account on our site.\n"
      ."You can logout of facebook and attempt to associate another Facebook account to your"
      ."!site_name account, or you need to disconnect the current association."
-     ,array('!site_name' => variable_get('site_name', 'site'))  
+     ,array('!site_name' => $conf['invite_name'])  
     );
   }
   else {
@@ -143,13 +146,14 @@ function fbconnect_user_identities($user) {
  *  Some options are visible only if facebook session is active.
  */
 function fbconnect_user_settings_form() {
-  $user = user_load(arg(1));  
+  $user = user_load(arg(1));
+  $conf = fbconnect_get_config();
   // These fields manage the visibility of the user, 
   // if the option is enabled, user's facebook friends 
   // will be able to see his presence on this site
   $form['fb_visible'] = array(
     '#type' => 'checkbox',
-    '#title' => t('Let my Facebook friends see me on @site', array('@site' => variable_get('site_name', 'this website'))),
+    '#title' => t('Let my Facebook friends see me on @site', array('@site' => $conf['invite_name'])),
     '#description' => t('My Facebook friends will be able to see that I own an account on this website.'),
     '#default_value' => $user->fb_visible,
   );

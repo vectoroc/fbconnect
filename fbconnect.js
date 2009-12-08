@@ -21,9 +21,13 @@ Drupal.fbconnect.initLogoutLinks = function(context) {
 	var links = $('a[href=/logout]', context).not('.logout_link_inited');
 	links.addClass('logout_link_inited');
 	links.click(function() {
+		var t_args = {
+			'!site_name' : Drupal.settings.fbconnect.invite_name
+		};
+		
 		var buttons = [
-		    {
-		    	'label': Drupal.t('Logout me from Facebook account'), 
+		    { 
+		    	'label': Drupal.t('Facebook and !site_name', t_args), 
 		    	'click': function() {
 		    		this.close();
 		    		FB.Connect.logout(function() { 
@@ -32,7 +36,7 @@ Drupal.fbconnect.initLogoutLinks = function(context) {
 		    	}
 		    }, {
 		    	'name': 'cancel', 
-		    	'label': Drupal.t('No thanks. Keep me logged in'), 
+		    	'label': Drupal.t('!site_name Only', t_args), 
 		    	'click': function() {
 			    	this.close();
 		    		window.location.pathname = Drupal.settings.basePath + 'logout'; 
@@ -42,7 +46,7 @@ Drupal.fbconnect.initLogoutLinks = function(context) {
 	
 		var dialog = new Drupal.fbconnect.PopupDialog({
 			'title' : Drupal.t('Logout'),
-			'message' : Drupal.t('Do you want logout from your Facebook account'),
+			'message' : Drupal.t('Do you also want to logout from your Facebook account?'),
 			'buttons' : buttons 
 		});
 		
