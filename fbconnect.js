@@ -18,6 +18,7 @@ Drupal.behaviors.fbconnect = function(context) {
 Drupal.fbconnect = {};
 Drupal.fbconnect.initLogoutLinks = function(context) {
 	if (Drupal.settings.fbconnect.loginout_mode != 'ask') return;
+	if (!FB.Connect.get_loggedInUser()) return;
 	var links = $('a[href=/logout]', context).not('.logout_link_inited');
 	links.addClass('logout_link_inited');
 	links.click(function() {
@@ -29,7 +30,7 @@ Drupal.fbconnect.initLogoutLinks = function(context) {
 		    	'click': function() {
 		    		this.close();
 		    		FB.Connect.logout(function() { 
-		    			window.location = Drupal.settings.basePath + '/logout'; 
+		    			location.href = Drupal.settings.basePath + 'logout'; 
 		    		});
 		    	}
 		    }, {
@@ -37,13 +38,13 @@ Drupal.fbconnect.initLogoutLinks = function(context) {
 		    	'label': Drupal.t('!site_name Only', t_args), 
 		    	'click': function() {
 			    	this.close();
-		    		window.location.pathname = Drupal.settings.basePath + 'logout'; 
+			    	location.href = Drupal.settings.basePath + 'logout'; 
 		    	}
 		    }					    
 		];
 	
 		var dialog = new Drupal.fbconnect.PopupDialog({
-			'title' : Drupal.t('Logout'),
+			'title'   : Drupal.t('Logout'),
 			'message' : Drupal.t('Do you also want to logout from your Facebook account?'),
 			'buttons' : buttons 
 		});
