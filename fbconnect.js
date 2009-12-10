@@ -1,9 +1,17 @@
 Drupal.behaviors.fbconnect = function(context) {
 	if (window.FB && Drupal.settings.fbconnect && Drupal.settings.fbconnect.api_key) {
+		if (Drupal.settings.fbconnect.loginout_mode == 'ask')
+			Drupal.fbconnect.initLogoutLinks(context);
+		
 		FB.Bootstrap.requireFeatures(["Connect","XFBML"], function() {
+			var appInitSettins = {};
+			if (Drupal.settings.fbconnect.loginout_mode == 'auto')
+				appInitSettins.reloadIfSessionStateChanged = true;
+
 			FB.Facebook.init(
 				Drupal.settings.fbconnect.api_key, 
-				Drupal.settings.basePath + Drupal.settings.fbconnect.xd_path
+				Drupal.settings.basePath + Drupal.settings.fbconnect.xd_path,
+				appInitSettins
 			);
 			$(context).each(function() {
 				var elem = $(this).get(0);
@@ -11,13 +19,11 @@ Drupal.behaviors.fbconnect = function(context) {
 			});
 		});
 		
-		Drupal.fbconnect.initLogoutLinks(context);
 	}
 };
 
 Drupal.fbconnect = {};
 Drupal.fbconnect.initLogoutLinks = function(context) {
-	if (Drupal.settings.fbconnect.loginout_mode != 'ask') return;
 	var links = $('a[href=/logout]', context).not('.logout_link_inited');
 	links.addClass('logout_link_inited');
 	links.click(function() {
@@ -29,7 +35,7 @@ Drupal.fbconnect.initLogoutLinks = function(context) {
 		    	'click': function() {
 		    		this.close();
 		    		FB.Connect.logout(function() { 
-		    			location.href = Drupal.settings.basePath + 'logout'; 
+		    			window.location.href = Drupal.settings.basePath + 'logout'; 
 		    		});
 		    	}
 		    }, {
@@ -37,7 +43,7 @@ Drupal.fbconnect.initLogoutLinks = function(context) {
 		    	'label': Drupal.t('!site_name Only', t_args), 
 		    	'click': function() {
 			    	this.close();
-			    	location.href = Drupal.settings.basePath + 'logout'; 
+			    	window.location.href = Drupal.settings.basePath + 'logout'; 
 		    	}
 		    }					    
 		];

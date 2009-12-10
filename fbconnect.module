@@ -124,7 +124,9 @@ function fbconnect_get_connected_friends($fbuid) {
       $rows = facebook_client()->api_client->fql_query($query);
     }
     catch (Exception $e) {
-      watchdog('fbconnect', 'Exception thrown while using fbconnect_get_connected_friends: @code', array('@code' => $e->getMessage()), WATCHDOG_WARNING);
+      $msg  = 'Exception thrown while using fbconnect_get_connected_friends: @code';
+      $args = array('@code' => $e->getMessage());
+      watchdog('fbconnect', $msg, $args, WATCHDOG_WARNING);
     }
 
     if ($rows) {
@@ -136,8 +138,8 @@ function fbconnect_get_connected_friends($fbuid) {
 
       if ($fbid) {
         $res = db_query('SELECT uid FROM {fbconnect_users} WHERE fbuid IN ('. implode($fbid, ',') .')');
-        while ($tab = db_fetch_array($res)) {
-          $user = user_load($tab['uid']);
+        while ($uid = db_result($res)) {
+          $user = user_load($uid);
           if ($user->fb_visible) {
             $friends[] = $user;
           }
@@ -371,6 +373,15 @@ function fbconnect_get_fbuid() {
  */
 function fbconnect_init() {
   fbconnect_render_js();
+  $conf  = fbconnect_get_config();
+  if ($conf['loginout_mode'] == 'auto' && user_is_anonymous()) {
+    $fbuid = fbconnect_get_fbuid();
+    if ($fbuid && _is_fbconnect_user($fbuid)) { 
+      $form_state = array('values' => array('op' => 'connect'));
+      drupal_execute('fbconnect_autoconnect_form', $form_state);
+      drupal_goto($form_state['redirect']);
+    }
+  } 
   // During registration the cache is disabled
   if (arg(0) == 'fbconnect' && arg(1) == 'register') {
     $GLOBALS['conf']['cache'] = FALSE;
@@ -457,7 +468,7 @@ function fbconnect_autoconnect_form() {
 }
 
 function fbconnect_autoconnect_form_submit($form, &$form_state) {
-  if (!user_is_logged_in()) {
+  if (user_is_anonymous()) {
     $fbuid = fbconnect_get_fbuid();
     if ($fbuid) {
       $uid = _is_fbconnect_user($fbuid);
@@ -565,7 +576,7 @@ SQL;
  */
 function _get_user_fbuid($uid) { 
   if ($uid) {
-    $query = "SELECT uid FROM {fbconnect_users} where uid = %d";
+    $query = "SELECT fbuid FROM {fbconnect_users} where uid = %d";
     return db_result(db_query($query, $uid));
   }
 }

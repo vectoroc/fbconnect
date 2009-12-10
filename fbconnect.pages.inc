@@ -105,7 +105,6 @@ function fbconnect_register_form_submit($form, &$form_state) {
   fbconnect_register($user->uid, $fbuid);  
   $data['fb_avatar']  = $form_state['values']['fb_avatar'];
   $data['fb_visible'] = $form_state['values']['fb_visible'];
-  $data['fbuid']      = $fbuid;
   
   user_save($user, $data);   
   user_external_login($user);
@@ -145,7 +144,7 @@ function fbconnect_user_identities($account) {
  *
  *  Some options are visible only if facebook session is active.
  */
-function fbconnect_user_settings_form($account) {
+function fbconnect_user_settings_form($form_state, $account) {
   $conf = fbconnect_get_config();
   // These fields manage the visibility of the user, 
   // if the option is enabled, user's facebook friends 
@@ -167,6 +166,11 @@ function fbconnect_user_settings_form($account) {
     );
   
   }
+  
+  $form['account'] = array(
+    '#type'  => 'value',
+    '#value' => $account,
+  ); 
   
   $form['fbconnect'] = array(
     '#title' => t('Facebook account'),
@@ -198,8 +202,8 @@ function fbconnect_user_settings_form($account) {
  * Handle post-validation user_settingsForm submission. 
  */
 function fbconnect_user_settings_form_submit($form, &$form_state) {
-  $account = user_load(arg(1)); 
   $fbuid   = fbconnect_get_fbuid(); 
+  $account = $form_state['values']['account']; 
   $visible = $form_state['values']['visibility'];
   $avatar  = $form_state['values']['fb_avatar'];
   $op      = $form_state['values']['op'];
