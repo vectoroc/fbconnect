@@ -115,15 +115,15 @@ function fbconnect_register_form_submit($form, &$form_state) {
 /**
  * Menu callback fbconnect identities
  */
-function fbconnect_user_identities($user) {
+function fbconnect_user_identities($account) {
   $conf  = fbconnect_get_config();
   $fbuid = fbconnect_get_fbuid();
   $uid   = _is_fbconnect_user($fbuid);
   
-  if ($user->uid == $uid) { 
-    return drupal_get_form('fbconnect_user_settings_form');
+  if ($account->uid == $uid) { 
+    return drupal_get_form('fbconnect_user_settings_form', $account);
   }
-  elseif ($uid && $user->uid != $uid) {
+  elseif ($uid && $account->uid != $uid) {
     return t(
       "Your current Facebook session is associated to another account on our site.\n"
      ."You can logout of facebook and attempt to associate another Facebook account to your"
@@ -145,8 +145,7 @@ function fbconnect_user_identities($user) {
  *
  *  Some options are visible only if facebook session is active.
  */
-function fbconnect_user_settings_form() {
-  $user = user_load(arg(1));
+function fbconnect_user_settings_form($account) {
   $conf = fbconnect_get_config();
   // These fields manage the visibility of the user, 
   // if the option is enabled, user's facebook friends 
@@ -155,7 +154,7 @@ function fbconnect_user_settings_form() {
     '#type' => 'checkbox',
     '#title' => t('Let my Facebook friends see me on @site', array('@site' => $conf['invite_name'])),
     '#description' => t('My Facebook friends will be able to see that I own an account on this website.'),
-    '#default_value' => $user->fb_visible,
+    '#default_value' => $account->fb_visible,
   );
 
   // Whether user picture is enabled, 
@@ -164,7 +163,7 @@ function fbconnect_user_settings_form() {
     $form['fb_avatar'] = array(
       '#type' => 'checkbox',
       '#title' => t('Use my Facebook picture as user picture'),
-      '#default_value' => $user->fb_avatar,
+      '#default_value' => $account->fb_avatar,
     );
   
   }
@@ -179,7 +178,7 @@ function fbconnect_user_settings_form() {
   $form['fbconnect']['profile'] = array(
     '#type' =>  'item',
     '#title' => t('Linked to this Facebook account'),
-    '#value' => '<fb:name uid="loggedinuser" useyou="false" linked="true"></fb:name>',
+    '#value' => '<fb:name uid="'. $account->fbuid .'" useyou="false" linked="true"></fb:name>',
   );
   
   $form['fbconnect']['unlink'] = array(
@@ -199,7 +198,7 @@ function fbconnect_user_settings_form() {
  * Handle post-validation user_settingsForm submission. 
  */
 function fbconnect_user_settings_form_submit($form, &$form_state) {
-  $user    = user_load(arg(1)); 
+  $account = user_load(arg(1)); 
   $fbuid   = fbconnect_get_fbuid(); 
   $visible = $form_state['values']['visibility'];
   $avatar  = $form_state['values']['fb_avatar'];
@@ -214,7 +213,7 @@ function fbconnect_user_settings_form_submit($form, &$form_state) {
     $data['fb_avatar'] = null;
   }
   
-  if ($data) user_save($user, $data);
+  if ($data) user_save($account, $data);
   drupal_set_message(t('Your configuration options have been saved.'));
 }
 

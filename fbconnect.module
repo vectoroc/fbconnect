@@ -517,9 +517,16 @@ function fbconnect_exit($destination = null) {
  */
 function fbconnect_user($op, &$edit, &$user, $category = NULL) {
   switch ($op) {
+    case 'load':
+      if ($fbuid = _get_user_fbuid($user->uid)) {
+        $user->fbuid = $fbuid;
+      }
+      break;
+      
     case 'delete':
       db_query('DELETE FROM {fbconnect_users} WHERE uid = %d', $user->uid);
       break;
+      
     case 'logout':
       $conf = fbconnect_get_config();
       $fbuid = fbconnect_get_fbuid();
@@ -536,7 +543,7 @@ function fbconnect_user($op, &$edit, &$user, $category = NULL) {
  *
  * @param Int $fbuid
  *   Facebook user id
- * @return array
+ * @return Int $uid
  */
 function _is_fbconnect_user($fbuid) {
   if ($fbuid) {
@@ -546,6 +553,20 @@ function _is_fbconnect_user($fbuid) {
       WHERE fbuid = %s AND u.status = 1
 SQL;
     return db_result(db_query($query, $fbuid));
+  }
+}
+
+/**
+ * Returns fbuid by uid
+ * 
+ * @param Int $uid
+ *   Drupal user id
+ * @return Int $fbuid
+ */
+function _get_user_fbuid($uid) { 
+  if ($uid) {
+    $query = "SELECT uid FROM {fbconnect_users} where uid = %d";
+    return db_result(db_query($query, $uid));
   }
 }
 
@@ -635,7 +656,7 @@ function fbconnect_theme_registry_alter(&$theme_registry) {
  */
 function fbconnect_theme_user_picture_override($account) {
   // First learn the Facebook id
-  $fbuid = db_result(db_query("SELECT fbuid FROM {fbconnect_users} WHERE uid = %d", $account->uid));
+  $fbuid    = $account->fbuid;
   $user_url = url('user/' . $account->uid);
 
   if ($fbuid && $account->fb_avatar) {
