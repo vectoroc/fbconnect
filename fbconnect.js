@@ -1,58 +1,93 @@
 Drupal.behaviors.fbconnect = function(context) {
 	if (window.FB && Drupal.settings.fbconnect && Drupal.settings.fbconnect.api_key) {
-		if (Drupal.settings.fbconnect.loginout_mode == 'ask')
-			Drupal.fbconnect.initLogoutLinks(context);
+		var settings = Drupal.settings.fbconnect;
 		
 		FB.Bootstrap.requireFeatures(["Connect","XFBML"], function() {
-			var appInitSettins = {};
-			if (Drupal.settings.fbconnect.loginout_mode == 'auto')
-				appInitSettins.reloadIfSessionStateChanged = true;
-
+			if (settings.debug) {
+				FB.FBDebug.isEnabled = true;
+				FB.FBDebug.logLevel = 4;
+			}
+			
+			var appInitSettins = {
+				ifUserConnected    : function(fbuid) {
+					$.event.trigger('fbconnect:ifUserConnected', [fbuid, settings.fbuid]);
+				},
+				ifUserNotConnected : function(fbuid) {
+					$.event.trigger('fbconnect:ifUserNotConnected', [fbuid, settings.fbuid]);
+				}
+			};
+			
 			FB.Facebook.init(
-				Drupal.settings.fbconnect.api_key, 
-				Drupal.settings.basePath + Drupal.settings.fbconnect.xd_path,
+				settings.api_key, 
+				Drupal.settings.basePath + settings.xd_path,
 				appInitSettins
 			);
+			
 			$(context).each(function() {
 				var elem = $(this).get(0);
 				FB.XFBML.Host.parseDomElement(elem);
-			});
+			});			
 		});
-		
+
+		switch (settings.loginout_mode) {
+			case 'auto':
+				Drupal.fbconnect.initLogoutLinks(context);
+				$(document.body).bind(
+						'fbconnect:ifUserConnected',
+						Drupal.fbconnect.reload_ifUserConnected
+					);
+				break;
+				
+			case 'ask':
+				Drupal.fbconnect.initLogoutLinks(context);
+				break;
+		}
 	}
 };
 
 Drupal.fbconnect = {};
+Drupal.fbconnect.reload_ifUserConnected = function(e, fbuid, old_fbuid) {
+	if (Drupal.settings.fbconnect.user.uid) return;
+	if (fbuid != old_fbuid) window.location.reload();
+};
+
 Drupal.fbconnect.initLogoutLinks = function(context) {
-	var links = $('a[href=/logout]', context).not('.logout_link_inited');
-	links.addClass('logout_link_inited');
-	links.click(function() {
-		if (!FB.Connect.get_loggedInUser()) return;
-		var t_args = {'!site_name' : Drupal.settings.fbconnect.invite_name};
-		var buttons = [
-		    { 
-		    	'label': Drupal.t('Facebook and !site_name', t_args), 
-		    	'click': function() {
-		    		this.close();
-		    		FB.Connect.logout(function() { 
-		    			window.location.href = Drupal.settings.basePath + 'logout'; 
-		    		});
-		    	}
-		    }, {
-		    	'name': 'cancel', 
-		    	'label': Drupal.t('!site_name Only', t_args), 
-		    	'click': function() {
-			    	this.close();
-			    	window.location.href = Drupal.settings.basePath + 'logout'; 
-		    	}
-		    }					    
-		];
+	var loginout_mode = Drupal.settings.fbconnect.loginout_mode;
+	var user          = Drupal.settings.fbconnect.user;
+	var basePath      = Drupal.settings.basePath;
+	var logout_url    = basePath + 'logout'; 
+	var links         = $('a[href='+ logout_url +']', context).not('.logout_link_inited');
 	
-		var dialog = new Drupal.fbconnect.PopupDialog({
-			'title'   : Drupal.t('Logout'),
-			'message' : Drupal.t('Do you also want to logout from your Facebook account?'),
-			'buttons' : buttons 
-		});
+	links.addClass('logout_link_inited').click(function() {
+		if (!user.fbuid || user.fbuid != FB.Connect.get_loggedInUser()) return;
+		if (loginout_mode == 'auto') { 
+			FB.Connect.logoutAndRedirect(logout_url);	
+		}
+		else if (loginout_mode == 'ask') {		
+			var t_args  = {'!site_name' : Drupal.settings.fbconnect.invite_name};
+			var buttons = [
+			    { 
+			    	'label': Drupal.t('Facebook and !site_name', t_args), 
+			    	'click': function() {
+			    		this.close();
+			    		FB.Connect.logoutAndRedirect(logout_url);
+			    	}
+			    }, {
+			    	'name': 'cancel', 
+			    	'label': Drupal.t('!site_name Only', t_args), 
+			    	'click': function() {
+				    	this.close();
+				    	window.location.href = logout_url; 
+			    	}
+			    }					    
+			];
+		
+			var dialog = new Drupal.fbconnect.PopupDialog({
+				'title'   : Drupal.t('Logout'),
+				'message' : Drupal.t('Do you also want to logout from your Facebook account?'),
+				'buttons' : buttons 
+			});
+		}
 		
 		return false;
 	});

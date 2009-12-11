@@ -168,7 +168,8 @@ function fbconnect_redirect_submit($form, &$form_state) {
     }
     else {
       drupal_set_message(t('Error linking your account.'));
-      watchdog('fbconnect', 'Error linking account for @fbuid, code : @uid', array('@fbuid' => $fbuid, '@uid' => $user->uid));
+      $msg = 'Error linking account for @fbuid, code : @uid';
+      watchdog('fbconnect', $msg, array('@fbuid' => $fbuid, '@uid' => $user->uid));
     }
   }
 }
@@ -295,30 +296,30 @@ function facebook_client() {
         'jsonwrapper/jsonwrapper_inner.php',    
         'jsonwrapper/jsonwrapper.php',
         'jsonwrapper/JSON/JSON.php'
-        );
+      );
 
-        foreach ($lib_files as $file) {
-          $file = $lib_path.$file;
-          if (!file_exists($file)) {
-            drupal_set_message(t('Fbconnect : Facebook PHP library file @file not found see README.TXT', array('@file' => $file)), 'status', FALSE);
-            return FALSE;
-          }
+      foreach ($lib_files as $file) {
+        $file = $lib_path.$file;
+        if (!file_exists($file)) {
+          drupal_set_message(t('Fbconnect : Facebook PHP library file @file not found see README.TXT', array('@file' => $file)), 'status', FALSE);
+          return FALSE;
         }
-        // Include facebook.php
-        include_once($lib_path.$lib_files[0]);
-        if (class_exists('Facebook')) {
-          $fb = new Facebook($conf['api_key'], $conf['secret_api_key']);
-          /*
-           * If a page is loaded via HTTPS, then all images and static
-           * resources need to be printed with HTTPS urls to avoid
-           * mixed content warnings. If your page loads with an HTTPS
-           * url, then call set_use_ssl_resources to retrieve the correct
-           * urls.
-           */
-          if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on') {
-            $fb->api_client->set_use_ssl_resources(true);
-          }
+      }
+      // Include facebook.php
+      include_once($lib_path.$lib_files[0]);
+      if (class_exists('Facebook')) {
+        $fb = new Facebook($conf['api_key'], $conf['secret_api_key']);
+        /*
+         * If a page is loaded via HTTPS, then all images and static
+         * resources need to be printed with HTTPS urls to avoid
+         * mixed content warnings. If your page loads with an HTTPS
+         * url, then call set_use_ssl_resources to retrieve the correct
+         * urls.
+         */
+        if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on') {
+          $fb->api_client->set_use_ssl_resources(true);
         }
+      }
     }
   }
   return $fb;
@@ -393,13 +394,18 @@ function fbconnect_init() {
  */
 function fbconnect_render_js() {
   global $base_url;
+  global $user;
   $module_path = drupal_get_path('module', 'fbconnect');
   $escaped_urL = drupal_to_js($base_url);
-  $config = fbconnect_get_config();
-   
-  if ($param = $config) {
-    unset($param['secret_api_key']);
-    drupal_add_js(array('fbconnect'=> $param), 'setting');
+  
+  if ($config = fbconnect_get_config()) {
+    unset($config['secret_api_key']);
+    $config['fbuid'] = fbconnect_get_fbuid();
+    $config['user']  = array(
+      'uid'   => $user->uid,
+      'fbuid' => $user->fbuid,
+    );
+    drupal_add_js(array('fbconnect'=> $config), 'setting');
     drupal_add_js($module_path. '/fbconnect.js');
   }
 
@@ -491,39 +497,6 @@ function fbconnect_autoconnect_form_submit($form, &$form_state) {
 }
 
 /**
- * Implementation of hook_exit();
- */
-function fbconnect_exit($destination = null) {
-  global $fbconnect_logout_on_exit;
-  if (!$fbconnect_logout_on_exit) return;
-  
-  // off trigger to prevent repeated hook_exit calling
-  $fbconnect_logout_on_exit = false;
-  
-  if (fbconnect_get_fbuid()) {
-    $conf = fbconnect_get_config();
-    $session_key = facebook_client()->api_client->session_key;
-     
-    if ($conf && $session_key && $conf['loginout_mode'] == 'auto') {
-      // Figure out where to send the user.
-      if ($destination) {
-        $next = url($destination, array('absolute' => TRUE));
-      }
-      elseif ($_REQUEST['destination']) {
-        $next = url($_REQUEST['destination'], array('absolute' => TRUE));
-        // It pains me to muck with $_REQUEST['destination'], but facebook's weak-ass API leaves us little choice.
-        unset($_REQUEST['destination']);
-      }
-      else {
-        $next = url('<front>', array('absolute' => TRUE));
-      }
-      
-      facebook_client()->logout($next);
-    }
-  }
-}
-
-/**
  * Implementation of hook_user().
  */
 function fbconnect_user($op, &$edit, &$user, $category = NULL) {
@@ -538,14 +511,20 @@ function fbconnect_user($op, &$edit, &$user, $category = NULL) {
       db_query('DELETE FROM {fbconnect_users} WHERE uid = %d', $user->uid);
       break;
       
-    case 'logout':
-      $conf = fbconnect_get_config();
-      $fbuid = fbconnect_get_fbuid();
-      if ($fbuid && $conf['loginout_mode'] == 'auto') {
-        global $fbconnect_logout_on_exit;
-        $fbconnect_logout_on_exit = true;
-      }
-      break;
+//    case 'logout':
+//      $conf = fbconnect_get_config();
+//      $fbuid = fbconnect_get_fbuid();
+//      if ($fbuid && $user->fbuid == $fbuid && $conf['loginout_mode'] == 'auto') {
+//        try {
+//          facebook_client()->expire_session();
+//        } 
+//        catch (Exception $e) {
+//          $msg  = 'Exception thrown while using facebook_client()->expire_session: @code';
+//          $args = array('@code' => $e->getMessage());
+//          watchdog('fbconnect', $msg, $args, WATCHDOG_WARNING);
+//        }
+//      }
+//      break;
   }
 }
 
@@ -608,12 +587,16 @@ function fbconnect_unregister($fbuid) {
     $fb = facebook_client();    
     $fb->api_client->auth_revokeAuthorization($fbuid);
     db_query('DELETE FROM {fbconnect_users} WHERE fbuid = %s', $fbuid);
-    watchdog('fbconnect', "Users authorization is revoked", compact('fbuid'));
+    watchdog(
+      'fbconnect', 
+      "Users authorization is revoked (fbuid: @fbuid)", 
+      array('@fbuid' => $fbuid)
+    );
     return true;
   }
   
-  $msg = __FUNCTION__.' is called with wrong $fbuid argument';
-  watchdog('fbconnect', $msg, compact('fbuid'), WATCHDOG_WARNING);
+  $msg = __FUNCTION__.' is called with wrong $fbuid(@fbuid) argument ';
+  watchdog('fbconnect', $msg, array('@fbuid' => $fbuid), WATCHDOG_WARNING);
   
   return false; 
 }
@@ -629,7 +612,8 @@ function fbconnect_get_info_from_fb($fbuid, $fields) {
       $result = facebook_client()->api_client->fql_query("SELECT $fields FROM user WHERE uid = $fbuid");
       return $result[0];
     } catch (Exception $e) {
-      watchdog('fbconnect', 'Exception thrown while using fbconnect_get_info_from_fb : @code', array('@code' => $e->getMessage()), WATCHDOG_WARNING);
+      $msg = 'Exception thrown while using fbconnect_get_info_from_fb : @code';
+      watchdog('fbconnect', $msg, array('@code' => $e->getMessage()), WATCHDOG_WARNING);
     }
   }
 }
@@ -693,12 +677,16 @@ PIC;
  * @todo Test it
  */
 function fbconnect_post_remove_callback() {
-  watchdog('fbconnect', "User with fbuid $fbuid has revoked authorization");
   if ($fb = facebook_client()) {
     $fbuid = $fb->get_loggedin_user();
     if ($fbuid && $fb->fb_params['uninstall'] == 1) {
       //The user has removed your app
       fbconnect_unregister($fbuid);
+      watchdog(
+        'fbconnect', 
+        "User with fbuid @fbuid has revoked authorization", 
+        array('@fbuid' => $fbuid)
+      );
     }
   }
 }
