@@ -159,10 +159,6 @@ function fbconnect_redirect_submit($form, &$form_state) {
   drupal_get_messages('status');
   $fbuid = fbconnect_get_fbuid();
   if ($fbuid) {
-    global $user;
-    $data['fbuid'] = $fbuid;
-    $user = user_save($user, $data);
-
     if (fbconnect_register($user->uid, $fbuid)) {
       drupal_set_message(t('Your Facebook connect link is now activate'));
     }
@@ -584,7 +580,7 @@ function fbconnect_register($uid, $fbuid) {
  */
 function fbconnect_unregister($fbuid) {
   if ($fbuid) {
-    $fb = facebook_client();    
+    $fb = facebook_client();
     $fb->api_client->auth_revokeAuthorization($fbuid);
     db_query('DELETE FROM {fbconnect_users} WHERE fbuid = %s', $fbuid);
     watchdog(

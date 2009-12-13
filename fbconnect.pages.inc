@@ -119,7 +119,7 @@ function fbconnect_user_identities($account) {
   $fbuid = fbconnect_get_fbuid();
   $uid   = _is_fbconnect_user($fbuid);
   
-  if ($account->uid == $uid) { 
+  if ($account->fbuid) { 
     return drupal_get_form('fbconnect_user_settings_form', $account);
   }
   elseif ($uid && $account->uid != $uid) {
@@ -202,19 +202,24 @@ function fbconnect_user_settings_form($form_state, $account) {
  * Handle post-validation user_settingsForm submission. 
  */
 function fbconnect_user_settings_form_submit($form, &$form_state) {
-  $fbuid   = fbconnect_get_fbuid(); 
   $account = $form_state['values']['account']; 
   $visible = $form_state['values']['visibility'];
   $avatar  = $form_state['values']['fb_avatar'];
   $op      = $form_state['values']['op'];
+  $fbuid   = $account->fbuid;
   
   $data['fb_visible'] = $form_state['values']['fb_visible'];
   $data['fb_avatar']  = $form_state['values']['fb_avatar'];
   
   if ($op == $form['fbconnect']['unlink']['#value']) {
-    fbconnect_unregister($fbuid);
-    $data['fb_visible'] = null;
-    $data['fb_avatar'] = null;
+    if (fbconnect_unregister($fbuid)) {
+      $data['fb_visible'] = null;
+      $data['fb_avatar'] = null;
+      
+      // TODO remove this line before release module
+      // remove inconsistent data
+      $data['fbuid'] = null;      
+    }
   }
   
   if ($data) user_save($account, $data);
