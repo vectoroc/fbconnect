@@ -155,7 +155,9 @@ function fbconnect_get_connected_friends($fbuid) {
  *  Redirects the user to the account linking page.
  */
 function fbconnect_redirect_submit($form, &$form_state) {
-  $form_state['redirect'] = 'user/'. $GLOBALS['user']->uid .'/fbconnect';
+  global $user;
+  
+  $form_state['redirect'] = 'user/'. $user->uid .'/fbconnect';
   drupal_get_messages('status');
   $fbuid = fbconnect_get_fbuid();
   if ($fbuid) {
