@@ -162,7 +162,7 @@ function fbconnect_redirect_submit($form, &$form_state) {
   $fbuid = fbconnect_get_fbuid();
   if ($fbuid) {
     if (fbconnect_register($user->uid, $fbuid)) {
-      drupal_set_message(t('Your Facebook connect link is now activate'));
+      drupal_set_message(t('Your Facebook connect link is now active'));
     }
     else {
       drupal_set_message(t('Error linking your account.'));
@@ -499,12 +499,6 @@ function fbconnect_autoconnect_form_submit($form, &$form_state) {
  */
 function fbconnect_user($op, &$edit, &$user, $category = NULL) {
   switch ($op) {
-    case 'load':
-      if ($fbuid = _get_user_fbuid($user->uid)) {
-        $user->fbuid = $fbuid;
-      }
-      break;
-      
     case 'delete':
       db_query('DELETE FROM {fbconnect_users} WHERE uid = %d', $user->uid);
       break;
@@ -568,9 +562,16 @@ function _get_user_fbuid($uid) {
  */
 function fbconnect_register($uid, $fbuid) {
   if (_is_fbconnect_user($fbuid)) return false;
-    
-         db_query('DELETE FROM {fbconnect_users} WHERE uid = %d', $uid);
-  return db_query('INSERT INTO {fbconnect_users} (uid, fbuid, timestamp) VALUES (%d, %s, %d)', $uid, $fbuid, time());
+  
+  $delete_query = 'DELETE FROM {fbconnect_users} WHERE uid = %d';
+  $insert_query = 'INSERT INTO {fbconnect_users} (uid, fbuid, timestamp) VALUES (%d, %s, %d)';  
+  
+  db_query($delete_query, $uid);
+  if (db_query($insert_query, $uid, $fbuid, time())) {  
+    user_save(user_load($uid), array('fbuid' => $fbuid));
+    return true;
+  }
+  return false;
 }
 
 /**
@@ -581,15 +582,19 @@ function fbconnect_register($uid, $fbuid) {
  * @return A
  */
 function fbconnect_unregister($fbuid) {
-  if ($fbuid) {
+  if ($fbuid && $uid = _is_fbconnect_user($fbuid)) {
     $fb = facebook_client();
     $fb->api_client->auth_revokeAuthorization($fbuid);
+    
     db_query('DELETE FROM {fbconnect_users} WHERE fbuid = %s', $fbuid);
+    user_save(user_load($uid), array('fbuid' => null));
+    
     watchdog(
       'fbconnect', 
       "Users authorization is revoked (fbuid: @fbuid)", 
       array('@fbuid' => $fbuid)
     );
+    
     return true;
   }
   
