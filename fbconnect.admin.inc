@@ -14,43 +14,68 @@
 function fbconnect_admin_settings() {
   global $base_url;
   $module_path = drupal_get_path('module', 'fbconnect') .'/images/';
-    
-  $form['fbconnect_key'] = array( 
+   
+  $form['global'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Facebook API Settings'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+  );
+  $form['global']['fbconnect_key'] = array( 
     '#type' => 'textfield', 
     '#title' => t('Facebook key'), 
     '#default_value' => variable_get('fbconnect_key', NULL),
     '#description' => t('Your public API key'),
   );
   
-  $form['fbconnect_skey'] = array(
+  $form['global']['fbconnect_skey'] = array(
     '#type' => 'textfield',
     '#title' => t('Facebook Secret key'),
     '#default_value' => variable_get('fbconnect_skey', NULL),
     '#description' => t('Do not share your secret key with anyone'),
   );
   
-  $form['fbconnect_base_domaine'] = array(
+  $form['global']['fbconnect_base_domaine'] = array(
     '#type' => 'textfield',
     '#title' => t('Base domain url'),
     '#description' => t('Use this to enable your Facebook Connect implementation to span multiple subdomains (e.g., using example.com would enable  www.example.com, foo.example.com or bar.example.com,).'),
     '#default_value' => variable_get('fbconnect_base_domaine', NULL),
   );
   
-  $form['fbconnect_connect_url'] = array(
+  $form['global']['fbconnect_connect_url'] = array(
     '#type' => 'textfield',
     '#title' => t('Connect url'),
     '#description' => t('Your site\'s main URL'),
     '#default_value' => variable_get('fbconnect_connect_url', $base_url),
   );
   
-  $form['fbconnect_fast_reg'] = array(
+  $form['global']['fbconnect_language_code'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Language code'),
+    '#description' => t('Enter your country code here to get translated versions of facebook connect. (e.g. en_US or de_DE)'),
+    '#default_value' => variable_get('fbconnect_language_code', 'en_US'),
+  );
+  
+  $form['global']['fbconnect_debug'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Debug mode'),      
+    '#default_value' => variable_get('fbconnect_debug', false),
+  );  
+  
+  $form['site'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Settings for !site', array('!site' => variable_get('site_name', t('Your Site')))),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+  );
+  $form['site']['fbconnect_fast_reg'] = array(
     '#type' => 'checkbox',
     '#title' => t('Fast registration mode'),
     '#default_value' => variable_get('fbconnect_fast_reg', NULL),
     '#description' => t('Unable this mode will bypass drupal\'s standard registration form.'),
   );
   
-  $form['fbconnect_loginout_mode'] = array(
+  $form['site']['fbconnect_loginout_mode'] = array(
     '#type' => 'select',
     '#title' => t('Login/logout mode'),
     '#options' => array(
@@ -62,24 +87,32 @@ function fbconnect_admin_settings() {
     '#description' => t('Login to drupal/logout from facebook. Enable this if you don\'t want to logout automatically from facebook.'),
   );
   
-  $form['fbconnect_invite_msg'] = array(
+  $form['site']['fbconnect_invite_msg'] = array(
     '#type' => 'textfield',
     '#title' => t('Invite message'),      
     '#default_value' => variable_get('fbconnect_invite_msg', t('Enjoy facebook connect')),
   );
   
-  $form['fbconnect_invite_name'] = array(
+  $form['site']['fbconnect_invite_name'] = array(
     '#type' => 'textfield',
     '#title' => t('Your site name'),      
     '#default_value' => variable_get('fbconnect_invite_name', variable_get('site_name', NULL)),
   );
   
-  $form['fbconnect_invite_dest'] = array(
+  $form['site']['fbconnect_invite_dest'] = array(
     '#type' => 'textfield',
     '#title' => t('Destination, after user\'s valid or skip invite friend form'),
     '#default_value' => variable_get('fbconnect_invite_dest', $base_url),
   );
 
+  
+  $form['display'] = array(
+    '#title' => t('Display Settings'),
+    '#type' => 'fieldset',
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+  );
+  
   if (fbconnect_get_config()) {  
     $button = array(
       'small_short'  => fbconnect_render_button(array('size' => 'small' , 'length' => 'short', 'onclick' => 'return false;')),
@@ -89,28 +122,48 @@ function fbconnect_admin_settings() {
       'large_long'   => fbconnect_render_button(array('size' => 'large' , 'length' => 'long', 'onclick' => 'return false;')),
     );
 
-    $form['fbconnect_button'] = array(
+    $form['display']['fbconnect_button'] = array(
       '#type' => 'radios',
       '#default_value' => variable_get('fbconnect_button', 'medium_short'),
       '#options' => $button,
     );
+    $form['display']['fbconnect_button_text'] = array(
+      '#title' => t('Button text'),
+      '#type' => 'textfield',
+      '#description' => t('Enter the text you want to display on the Facebook Connect Button.'),
+      '#default_value' => variable_get('fbconnect_button_text', 'Connect'),
+    );  
   }
   
-  $form['api']['fbconnect_reg_feed_id'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Registration feed bundle ID'),
-    '#default_value' => variable_get('fbconnect_reg_feed_id', FBCONNECT_REG_FEED_BUNDLEID),
-  );
-  $form['api']['fbconnect_com_feed_id'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Comment feed bundle ID'),
-    '#default_value' => variable_get('fbconnect_com_feed_id', FBCONNECT_COMMENT_FEED_BUNDLEID),
+  $form['display']['fbconnect_pic_allow'] = array(
+    '#type' => 'select',
+    '#title' => t('Facebook picture settings'),
+    '#description' => t('Here you can deside whether you want to allow the use of the facebook picture - or not.'),
+    '#default_value' => variable_get('fbconnect_pic_allow', 'allow'),
+    '#options' => array(
+      'allow' => t('Let the user choose'),
+      'disallow' => t('Do not allow the use of facebook user picture at your site'),
+    ),
   );
   
-  $form['fbconnect_debug'] = array(
+  $form['display']['fbconnect_pic_size'] = array(
+    '#type' => 'select',
+    '#title' => t('Facebook picture size'),
+    '#description' => t('If your user decides to use his facebook picture, choose its size here.'),
+    '#default_value' => variable_get('fbconnect_pic_size', 'square'),
+    '#options' => array(
+      'thumb' => t('Thumb'),
+      'small' => t('Small'),
+      'normal' => t('Normal'),
+      'square' => t('square'),
+    ),
+  );
+
+  $form['display']['fbconnect_pic_logo'] = array(
     '#type' => 'checkbox',
-    '#title' => t('Debug mode'),      
-    '#default_value' => variable_get('fbconnect_debug', false),
+    '#title' => t('Show Facebook Logo'),
+    '#description' => t('Uncheck this if you don\'t want to display the facebook logo on the user picture.'),
+    '#value' => variable_get('fbconnect_pic_logo', TRUE),
   );
 
   $form = system_settings_form($form);
