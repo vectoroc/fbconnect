@@ -72,6 +72,18 @@ function fbconnect_menu() {
 }
 
 /**
+ * Implementation of hook_theme()
+ */
+function fbconnect_theme() {
+  return array(
+    'fbconnect_user_picture_override' => array(
+      'arguments' => array('fbuid' => NULL, 'account' => NULL, 'user_url' => NULL, 'size' => '', 'logo' => TRUE),
+      'file'      => 'fbconnect.pages.inc',
+    ),
+  );
+}
+
+/**
  * Implementation of hook_block().
  */
 function fbconnect_block($op = 'list', $delta = 0, $edit = array()) {
@@ -236,9 +248,9 @@ function fbconnect_comment_feed_submit($form, &$form_state) {
      
     $_SESSION['fbconnect_feed'] = array(
       'type'    => 'comment',
-      'comment' => drupal_to_js($form_state['values']['comment']),
-      'title'   => drupal_to_js($node->title),
-      'nodeurl' => drupal_to_js(url('node/'.$node->nid, array('absolute' => TRUE))),
+      'comment' => $form_state['values']['comment'],
+      'title'   => $node->title,
+      'nodeurl' => url('node/'.$node->nid, array('absolute' => TRUE)),
     );
   }
 }
@@ -266,14 +278,17 @@ function fbconnect_render_button($attr = array()) {
     'length'     => $length,
     'onlogin'    => 'facebook_onlogin_ready();',
     'background' => 'dark',
-    'text'       => 'Connect',
     'v'          => 2
   ); 
   
   $attr = array_merge($defaulr_attr, $attr);
   drupal_alter('fbconnect_login_button', $attr);
-  $text = $attr['text'];
-  unset($attr['text']);
+  if (isset($attr['text'])) {
+    $text = $attr['text'];
+    unset($attr['text']);
+  } else {
+    $text = t(variable_get('fbconnect_button_text', 'Connect'));
+  }
 
   return '<fb:login-button '.drupal_attributes($attr).'>'. $text .'</fb:login-button>';
 }
@@ -337,9 +352,12 @@ function fbconnect_get_config() {
 	  $config['secret_api_key'] = variable_get('fbconnect_skey', NULL);
 	  $config['xd_path'] = 'fbconnect/receiver';
 	  
+	  $config['user_picture'] = variable_get('fbconnect_pic_allow', 'allow');
+	  $config['language_code'] = variable_get('fbconnect_language_code', 'en_US');
+	  
 	  $url = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on')
-         ? "https://ssl.connect.facebook.com/js/api_lib/v0.4/FeatureLoader.js.php"
-         : "http://static.ak.connect.facebook.com/js/api_lib/v0.4/FeatureLoader.js.php" ;
+         ? "https://ssl.connect.facebook.com/js/api_lib/v0.4/FeatureLoader.js.php/".$config['language_code']
+         : "http://static.ak.connect.facebook.com/js/api_lib/v0.4/FeatureLoader.js.php/".$config['language_code'] ;
          
     $config['featureLoader_url'] = $url; 
 	  $config['debug'] = variable_get('fbconnect_debug', false);
@@ -408,38 +426,58 @@ function fbconnect_render_js() {
   }
 
   if ($_SESSION['fbconnect_feed']) {
-    $site = drupal_to_js(variable_get('site_name', $base_url));
+    $site = variable_get('site_name', $base_url);
     $feed = $_SESSION['fbconnect_feed'];
 
     switch ($feed['type']) {
       case 'comment' :
-        $bundle_id = variable_get('fbconnect_com_feed_id', FBCONNECT_COMMENT_FEED_BUNDLEID);
-        $feed_js   = 'var template_data = {"sitename":'. $site .',
-                        "siteurl" : '. $escaped_urL .',
-                        "title" : '. $feed['title'] .',
-                        "article_url" : '. $feed['nodeurl'] .'
-                      };';
-        $feed_js  .= 'var body = '. $feed['comment'] .';';
+        $autopublish = 'false';
+        $feed_js = array(
+          'name'        => $feed['title'],
+          'href'        => $feed['nodeurl'],
+          'caption'     => t("{*actor*} commented at !site", array("!site"=> $site)),
+          'description' => strip_tags($feed["comment"]),
+          'properties'  => array(
+            t('read')     => array(
+              'text'  => $feed['title'],
+              'href'  => $feed['nodeurl'],
+            ),
+            t('visit')    => array(
+              'text'  => $site,
+              'href'  => $base_url,
+            )
+          ),
+        );
+        //Action links are currently not working and will be removed from above
+        //properties to action links as soon as they're available
+        $action_links = array();
         break;
 
       case 'register' :
-        $bundle_id = variable_get('fbconnect_reg_feed_id', FBCONNECT_REG_FEED_BUNDLEID);
-        $feed_js   = 'var template_data = {"sitename":'. $site .', "siteurl" : '. $escaped_urL .'};';
-        $feed_js  .= 'var body = null;';
-        /*
-        TODO ajouter un champ body utile
-        */
+        $autopublish = 'true';
+        $feed_js = array(
+          'name'        => t('Welcome to @site', array('@site'=>$site)),
+          'href'        => $base_url,
+          'caption'     => t("{*actor*} has registered ar at !site", array("!site"=> $site)),
+          'properties'  => array(
+            t('visit')    => array(
+              'text'  => $site,
+              'href'  => $base_url,
+            )
+          ),
+        );
+        //Action links are currently not working and will be removed from above
+        //properties to action links as soon as they're available
+        $action_links = array();
         break;
     }
-
-    // TODO http://drupal.org/node/617778
-    if (false) {
-      drupal_add_js('$(document).ready(function() {
-	      FB.Bootstrap.requireFeatures(["Connect"], function() { ' .$feed_js. '
-	          FB.Connect.showFeedDialog('. $bundle_id .', template_data, null, body);
-	      });
-	    });', 'inline', 'footer');
-    }
+    
+    /**
+     * see http://developers.facebook.com/docs/?u=facebook.jslib.FB.Connect.streamPublish
+     * for more info about used params here
+     * FB.Connect.streamPublish(user_message, attachment, action_links, target_id, user_management_promt, callback, auto_publish, actor_id)
+     */
+    drupal_add_js('$(document).ready(function() {FB.Connect.streamPublish("", '.drupal_to_js($feed_js).', '.drupal_to_js($action_links).', "", "'.t('Something to say?').'", "", '.$autopublish.');});', 'inline', 'footer');
 
     unset($_SESSION['fbconnect_feed']);
   }
@@ -453,6 +491,8 @@ function fbconnect_footer() {
     $footer = '<script type="text/javascript" src="'. $config['featureLoader_url'] .'"></script>';
     // Display the autoconnect form.
     $footer .= drupal_get_form('fbconnect_autoconnect_form');
+    //initialize facebooks javascript
+    $footer .= '<script type="text/javascript">FB.init("'.$config['api_key'].'");</script>';
     return $footer;
   }
 }
@@ -638,15 +678,18 @@ function fbconnect_theme_registry_alter(&$theme_registry) {
   //    'arguments' => array('object' => NULL),
   //    'function' => 'fbconnect_theme_username_override',
   //  );
-
-  // Re-register the original theme function under a new name.
-  $theme_registry['fbconnect_user_picture_orig'] = $theme_registry['user_picture'];
-  // Override theme username
-  $theme_registry['user_picture'] = array(
-    'arguments' => array('account' => NULL),
-    'function' => 'fbconnect_theme_user_picture_override',
-  );
-
+  
+  // Only change image handling if user have the permission to use the image.
+  $conf = fbconnect_get_config();
+  if ($conf['user_picture'] == 'allow') {
+    // Re-register the original theme function under a new name.
+    $theme_registry['fbconnect_user_picture_orig'] = $theme_registry['user_picture'];
+    // Override theme username
+    $theme_registry['user_picture'] = array(
+      'arguments' => array('account' => NULL),
+      'function' => 'fbconnect_theme_user_picture_override',
+    );
+  }
 }
 
 /**
@@ -658,13 +701,7 @@ function fbconnect_theme_user_picture_override($account) {
   $user_url = url('user/' . $account->uid);
 
   if ($fbuid && $account->fb_avatar) {
-    $output = <<<PIC
-      <div class="picture">
-        <a href="$user_url">
-         <fb:profile-pic uid='$fbuid' linked=false></fb:profile-pic>
-        </a>
-      </div>
-PIC;
+    $output = theme('fbconnect_user_picture_override', $fbuid, $account, $user_url, variable_get('fbconnect_pic_size', 'square'), variable_get('fbconnect_pic_logo', TRUE));
   } else {  
     $output = theme('fbconnect_user_picture_orig', $account); // Markup without fb_connect.
   }
