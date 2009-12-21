@@ -1,3 +1,10 @@
+2009/12/16 - ambo
+  - Change publishing to Facebook Stream
+  - Some more use of t() Function
+  - Make Fbconnect user picture override themeable
+  - Add Flag for hte use of Facebooks user picture
+  - extends admin interface with a textfield to enter own text for facebook connect button and changed the fbconnect_render_button function as well
+
 2009/11/26 - vectoroc
   - Extend users.mail field upto 320 chars to support proxied_mail in fast registration mode (monkey patch)
   - Some bugfixes
