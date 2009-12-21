@@ -48,7 +48,7 @@ function fbconnect_register_page($form_state = array()) {
     '#default_value' => 1,
   );
   
-  if (variable_get('user_pictures', 0)) {
+  if (variable_get('user_pictures', 0) && $conf['user_pictures'] == 'allow') {
     $form['fb_avatar'] = array(
       '#type' => 'checkbox',
       '#title' => t('Use my Facebook picture as user picture'),
@@ -158,7 +158,7 @@ function fbconnect_user_settings_form($form_state, $account) {
 
   // Whether user picture is enabled, 
   // users can choose to use his facebook avatar as avatar
-  if (variable_get('user_pictures', 0)) {
+  if (variable_get('user_pictures', 0) && $conf['user_pictures'] == 'allow') {
     $form['fb_avatar'] = array(
       '#type' => 'checkbox',
       '#title' => t('Use my Facebook picture as user picture'),
@@ -222,7 +222,9 @@ function fbconnect_user_settings_form_submit($form, &$form_state) {
     }
   }
   
-  if ($data) user_save($account, $data);
+  if ($data) {
+    user_save($user, $data);
+  }
   drupal_set_message(t('Your configuration options have been saved.'));
 }
 
@@ -256,5 +258,19 @@ function fbconnect_render_friends_invite_form() {
                   </fb:fbml>
                 </script>
               </fb:serverfbml>';
+  return $output;
+}
+
+/**
+ * Make rendering of facebook user picture themeable
+ */
+function theme_fbconnect_user_picture_override($fbuid = '', $account = '', $user_url = '', $size = 'square', $logo = TRUE) {
+  $output = <<<PIC
+      <div class="picture">
+        <a href="$user_url">
+         <fb:profile-pic uid="$fbuid" linked="false" size="$size" facebook-logo="$logo"></fb:profile-pic>
+        </a>
+      </div>
+PIC;
   return $output;
 }
