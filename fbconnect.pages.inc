@@ -223,7 +223,7 @@ function fbconnect_user_settings_form_submit($form, &$form_state) {
   }
   
   if ($data) {
-    user_save($user, $data);
+    user_save($account, $data);
   }
   drupal_set_message(t('Your configuration options have been saved.'));
 }

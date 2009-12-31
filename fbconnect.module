@@ -283,9 +283,9 @@ function fbconnect_render_button($attr = array()) {
   ); 
   
   $attr = array_merge($defaulr_attr, $attr);
+  drupal_alter('fbconnect_login_button', $attr);
   $text = $attr['text'];
   unset($attr['text']);
-  drupal_alter('fbconnect_login_button', $attr);
 
   return '<fb:login-button '.drupal_attributes($attr).'>'. $text .'</fb:login-button>';
 }
@@ -349,7 +349,7 @@ function fbconnect_get_config() {
 	  $config['secret_api_key'] = variable_get('fbconnect_skey', NULL);
 	  $config['xd_path'] = 'fbconnect/receiver';
 	  
-	  $config['user_picture'] = variable_get('fbconnect_pic_allow', 'allow');
+	  $config['user_pictures'] = variable_get('fbconnect_pic_allow', 'allow');
 	  $config['language_code'] = variable_get('fbconnect_language_code', 'en_US');
 	  
 	  $url = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on')
