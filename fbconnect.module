@@ -299,24 +299,21 @@ function facebook_client() {
   static $fb = NULL;
   if (!$fb instanceof Facebook) {
     if ($conf = fbconnect_get_config()) {
-      $lib_path = drupal_get_path('module', 'fbconnect') .'/facebook-client/';
-      $lib_files = array(
-        'facebook.php',
-        'facebook_desktop.php',
-        'jsonwrapper/jsonwrapper_inner.php',    
-        'jsonwrapper/jsonwrapper.php',
-        'jsonwrapper/JSON/JSON.php'
-      );
-
-      foreach ($lib_files as $file) {
-        $file = $lib_path.$file;
-        if (!file_exists($file)) {
-          drupal_set_message(t('Fbconnect : Facebook PHP library file @file not found see README.TXT', array('@file' => $file)), 'status', FALSE);
-          return FALSE;
+      if (module_exists('libraries')) {
+        $lib_path = libraries_get_path('facebook-platform') .'/php/';
+      } else {
+        $lib_path = drupal_get_path('module', 'fbconnect') .'/facebook-client/';
+        if (is_dir($lib_path. '/php')) {
+          $lib_path .= '/php';
         }
+      }	
+      $client_include = $lib_path .'/facebook.php';
+      if (!file_exists($client_include)) {
+        drupal_set_message(t('Fbconnect : Facebook PHP library file @file not found see README.TXT', array('@file' => $client_include)), 'status', FALSE);
+        return FALSE;
       }
       // Include facebook.php
-      include_once($lib_path.$lib_files[0]);
+      include_once($client_include);
       if (class_exists('Facebook')) {
         $fb = new Facebook($conf['api_key'], $conf['secret_api_key']);
         /*
@@ -678,7 +675,7 @@ function fbconnect_theme_registry_alter(&$theme_registry) {
   
   // Only change image handling if user have the permission to use the image.
   $conf = fbconnect_get_config();
-  if ($conf['user_picture'] == 'allow') {
+  if ($conf['user_pictures'] == 'allow') {
     // Re-register the original theme function under a new name.
     $theme_registry['fbconnect_user_picture_orig'] = $theme_registry['user_picture'];
     // Override theme username
