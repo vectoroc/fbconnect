@@ -188,55 +188,112 @@ function fbconnect_redirect_submit($form, &$form_state) {
  * Impletementation of hook_form_alter.
  */
 function fbconnect_form_alter(&$form, $form_state, $form_id) {
-//  if (in_array($form_id, array('user_profile_form', 'user_edit_form', 'user_register'))) {
+  // if (in_array($form_id, array('user_profile_form', 'user_edit_form', 'user_register'))) {
+  
+  // variable to catch any content type edit form's name
+  $ctype = preg_match('/([a-z0-9_]+)_node_form$/', $form_id, $matches);
+  $ctype = $matches[1];
+  $ctypeformid = $matches[1] . '_node_form';
+  
   if (isset($form['account'])) {
     $form['account']['mail']['#maxlength'] = 320;
   }
+  
+  switch ($form_id):
+    case 'user_login':
+      if ($_GET['destination'] == 'fbconnect') {
+        unset($_REQUEST['destination']);
 
-  if ($form_id == 'user_login' && $_GET['destination'] == 'fbconnect') {
-    unset($_REQUEST['destination']);
+        drupal_set_message(t('Please log in, in order to link your account with Facebook Connect'));
+        $form['#submit'][] = 'fbconnect_redirect_submit';
+      }
+      // don't break here since we want to run the next user_login_block case too
 
-    drupal_set_message(t('Please log in, in order to link your account with Facebook Connect'));
-    $form['#submit'][] = 'fbconnect_redirect_submit';
-  }
+    // Render fbconnect on login block.
+    case 'user_login_block':
+      if ($_GET['destination'] != 'fbconnect') {
+        
+        $form['fbconnect_button'] = array(
+          '#type' => 'item',
+          '#description' => t('Sign in using Facebook'),
+          '#value' => fbconnect_render_button(),
+          '#weight' => 1,
+          '#id' => 'fbconnect_button',
+        );
+      }
+      break;
 
-  // Render fbconnect on login block.
-  if ($form_id == 'user_login_block' || $form_id == 'user_login') {
-    if ($_GET['destination'] != 'fbconnect') {
-      
-      $form['fbconnect_button'] = array(
-        '#type' => 'item',
-        '#description' => t('Sign in using Facebook'),
-        '#value' => fbconnect_render_button(),
-        '#weight' => 1,
-        '#id' => 'fbconnect_button',
+    // Warning msg on user edit.
+    case 'user_profile_form':
+      if (variable_get('user_pictures', 0)) {
+        $user = user_load(arg(1));
+        if ($user->fb_avatar) {
+          $form['picture']['fb_avatar'] = array(
+            '#value' => t('You are currently using your Facebook picture, if you delete or load a new picture, your facebook picture will no longer be updated.'),
+            '#weight' => 0,
+          );
+          $form['#submit'][] = 'fbconnect_user_edit_submit';
+        }
+      }
+      break;
+
+    // Facebook feed checkbox on comment form.
+    case 'comment_form':
+      if (fbconnect_get_fbuid()) {
+        $favicon = '<img src="http://wiki.developers.facebook.com/images/1/17/Connect_light_small_short.gif" />';
+        $form['fbconnect_feed'] = array(
+          '#type' => 'checkbox',
+          '#title' => $favicon. t(' Publish To Facebook'),
+          '#default_value' => 1,
+          '#weight' => 0,
+        );
+        $form['#submit'][] = 'fbconnect_comment_feed_submit';
+      }
+      break;
+
+    // admin settings for enabling/disabling the ability to publish to facebook, per node type
+    case 'node_type_form':
+      $form['fbconnect_settings'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Facebook Connect'),
+        '#collapsible' => true,
+        '#collapsed' => true,
       );
-    }
-  }
-
-  // Warning msg on user edit.
-  if ($form_id == 'user_profile_form' && variable_get('user_pictures', 0)) {
-    $user = user_load(arg(1));
-    if ($user->fb_avatar) {
-      $form['picture']['fb_avatar'] = array(
-        '#value' => t('You are currently using your Facebook picture, if you delete or load a new picture, your facebook picture will no longer be updated.'),
-        '#weight' => 0,
+      $form['fbconnect_settings']['onoff'] = array(
+        '#type' => 'checkbox',
+        '#title' => t('Allow this content type to publish to facebook'),
+        '#default_value' => variable_get('fbconnect_'. $form['#node_type']->type .'_onoff', 0),
       );
-      $form['#submit'][] = 'fbconnect_user_edit_submit';
-    }
-  }
+      $form['#submit'][] = 'fbconnect_node_type_form_save';
+      break;
 
-  // Facebook feed checkbox on comment form.
-  if ($form_id == 'comment_form' && fbconnect_get_fbuid()) {
-    $favicon = '<img src="http://wiki.developers.facebook.com/images/1/17/Connect_light_small_short.gif" />';
-    $form['fbconnect_feed'] = array(
-      '#type' => 'checkbox',
-      '#title' => $favicon. t(' Publish To Facebook'),
-      '#default_value' => 1,
-      '#weight' => 0,
-    );
-    $form['#submit'][] = 'fbconnect_comment_feed_submit';
-  }
+    // Facebook feed checkbox on node edit/create form.
+    // only show this on the create new forms, not the edit forms
+    case $ctypeformid:
+      if ($form['nid']['#value'] == null && fbconnect_get_fbuid() && variable_get('fbconnect_'. $ctype .'_onoff', 0) === 1) {
+        $favicon = '<img src="http://wiki.developers.facebook.com/images/1/17/Connect_light_small_short.gif" />';
+        $form['fbconnect_feed'] = array(
+          '#type' => 'checkbox',
+          '#title' => $favicon. t(' Publish To Facebook'),
+          '#default_value' => 1,
+          '#weight' => 0,
+        );
+      }
+      break;
+    
+  endswitch;
+}
+
+/**
+* Form submit handler.
+*
+* This captures the value of the additional fbconnect settings and saves it as a Drupal variable.
+*
+* @param Array $form
+* @param Array $form_state
+*/
+function fbconnect_node_type_form_save(&$form, &$form_state) {
+  variable_set('fbconnect_'. $form_state['values']['type'] .'_onoff', $form_state['values']['onoff']);
 }
 
 /**
@@ -444,6 +501,26 @@ function fbconnect_render_js() {
         );
         //Action links are currently not working and will be removed from above
         //properties to action links as soon as they're available
+        $action_links = array();
+        break;
+
+      case 'node' :
+        $autopublish = 'false';
+        $feed_js = array(
+          'name'        => $feed['title'],
+          'href'        => $feed['nodeurl'],
+          'caption'     => t("{*actor*} created some content at !site", array("!site"=> $site)),
+          'properties'  => array(
+            t('read')     => array(
+              'text'  => $feed['title'],
+              'href'  => $feed['nodeurl'],
+            ),
+            t('visit')    => array(
+              'text'  => $site,
+              'href'  => $base_url,
+            )
+          ),
+        );
         $action_links = array();
         break;
 
@@ -722,5 +799,21 @@ function fbconnect_post_remove_callback() {
         array('@fbuid' => $fbuid)
       );
     }
+  }
+}
+
+/***
+* Implementation of hook_nodeapi
+*/
+function fbconnect_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
+  if ($op == 'validate') {
+    $_SESSION['fbconnect_feed']['submit'] = ($a3['fbconnect_feed']['#post']['fbconnect_feed']) ? true : false;
+  }
+  if ($op == 'insert' && $_SESSION['fbconnect_feed']['submit'] === true) {
+    $_SESSION['fbconnect_feed'] = array(
+      'type'    => 'node',
+      'title'   => $node->title,
+      'nodeurl' => url('node/'. $node->nid, array('absolute' => true)),
+    );
   }
 }
