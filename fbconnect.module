@@ -452,7 +452,7 @@ function fbconnect_render_js() {
         $feed_js = array(
           'name'        => t('Welcome to @site', array('@site'=>$site)),
           'href'        => $base_url,
-          'caption'     => t("{*actor*} has registered ar at !site", array("!site"=> $site)),
+          'caption'     => t("{*actor*} has registered at !site", array("!site"=> $site)),
           'properties'  => array(
             t('visit')    => array(
               'text'  => $site,

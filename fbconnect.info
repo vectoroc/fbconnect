@@ -1,8 +1,8 @@
 ; $Id: fbconnect.info,v 1.5 2009/06/03 13:51:06 lanets Exp $
-name= Fbconnect
+name = Fbconnect
 description = Allows users to connect with Facebook account
 core = 6.x
-package = "Facebook connect"
+package = "Authentication"
 php = 5.2
 core = "6.x"
 
