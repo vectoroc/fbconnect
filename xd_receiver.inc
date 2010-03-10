@@ -1,4 +1,5 @@
 <?php 
+// $Id$
 
 /**
  * Without a receiver file, cross-domain javascript will not work.
@@ -11,10 +12,10 @@
  * Supports SSL, http://wiki.developers.facebook.com/index.php/Facebook_Connect_Via_SSL.
  */
 function fbconnect_receiver() {
-	$conf = fbconnect_get_config();
+  $conf = fbconnect_get_config();
   $src_suffix = $conf['debug']
-					    ? '.debug'
-					    : '' ;
+              ? '.debug'
+              : '' ;
   
   $src = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on') 
     ? "https://ssl.connect.facebook.com/js/api_lib/v0.4/XdCommReceiver$src_suffix.js" 

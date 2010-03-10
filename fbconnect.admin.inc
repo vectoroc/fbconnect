@@ -13,7 +13,7 @@
  */
 function fbconnect_admin_settings() {
   global $base_url;
-  $module_path = drupal_get_path('module', 'fbconnect') .'/images/';
+  $module_path = drupal_get_path('module', 'fbconnect') . '/images/';
    
   $form['global'] = array(
     '#type' => 'fieldset',
@@ -21,6 +21,7 @@ function fbconnect_admin_settings() {
     '#collapsible' => TRUE,
     '#collapsed' => FALSE,
   );
+
   $form['global']['fbconnect_key'] = array( 
     '#type' => 'textfield', 
     '#title' => t('Facebook key'), 
@@ -59,7 +60,7 @@ function fbconnect_admin_settings() {
   $form['global']['fbconnect_debug'] = array(
     '#type' => 'checkbox',
     '#title' => t('Debug mode'),      
-    '#default_value' => variable_get('fbconnect_debug', false),
+    '#default_value' => variable_get('fbconnect_debug', FALSE),
   );  
   
   $form['site'] = array(
@@ -83,7 +84,7 @@ function fbconnect_admin_settings() {
       'ask'    => t('Ask user to logout from FB'),
       'auto'   => t('Auto login/logout'),
     ),
-    '#default_value' => variable_get('fbconnect_loginout_mode', false),
+    '#default_value' => variable_get('fbconnect_loginout_mode', FALSE),
     '#description' => t('Login to drupal/logout from facebook. Enable this if you don\'t want to logout automatically from facebook.'),
   );
   
@@ -184,7 +185,7 @@ function fbconnect_set_appproperties($form, &$form_state) {
   $properties = array(
     'connect_url'   => $form_state['values']['fbconnect_connect_url'],
     'base_domain'   => $form_state['values']['fbconnect_base_domaine'],
-    'uninstall_url' => url('fbconnect/post-remove', array('absolute' => true)),
+    'uninstall_url' => url('fbconnect/post-remove', array('absolute' => TRUE)),
   );
   try {
     $res = facebook_client()->api_client->admin_setAppProperties($properties);

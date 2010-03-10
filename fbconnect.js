@@ -1,3 +1,5 @@
+// $Id$
+
 Drupal.behaviors.fbconnect = function(context) {
 	if (window.FB && Drupal.settings.fbconnect && Drupal.settings.fbconnect.api_key) {
 		var settings = Drupal.settings.fbconnect;
