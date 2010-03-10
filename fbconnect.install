@@ -95,5 +95,5 @@ function fbconnect_update_6005() {
 }
 
 function fbconnect_schema_alter(&$schema) {
-  $schema['users']['field']['mails']['length'] = 320;
+  $schema['users']['fields']['mail']['length'] = 320;
 }
