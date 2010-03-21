@@ -42,7 +42,7 @@ function fbconnect_menu() {
     'file' => 'fbconnect.pages.inc',    
   );
 
-  $items['user/%user/fbconnect'] = array(
+  $items['user/%user/edit/fbconnect'] = array(
     'title' => 'Facebook Connect',
     'page callback' => 'fbconnect_user_identities',
     'page arguments' => array(1),

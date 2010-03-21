@@ -43,7 +43,7 @@ Facebook API key: http://www.facebook.com/developers/
     provided by Facebook (API key, Secret API key).  When editing configuration, make sure your facebook session's 
     is active. If it is'nt active then perhaps you will see message "Unable to autoconfigure your application settings, 
     make sure you are logged into Facebook". In this case do 6 from this instruction and try to connect your drupal 
-    admin account with Facebook (developper of the App) on '/user/1/fbconnect' page.
+    admin account with Facebook (developper of the App) on '/user/1/edit/fbconnect' page.
      
   6. Edit the "page.tpl.php" file of your current theme. edit the <html> tag and add the facebook xmlns for rendering XFBML.
     example :
