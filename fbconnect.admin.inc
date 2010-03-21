@@ -47,7 +47,7 @@ function fbconnect_admin_settings() {
     '#type' => 'textfield',
     '#title' => t('Connect url'),
     '#description' => t('Your site\'s main URL'),
-    '#default_value' => variable_get('fbconnect_connect_url', $base_url),
+    '#default_value' => variable_get('fbconnect_connect_url', $base_url . '/'),
   );
   
   $form['global']['fbconnect_language_code'] = array(
@@ -176,7 +176,7 @@ function fbconnect_set_appproperties($form, &$form_state) {
     return FALSE;  
   }
   if (!fbconnect_get_fbuid()) {
-    drupal_set_message(t('Unable to autoconfigure your application settings, make sure you are logged into Facebook'), 'error');
+    drupal_set_message(t('Unable to autoconfigure your application settings, make sure you are logged into Facebook'), 'warning');
     return FALSE;
   }
   
