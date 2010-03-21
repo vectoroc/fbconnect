@@ -1,5 +1,5 @@
 <?php
-// $Id $
+// $Id$
 
 
 define('FBCONNECT_COMMENT_FEED_BUNDLEID', 84409393217);
@@ -119,7 +119,7 @@ function fbconnect_block($op = 'list', $delta = 0, $edit = array()) {
         }
 
         $blocks['title']   = t('Facebook friends');
-        $blocks['content'] = l(t('Invite friends'), 'fbconnect/invite/friends').$content;
+        $blocks['content'] = l(t('Invite friends'), 'fbconnect/invite/friends') . $content;
       }
       return $blocks;
   }
@@ -243,7 +243,7 @@ function fbconnect_form_alter(&$form, $form_state, $form_id) {
         $favicon = '<img src="http://wiki.developers.facebook.com/images/1/17/Connect_light_small_short.gif" />';
         $form['fbconnect_feed'] = array(
           '#type' => 'checkbox',
-          '#title' => $favicon. t(' Publish To Facebook'),
+          '#title' => $favicon . t(' Publish To Facebook'),
           '#default_value' => 1,
           '#weight' => 0,
         );
@@ -256,13 +256,13 @@ function fbconnect_form_alter(&$form, $form_state, $form_id) {
       $form['fbconnect_settings'] = array(
         '#type' => 'fieldset',
         '#title' => t('Facebook Connect'),
-        '#collapsible' => true,
-        '#collapsed' => true,
+        '#collapsible' => TRUE,
+        '#collapsed' => TRUE,
       );
       $form['fbconnect_settings']['onoff'] = array(
         '#type' => 'checkbox',
         '#title' => t('Allow this content type to publish to facebook'),
-        '#default_value' => variable_get('fbconnect_'. $form['#node_type']->type .'_onoff', 0),
+        '#default_value' => variable_get('fbconnect_' . $form['#node_type']->type . '_onoff', 0),
       );
       $form['#submit'][] = 'fbconnect_node_type_form_save';
       break;
@@ -270,11 +270,11 @@ function fbconnect_form_alter(&$form, $form_state, $form_id) {
     // Facebook feed checkbox on node edit/create form.
     // only show this on the create new forms, not the edit forms
     case $ctypeformid:
-      if ($form['nid']['#value'] == null && fbconnect_get_fbuid() && variable_get('fbconnect_'. $ctype .'_onoff', 0) === 1) {
+      if ($form['nid']['#value'] == NULL && fbconnect_get_fbuid() && variable_get('fbconnect_' . $ctype . '_onoff', 0) === 1) {
         $favicon = '<img src="http://wiki.developers.facebook.com/images/1/17/Connect_light_small_short.gif" />';
         $form['fbconnect_feed'] = array(
           '#type' => 'checkbox',
-          '#title' => $favicon. t(' Publish To Facebook'),
+          '#title' => $favicon . t(' Publish To Facebook'),
           '#default_value' => 1,
           '#weight' => 0,
         );
@@ -293,7 +293,7 @@ function fbconnect_form_alter(&$form, $form_state, $form_id) {
 * @param Array $form_state
 */
 function fbconnect_node_type_form_save(&$form, &$form_state) {
-  variable_set('fbconnect_'. $form_state['values']['type'] .'_onoff', $form_state['values']['onoff']);
+  variable_set('fbconnect_' . $form_state['values']['type'] . '_onoff', $form_state['values']['onoff']);
 }
 
 /**
@@ -307,7 +307,7 @@ function fbconnect_comment_feed_submit($form, &$form_state) {
       'type'    => 'comment',
       'comment' => $form_state['values']['comment'],
       'title'   => $node->title,
-      'nodeurl' => url('node/'.$node->nid, array('absolute' => TRUE)),
+      'nodeurl' => url('node/' . $node->nid, array('absolute' => TRUE)),
     );
   }
 }
@@ -330,21 +330,20 @@ function fbconnect_user_edit_submit($form, &$form_state) {
  */
 function fbconnect_render_button($attr = array()) {
   list($size, $length) = explode('_', variable_get('fbconnect_button', NULL));
-  $defaulr_attr = array(
+  $default_attr = array(
     'text'       => t(variable_get('fbconnect_button_text', 'Connect')), 
     'size'       => $size, 
-    'length'     => $length,
     'onlogin'    => 'facebook_onlogin_ready();',
     'background' => 'dark',
     'v'          => 2,
   ); 
   
-  $attr = array_merge($defaulr_attr, $attr);
+  $attr = array_merge($default_attr, $attr);
   drupal_alter('fbconnect_login_button', $attr);
   $text = $attr['text'];
   unset($attr['text']);
 
-  return '<fb:login-button '.drupal_attributes($attr).'>'. $text .'</fb:login-button>';
+  return '<fb:login-button ' . drupal_attributes($attr) . '>' . $text . '</fb:login-button>';
 }
 
 /**
@@ -357,14 +356,15 @@ function facebook_client() {
   if (!$fb instanceof Facebook) {
     if ($conf = fbconnect_get_config()) {
       if (module_exists('libraries')) {
-        $lib_path = libraries_get_path('facebook-platform') .'/php/';
-      } else {
-        $lib_path = drupal_get_path('module', 'fbconnect') .'/facebook-client/';
-        if (is_dir($lib_path. '/php')) {
+        $lib_path = libraries_get_path('facebook-platform') . '/php';
+      } 
+      else {
+        $lib_path = drupal_get_path('module', 'fbconnect') . '/facebook-client';
+        if (is_dir($lib_path . '/php')) {
           $lib_path .= '/php';
         }
-      }	
-      $client_include = $lib_path .'/facebook.php';
+      }
+      $client_include = $lib_path . '/facebook.php';
       if (!file_exists($client_include)) {
         drupal_set_message(t('Fbconnect : Facebook PHP library file @file not found see README.TXT', array('@file' => $client_include)), 'status', FALSE);
         return FALSE;
@@ -381,7 +381,7 @@ function facebook_client() {
          * urls.
          */
         if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on') {
-          $fb->api_client->set_use_ssl_resources(true);
+          $fb->api_client->set_use_ssl_resources(TRUE);
         }
       }
     }
@@ -399,24 +399,24 @@ function fbconnect_get_config() {
   static $config;
   
   if (!$config) {
-	  $config['api_key'] = variable_get('fbconnect_key', NULL);
-	  $config['secret_api_key'] = variable_get('fbconnect_skey', NULL);
-	  $config['xd_path'] = 'fbconnect/receiver';
-	  
-	  $config['user_pictures'] = variable_get('fbconnect_pic_allow', 'allow');
-	  $config['language_code'] = variable_get('fbconnect_language_code', 'en_US');
-	  
-	  $url = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on')
-         ? "https://ssl.connect.facebook.com/js/api_lib/v0.4/FeatureLoader.js.php/".$config['language_code']
-         : "http://static.ak.connect.facebook.com/js/api_lib/v0.4/FeatureLoader.js.php/".$config['language_code'] ;
+    $config['api_key'] = variable_get('fbconnect_key', NULL);
+    $config['secret_api_key'] = variable_get('fbconnect_skey', NULL);
+    $config['xd_path'] = 'fbconnect/receiver';
+    
+    $config['user_pictures'] = variable_get('fbconnect_pic_allow', 'allow');
+    $config['language_code'] = variable_get('fbconnect_language_code', 'en_US');
+    
+    $url = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on')
+         ? "https://ssl.connect.facebook.com/js/api_lib/v0.4/FeatureLoader.js.php/" . $config['language_code']
+         : "http://static.ak.connect.facebook.com/js/api_lib/v0.4/FeatureLoader.js.php/" . $config['language_code'] ;
          
     $config['featureLoader_url'] = $url; 
-	  $config['debug'] = variable_get('fbconnect_debug', false);
-	  $config['loginout_mode'] = variable_get('fbconnect_loginout_mode', 'manual');
-	  $config['invite_name'] = variable_get('fbconnect_invite_name', variable_get('site_name', $base_url));
-	
-	  // allow third party modules to change settings
-	  drupal_alter('fbconnect_config', $config);	
+    $config['debug'] = variable_get('fbconnect_debug', FALSE);
+    $config['loginout_mode'] = variable_get('fbconnect_loginout_mode', 'manual');
+    $config['invite_name'] = variable_get('fbconnect_invite_name', variable_get('site_name', $base_url));
+
+    // allow third party modules to change settings
+    drupal_alter('fbconnect_config', $config);
   }
   
   if ($config['api_key'] && $config['secret_api_key']) {
@@ -472,8 +472,8 @@ function fbconnect_render_js() {
       'uid'   => $user->uid,
       'fbuid' => $user->fbuid,
     );
-    drupal_add_js(array('fbconnect'=> $config), 'setting');
-    drupal_add_js($module_path. '/fbconnect.js');
+    drupal_add_js(array('fbconnect' => $config), 'setting');
+    drupal_add_js($module_path . '/fbconnect.js');
   }
 
   if ($_SESSION['fbconnect_feed']) {
@@ -486,7 +486,7 @@ function fbconnect_render_js() {
         $feed_js = array(
           'name'        => $feed['title'],
           'href'        => $feed['nodeurl'],
-          'caption'     => t("{*actor*} commented at !site", array("!site"=> $site)),
+          'caption'     => t("{*actor*} commented at !site", array("!site" => $site)),
           'description' => strip_tags($feed["comment"]),
           'properties'  => array(
             t('read')     => array(
@@ -509,7 +509,7 @@ function fbconnect_render_js() {
         $feed_js = array(
           'name'        => $feed['title'],
           'href'        => $feed['nodeurl'],
-          'caption'     => t("{*actor*} created some content at !site", array("!site"=> $site)),
+          'caption'     => t("{*actor*} created some content at !site", array("!site" => $site)),
           'properties'  => array(
             t('read')     => array(
               'text'  => $feed['title'],
@@ -527,9 +527,9 @@ function fbconnect_render_js() {
       case 'register' :
         $autopublish = 'true';
         $feed_js = array(
-          'name'        => t('Welcome to @site', array('@site'=>$site)),
+          'name'        => t('Welcome to @site', array('@site' => $site)),
           'href'        => $base_url,
-          'caption'     => t("{*actor*} has registered at !site", array("!site"=> $site)),
+          'caption'     => t("{*actor*} has registered at !site", array("!site" => $site)),
           'properties'  => array(
             t('visit')    => array(
               'text'  => $site,
@@ -548,7 +548,12 @@ function fbconnect_render_js() {
      * for more info about used params here
      * FB.Connect.streamPublish(user_message, attachment, action_links, target_id, user_management_promt, callback, auto_publish, actor_id)
      */
-    drupal_add_js('$(document).ready(function() {FB.Connect.streamPublish("", '.drupal_to_js($feed_js).', '.drupal_to_js($action_links).', "", "'.t('Something to say?').'", "", '.$autopublish.');});', 'inline', 'footer');
+    drupal_add_js(
+    '$(document).ready(function() {FB.Connect.streamPublish("", ' 
+    . drupal_to_js($feed_js) . ', '. drupal_to_js($action_links)
+    . ', "", "' . t('Something to say?') . '", "", ' . $autopublish
+    . ');});', 'inline', 'footer'
+  );
 
     unset($_SESSION['fbconnect_feed']);
   }
@@ -559,11 +564,11 @@ function fbconnect_render_js() {
  */
 function fbconnect_footer() {
   if ($config = fbconnect_get_config()) {
-    $footer = '<script type="text/javascript" src="'. $config['featureLoader_url'] .'"></script>';
+    $footer = '<script type="text/javascript" src="' . $config['featureLoader_url'] . '"></script>';
     // Display the autoconnect form.
     $footer .= drupal_get_form('fbconnect_autoconnect_form');
     //initialize facebooks javascript
-    $footer .= '<script type="text/javascript">FB.init("'.$config['api_key'].'");</script>';
+    $footer .= '<script type="text/javascript">FB.init("' . $config['api_key'] . '");</script>';
     return $footer;
   }
 }
@@ -573,8 +578,8 @@ function fbconnect_footer() {
  */
 function fbconnect_autoconnect_form() {
   $form['connect'] = array(
-    '#type' => 'submit',
-    '#value' => 'Connect',
+    '#type'   => 'submit',
+    '#value'  => 'Connect',
     '#prefix' => '<!--',
     '#suffix' => '-->',
   );
@@ -643,7 +648,7 @@ function _is_fbconnect_user($fbuid) {
     $query = <<<SQL
       SELECT u.uid FROM {users} u 
       INNER JOIN {fbconnect_users} f ON u.uid = f.uid 
-      WHERE fbuid = %s AND u.status = 1
+      WHERE fbuid = '%s' AND u.status = 1
 SQL;
     return db_result(db_query($query, $fbuid));
   }
@@ -672,17 +677,17 @@ function _get_user_fbuid($uid) {
  *   Facebook user id
  */
 function fbconnect_register($uid, $fbuid) {
-  if (_is_fbconnect_user($fbuid)) return false;
+  if (_is_fbconnect_user($fbuid)) return FALSE;
   
   $delete_query = 'DELETE FROM {fbconnect_users} WHERE uid = %d';
-  $insert_query = 'INSERT INTO {fbconnect_users} (uid, fbuid, timestamp) VALUES (%d, %s, %d)';  
+  $insert_query = 'INSERT INTO {fbconnect_users} (uid, fbuid, timestamp) VALUES (%d, \'%s\', %d)';  
   
   db_query($delete_query, $uid);
   if (db_query($insert_query, $uid, $fbuid, time())) {  
     user_save(user_load($uid), array('fbuid' => $fbuid));
-    return true;
+    return TRUE;
   }
-  return false;
+  return FALSE;
 }
 
 /**
@@ -698,7 +703,7 @@ function fbconnect_unregister($fbuid) {
     $fb->api_client->auth_revokeAuthorization($fbuid);
     
     db_query('DELETE FROM {fbconnect_users} WHERE fbuid = %s', $fbuid);
-    user_save(user_load($uid), array('fbuid' => null));
+    user_save(user_load($uid), array('fbuid' => NULL));
     
     watchdog(
       'fbconnect', 
@@ -706,13 +711,13 @@ function fbconnect_unregister($fbuid) {
       array('@fbuid' => $fbuid)
     );
     
-    return true;
+    return TRUE;
   }
   
-  $msg = __FUNCTION__.' is called with wrong $fbuid(@fbuid) argument ';
+  $msg = __FUNCTION__ . ' is called with wrong $fbuid(@fbuid) argument ';
   watchdog('fbconnect', $msg, array('@fbuid' => $fbuid), WATCHDOG_WARNING);
   
-  return false; 
+  return FALSE; 
 }
 
 /**
@@ -773,7 +778,8 @@ function fbconnect_theme_user_picture_override($account) {
 
   if ($fbuid && $account->fb_avatar) {
     $output = theme('fbconnect_user_picture_override', $fbuid, $account, $user_url, variable_get('fbconnect_pic_size', 'square'), variable_get('fbconnect_pic_logo', TRUE));
-  } else {  
+  } 
+  else {  
     $output = theme('fbconnect_user_picture_orig', $account); // Markup without fb_connect.
   }
 
@@ -807,13 +813,13 @@ function fbconnect_post_remove_callback() {
 */
 function fbconnect_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
   if ($op == 'validate') {
-    $_SESSION['fbconnect_feed']['submit'] = ($a3['fbconnect_feed']['#post']['fbconnect_feed']) ? true : false;
+    $_SESSION['fbconnect_feed']['submit'] = ($a3['fbconnect_feed']['#post']['fbconnect_feed']) ? TRUE : FALSE;
   }
-  if ($op == 'insert' && $_SESSION['fbconnect_feed']['submit'] === true) {
+  if ($op == 'insert' && $_SESSION['fbconnect_feed']['submit'] === TRUE) {
     $_SESSION['fbconnect_feed'] = array(
       'type'    => 'node',
       'title'   => $node->title,
-      'nodeurl' => url('node/'. $node->nid, array('absolute' => true)),
+      'nodeurl' => url('node/' . $node->nid, array('absolute' => TRUE)),
     );
   }
 }

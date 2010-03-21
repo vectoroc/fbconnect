@@ -13,7 +13,7 @@
  */
 function fbconnect_admin_settings() {
   global $base_url;
-  $module_path = drupal_get_path('module', 'fbconnect') .'/images/';
+  $module_path = drupal_get_path('module', 'fbconnect') . '/images/';
    
   $form['global'] = array(
     '#type' => 'fieldset',
@@ -21,6 +21,7 @@ function fbconnect_admin_settings() {
     '#collapsible' => TRUE,
     '#collapsed' => FALSE,
   );
+
   $form['global']['fbconnect_key'] = array( 
     '#type' => 'textfield', 
     '#title' => t('Facebook key'), 
@@ -46,7 +47,7 @@ function fbconnect_admin_settings() {
     '#type' => 'textfield',
     '#title' => t('Connect url'),
     '#description' => t('Your site\'s main URL'),
-    '#default_value' => variable_get('fbconnect_connect_url', $base_url),
+    '#default_value' => variable_get('fbconnect_connect_url', $base_url . '/'),
   );
   
   $form['global']['fbconnect_language_code'] = array(
@@ -59,7 +60,7 @@ function fbconnect_admin_settings() {
   $form['global']['fbconnect_debug'] = array(
     '#type' => 'checkbox',
     '#title' => t('Debug mode'),      
-    '#default_value' => variable_get('fbconnect_debug', false),
+    '#default_value' => variable_get('fbconnect_debug', FALSE),
   );  
   
   $form['site'] = array(
@@ -83,7 +84,7 @@ function fbconnect_admin_settings() {
       'ask'    => t('Ask user to logout from FB'),
       'auto'   => t('Auto login/logout'),
     ),
-    '#default_value' => variable_get('fbconnect_loginout_mode', false),
+    '#default_value' => variable_get('fbconnect_loginout_mode', FALSE),
     '#description' => t('Login to drupal/logout from facebook. Enable this if you don\'t want to logout automatically from facebook.'),
   );
   
@@ -115,11 +116,9 @@ function fbconnect_admin_settings() {
   
   if (fbconnect_get_config()) {  
     $button = array(
-      'small_short'  => fbconnect_render_button(array('size' => 'small' , 'length' => 'short', 'onclick' => 'return false;')),
-      'medium_short' => fbconnect_render_button(array('size' => 'medium', 'length' => 'short', 'onclick' => 'return false;')),
-      'medium_long'  => fbconnect_render_button(array('size' => 'medium', 'length' => 'long', 'onclick' => 'return false;')),
-      'large_short'  => fbconnect_render_button(array('size' => 'large' , 'length' => 'short', 'onclick' => 'return false;')),
-      'large_long'   => fbconnect_render_button(array('size' => 'large' , 'length' => 'long', 'onclick' => 'return false;')),
+      'small_short'  => fbconnect_render_button(array('size' => 'small' , 'onclick' => 'return false;')),
+      'medium_short' => fbconnect_render_button(array('size' => 'medium', 'onclick' => 'return false;')),
+      'large_short'  => fbconnect_render_button(array('size' => 'large' , 'onclick' => 'return false;')),
     );
 
     $form['display']['fbconnect_button'] = array(
@@ -177,14 +176,14 @@ function fbconnect_set_appproperties($form, &$form_state) {
     return FALSE;  
   }
   if (!fbconnect_get_fbuid()) {
-    drupal_set_message(t('Unable to autoconfigure your application settings, make sure you are logged into Facebook'), 'error');
+    drupal_set_message(t('Unable to autoconfigure your application settings, make sure you are logged into Facebook'), 'warning');
     return FALSE;
   }
   
   $properties = array(
     'connect_url'   => $form_state['values']['fbconnect_connect_url'],
     'base_domain'   => $form_state['values']['fbconnect_base_domaine'],
-    'uninstall_url' => url('fbconnect/post-remove', array('absolute' => true)),
+    'uninstall_url' => url('fbconnect/post-remove', array('absolute' => TRUE)),
   );
   try {
     $res = facebook_client()->api_client->admin_setAppProperties($properties);
