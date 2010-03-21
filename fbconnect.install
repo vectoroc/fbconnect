@@ -47,14 +47,15 @@ function fbconnect_schema() {
   return $schema; 
 }
 
-/**
- *
- */
 function fbconnect_update_6002() {
   variable_set('fbconnect_reg_feed_id', FBCONNECT_REG_FEED_BUNDLEID);
   variable_set('fbconnect_com_feed_id', FBCONNECT_COMMENT_FEED_BUNDLEID);
-  $ret[] = update_sql("ALTER TABLE  {fbconnect_users} DROP  `import_setting` ,  DROP  `avatar` ,  DROP  `visibility`");
-  $ret[] = update_sql("UPDATE {system} SET schema_version = 6002 WHERE name = 'fbconnect'");
+
+  $ret = array();
+  db_drop_field($ret, 'fbconnect_users', 'import_setting');
+  db_drop_field($ret, 'fbconnect_users', 'avatar');
+  db_drop_field($ret, 'fbconnect_users', 'visibility');
+
   return $ret;
 }
 
