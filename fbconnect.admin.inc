@@ -47,7 +47,7 @@ function fbconnect_admin_settings() {
     '#type' => 'textfield',
     '#title' => t('Connect url'),
     '#description' => t('Your site\'s main URL'),
-    '#default_value' => variable_get('fbconnect_connect_url', $base_url . '/'),
+    '#default_value' => variable_get('fbconnect_connect_url', $base_url . base_path()),
   );
   
   $form['global']['fbconnect_language_code'] = array(
