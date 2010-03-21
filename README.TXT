@@ -1,4 +1,4 @@
-/* $Id: README.TXT,v 1.9 2009/06/03 13:51:06 lanets Exp $ */
+/* $Id$ */
 
 
 -- SUMMARY --

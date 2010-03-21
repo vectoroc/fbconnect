@@ -1,5 +1,5 @@
 <?php
-// $Id: fbconnect.pages.inc,v 1.13 2009/06/03 13:51:06 lanets Exp $
+// $Id$
 
 /**
  * Menu callback.
