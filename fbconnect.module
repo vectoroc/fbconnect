@@ -1,11 +1,6 @@
 <?php
 // $Id: fbconnect.module,v 1.23 2010/03/21 16:26:03 vectoroc Exp $
 
-
-define('FBCONNECT_COMMENT_FEED_BUNDLEID', 84409393217);
-define('FBCONNECT_REG_FEED_BUNDLEID', 47875658217);
-
-
 /**
  * Implementation of hook_menu().
  */
