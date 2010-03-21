@@ -116,11 +116,9 @@ function fbconnect_admin_settings() {
   
   if (fbconnect_get_config()) {  
     $button = array(
-      'small_short'  => fbconnect_render_button(array('size' => 'small' , 'length' => 'short', 'onclick' => 'return false;')),
-      'medium_short' => fbconnect_render_button(array('size' => 'medium', 'length' => 'short', 'onclick' => 'return false;')),
-      'medium_long'  => fbconnect_render_button(array('size' => 'medium', 'length' => 'long', 'onclick' => 'return false;')),
-      'large_short'  => fbconnect_render_button(array('size' => 'large' , 'length' => 'short', 'onclick' => 'return false;')),
-      'large_long'   => fbconnect_render_button(array('size' => 'large' , 'length' => 'long', 'onclick' => 'return false;')),
+      'small_short'  => fbconnect_render_button(array('size' => 'small' , 'onclick' => 'return false;')),
+      'medium_short' => fbconnect_render_button(array('size' => 'medium', 'onclick' => 'return false;')),
+      'large_short'  => fbconnect_render_button(array('size' => 'large' , 'onclick' => 'return false;')),
     );
 
     $form['display']['fbconnect_button'] = array(
