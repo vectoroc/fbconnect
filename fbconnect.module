@@ -346,6 +346,32 @@ function fbconnect_render_button($attr = array()) {
   return '<fb:login-button ' . drupal_attributes($attr) . '>' . $text . '</fb:login-button>';
 }
 
+function _facebook_client_load_include() {
+  if (module_exists('libraries')) {
+    $lib_path = libraries_get_path('facebook-platform') . '/php';
+  } 
+  else {
+    $lib_path = drupal_get_path('module', 'fbconnect') . '/facebook-client';
+    if (is_dir($lib_path . '/php')) {
+      $lib_path .= '/php';
+    }
+  }
+  $client_include = $lib_path . '/facebook.php';
+  if (!file_exists($client_include)) {
+    $message = t(
+      'Fbconnect : Facebook PHP library file @file not found see README.TXT', 
+      array('@file' => $client_include)
+    );
+    drupal_set_message($message, 'warning', FALSE);
+    return FALSE;
+  }
+  else {
+    // Include facebook.php
+    include_once($client_include);
+    return TRUE;
+  }  
+}
+
 /**
  * Get the facebook client object for easy access.
  * @return Facebook
@@ -355,22 +381,9 @@ function facebook_client() {
   static $fb = NULL;
   if (!$fb instanceof Facebook) {
     if ($conf = fbconnect_get_config()) {
-      if (module_exists('libraries')) {
-        $lib_path = libraries_get_path('facebook-platform') . '/php';
-      } 
-      else {
-        $lib_path = drupal_get_path('module', 'fbconnect') . '/facebook-client';
-        if (is_dir($lib_path . '/php')) {
-          $lib_path .= '/php';
-        }
+      if (!class_exists('Facebook')) {
+        _facebook_client_load_include();
       }
-      $client_include = $lib_path . '/facebook.php';
-      if (!file_exists($client_include)) {
-        drupal_set_message(t('Fbconnect : Facebook PHP library file @file not found see README.TXT', array('@file' => $client_include)), 'status', FALSE);
-        return FALSE;
-      }
-      // Include facebook.php
-      include_once($client_include);
       if (class_exists('Facebook')) {
         $fb = new Facebook($conf['api_key'], $conf['secret_api_key']);
         /*
