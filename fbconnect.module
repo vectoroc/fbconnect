@@ -118,7 +118,7 @@ function fbconnect_block($op = 'list', $delta = 0, $edit = array()) {
           }
         }
 
-        $blocks['title']   = t('Facebook friends');
+        $blocks['subject'] = t('Facebook friends');
         $blocks['content'] = l(t('Invite friends'), 'fbconnect/invite/friends') . $content;
       }
       return $blocks;
