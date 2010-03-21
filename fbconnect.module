@@ -330,16 +330,15 @@ function fbconnect_user_edit_submit($form, &$form_state) {
  */
 function fbconnect_render_button($attr = array()) {
   list($size, $length) = explode('_', variable_get('fbconnect_button', NULL));
-  $defaulr_attr = array(
+  $default_attr = array(
     'text'       => t(variable_get('fbconnect_button_text', 'Connect')), 
     'size'       => $size, 
-    'length'     => $length,
     'onlogin'    => 'facebook_onlogin_ready();',
     'background' => 'dark',
     'v'          => 2,
   ); 
   
-  $attr = array_merge($defaulr_attr, $attr);
+  $attr = array_merge($default_attr, $attr);
   drupal_alter('fbconnect_login_button', $attr);
   $text = $attr['text'];
   unset($attr['text']);
@@ -357,10 +356,10 @@ function facebook_client() {
   if (!$fb instanceof Facebook) {
     if ($conf = fbconnect_get_config()) {
       if (module_exists('libraries')) {
-        $lib_path = libraries_get_path('facebook-platform') . '/php/';
+        $lib_path = libraries_get_path('facebook-platform') . '/php';
       } 
       else {
-        $lib_path = drupal_get_path('module', 'fbconnect') . '/facebook-client/';
+        $lib_path = drupal_get_path('module', 'fbconnect') . '/facebook-client';
         if (is_dir($lib_path . '/php')) {
           $lib_path .= '/php';
         }
