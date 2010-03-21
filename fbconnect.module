@@ -1,5 +1,5 @@
 <?php
-// $Id$
+// $Id: fbconnect.module,v 1.23 2010/03/21 16:26:03 vectoroc Exp $
 
 
 define('FBCONNECT_COMMENT_FEED_BUNDLEID', 84409393217);

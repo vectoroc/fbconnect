@@ -1,5 +1,5 @@
 <?php
-// $Id$
+// $Id: fbconnect.pages.inc,v 1.18 2010/03/21 16:26:03 vectoroc Exp $
 
 /**
  * Menu callback.
@@ -158,13 +158,21 @@ function fbconnect_user_settings_form($form_state, $account) {
 
   // Whether user picture is enabled, 
   // users can choose to use his facebook avatar as avatar
-  if (variable_get('user_pictures', 0) && $conf['user_pictures'] == 'allow') {
+  if ($conf['user_pictures'] == 'allow') {
     $form['fb_avatar'] = array(
       '#type' => 'checkbox',
       '#title' => t('Use my Facebook picture as user picture'),
       '#default_value' => $account->fb_avatar,
     );
+  }
   
+  if (!variable_get('user_pictures', 0)) {
+    $form['fb_avatar']['#attributes'] = array(
+      'disabled' => 'disabled',
+    );
+    $form['fb_avatar']['#description'] = t('Enable user picture support in !link', array(
+      '!link' => l(t('User settings'), 'admin/user/settings'),
+    ));    
   }
   
   $form['account'] = array(
@@ -265,6 +273,7 @@ function fbconnect_render_friends_invite_form() {
  * Make rendering of facebook user picture themeable
  */
 function theme_fbconnect_user_picture_override($fbuid = '', $account = '', $user_url = '', $size = 'square', $logo = TRUE) {
+  if ($logo) $logo = 'true';
   $output = <<<PIC
       <div class="picture">
         <a href="$user_url">

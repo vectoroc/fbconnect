@@ -1,5 +1,5 @@
 <?php
-// $Id$
+// $Id: fbconnect.admin.inc,v 1.15 2010/03/21 16:26:03 vectoroc Exp $
 
 /** 
  * @file 

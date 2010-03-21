@@ -1,4 +1,4 @@
-; $Id$
+; $Id: fbconnect.info,v 1.10 2010/03/21 16:26:03 vectoroc Exp $
 name = Fbconnect
 description = Allows users to connect with Facebook account
 package = "Authentication"

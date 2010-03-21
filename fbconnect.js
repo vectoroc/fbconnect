@@ -1,4 +1,4 @@
-// $Id$
+// $Id: fbconnect.js,v 1.4 2010/03/21 16:26:03 vectoroc Exp $
 
 Drupal.behaviors.fbconnect = function(context) {
 	if (window.FB && Drupal.settings.fbconnect && Drupal.settings.fbconnect.api_key) {

@@ -1,5 +1,5 @@
 <?php 
-// $Id$
+// $Id: xd_receiver.inc,v 1.4 2010/03/21 16:26:03 vectoroc Exp $
 
 /**
  * Without a receiver file, cross-domain javascript will not work.
