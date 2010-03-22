@@ -35,7 +35,9 @@ Facebook API key: http://www.facebook.com/developers/
     Copy the content of the "php" folder into the "facebook-client" folder (see facebook-client/README.TXT)
       
   3. Create a new application: http://www.facebook.com/developers/createapp.php  
-    (more information here: http://developers.facebook.com/get_started.php), leave app default settings. 
+    (more information here: http://developers.facebook.com/get_started.php), leave app default settings.
+    Important! Add your server to the Server Whitelist on Advanced settings tab on Facebook or 
+    disable Session Secret Whitelist Exception. 
 
   4. Activate the module through your website's modules administration pages, 
   
