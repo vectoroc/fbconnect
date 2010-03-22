@@ -38,7 +38,7 @@ function fbconnect_menu() {
   );
 
   $items['user/%user/edit/fbconnect'] = array(
-    'title' => 'Facebook Connect',
+    'title' => 'Facebook',
     'page callback' => 'fbconnect_user_identities',
     'page arguments' => array(1),
     'access callback' => 'user_edit_access',
@@ -164,7 +164,7 @@ function fbconnect_get_connected_friends($fbuid) {
 function fbconnect_redirect_submit($form, &$form_state) {
   global $user;
   
-  $form_state['redirect'] = 'user/'. $user->uid .'/fbconnect';
+  $form_state['redirect'] = 'user/'. $user->uid .'/edit/fbconnect';
   drupal_get_messages('status');
   $fbuid = fbconnect_get_fbuid();
   if ($fbuid) {
