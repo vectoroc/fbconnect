@@ -162,7 +162,7 @@ function fbconnect_admin_settings() {
     '#type' => 'checkbox',
     '#title' => t('Show Facebook Logo'),
     '#description' => t('Uncheck this if you don\'t want to display the facebook logo on the user picture.'),
-    '#value' => variable_get('fbconnect_pic_logo', TRUE),
+    '#default_value' => variable_get('fbconnect_pic_logo', TRUE),
   );
 
   $form = system_settings_form($form);
