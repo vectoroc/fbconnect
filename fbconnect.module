@@ -1,11 +1,6 @@
 <?php
 // $Id$
 
-
-define('FBCONNECT_COMMENT_FEED_BUNDLEID', 84409393217);
-define('FBCONNECT_REG_FEED_BUNDLEID', 47875658217);
-
-
 /**
  * Implementation of hook_menu().
  */
@@ -42,8 +37,8 @@ function fbconnect_menu() {
     'file' => 'fbconnect.pages.inc',    
   );
 
-  $items['user/%user/fbconnect'] = array(
-    'title' => 'Facebook Connect',
+  $items['user/%user/edit/fbconnect'] = array(
+    'title' => 'Facebook',
     'page callback' => 'fbconnect_user_identities',
     'page arguments' => array(1),
     'access callback' => 'user_edit_access',
@@ -118,7 +113,7 @@ function fbconnect_block($op = 'list', $delta = 0, $edit = array()) {
           }
         }
 
-        $blocks['title']   = t('Facebook friends');
+        $blocks['subject'] = t('Facebook friends');
         $blocks['content'] = l(t('Invite friends'), 'fbconnect/invite/friends') . $content;
       }
       return $blocks;
@@ -169,7 +164,7 @@ function fbconnect_get_connected_friends($fbuid) {
 function fbconnect_redirect_submit($form, &$form_state) {
   global $user;
   
-  $form_state['redirect'] = 'user/'. $user->uid .'/fbconnect';
+  $form_state['redirect'] = 'user/'. $user->uid .'/edit/fbconnect';
   drupal_get_messages('status');
   $fbuid = fbconnect_get_fbuid();
   if ($fbuid) {
@@ -346,6 +341,31 @@ function fbconnect_render_button($attr = array()) {
   return '<fb:login-button ' . drupal_attributes($attr) . '>' . $text . '</fb:login-button>';
 }
 
+function _facebook_client_load_include() {
+  if (!class_exists('Facebook')) {  
+    if (module_exists('libraries')) {
+      $lib_path = libraries_get_path('facebook-platform') . '/php';
+    } 
+    else {
+      $lib_path = drupal_get_path('module', 'fbconnect') . '/facebook-client';
+      if (is_dir($lib_path . '/php')) {
+        $lib_path .= '/php';
+      }
+    }
+    $client_include = $lib_path . '/facebook.php';
+    if (!file_exists($client_include)) {
+      $message = t('Fbconnect : Facebook PHP library not found. See README.TXT');
+      drupal_set_message($message, 'warning', FALSE);
+    }
+    else {
+      // Include facebook.php
+      include_once($client_include);
+    }
+  }
+  
+  return class_exists('Facebook');
+}
+
 /**
  * Get the facebook client object for easy access.
  * @return Facebook
@@ -353,37 +373,20 @@ function fbconnect_render_button($attr = array()) {
  */
 function facebook_client() {
   static $fb = NULL;
-  if (!$fb instanceof Facebook) {
-    if ($conf = fbconnect_get_config()) {
-      if (module_exists('libraries')) {
-        $lib_path = libraries_get_path('facebook-platform') . '/php';
-      } 
-      else {
-        $lib_path = drupal_get_path('module', 'fbconnect') . '/facebook-client';
-        if (is_dir($lib_path . '/php')) {
-          $lib_path .= '/php';
-        }
-      }
-      $client_include = $lib_path . '/facebook.php';
-      if (!file_exists($client_include)) {
-        drupal_set_message(t('Fbconnect : Facebook PHP library file @file not found see README.TXT', array('@file' => $client_include)), 'status', FALSE);
-        return FALSE;
-      }
-      // Include facebook.php
-      include_once($client_include);
-      if (class_exists('Facebook')) {
-        $fb = new Facebook($conf['api_key'], $conf['secret_api_key']);
-        /*
-         * If a page is loaded via HTTPS, then all images and static
-         * resources need to be printed with HTTPS urls to avoid
-         * mixed content warnings. If your page loads with an HTTPS
-         * url, then call set_use_ssl_resources to retrieve the correct
-         * urls.
-         */
-        if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on') {
-          $fb->api_client->set_use_ssl_resources(TRUE);
-        }
-      }
+  if (!$fb instanceof Facebook 
+    && $conf = fbconnect_get_config()
+    && _facebook_client_load_include()
+  ) {
+    $fb = new Facebook($conf['api_key'], $conf['secret_api_key']);
+    /*
+     * If a page is loaded via HTTPS, then all images and static
+     * resources need to be printed with HTTPS urls to avoid
+     * mixed content warnings. If your page loads with an HTTPS
+     * url, then call set_use_ssl_resources to retrieve the correct
+     * urls.
+     */
+    if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on') {
+      $fb->api_client->set_use_ssl_resources(TRUE);
     }
   }
   return $fb;
