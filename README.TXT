@@ -36,18 +36,20 @@ Facebook API key: http://www.facebook.com/developers/
       
   3. Create a new application: http://www.facebook.com/developers/createapp.php  
     (more information here: http://developers.facebook.com/get_started.php), leave app default settings.
-    Important! Add your server to the Server Whitelist on Advanced settings tab on Facebook or 
-    disable Session Secret Whitelist Exception. 
-
-  4. Activate the module through your website's modules administration pages, 
+    
+  4. Enter the Connect URL on Connect settings tab (e.g. copy value from admin/settings/fbconnect field “Connect url”).
   
-  5. Configure the module through the 'Fbconnect' section of the 'Site configuration' menu, using the information 
+  5. Add your server to the Server Whitelist on Advanced settings tab on Facebook or disable Session Secret Whitelist Exception. 
+
+  6. Activate the module through your website's modules administration pages, 
+  
+  7. Configure the module through the 'Fbconnect' section of the 'Site configuration' menu, using the information 
     provided by Facebook (API key, Secret API key).  When editing configuration, make sure your facebook session's 
     is active. If it is'nt active then perhaps you will see message "Unable to autoconfigure your application settings, 
     make sure you are logged into Facebook". In this case do 6 from this instruction and try to connect your drupal 
     admin account with Facebook (developper of the App) on '/user/1/edit/fbconnect' page.
      
-  6. Edit the "page.tpl.php" file of your current theme. edit the <html> tag and add the facebook xmlns for rendering XFBML.
+  8. Edit the "page.tpl.php" file of your current theme. edit the <html> tag and add the facebook xmlns for rendering XFBML.
     example :
     <html xmlns:fb="http://www.facebook.com/2008/fbml" 
        xmlns="http://www.w3.org/1999/xhtml" xml:lang="<?php print $language->language ?>" 
@@ -55,4 +57,4 @@ Facebook API key: http://www.facebook.com/developers/
 
     Ensure that your page.tpl.php contains <?php print $closure ?> code. 
      
-  7. Activate the 'fbconnect friend' block from the 'build/block' menu if you want
+  9. Activate the 'fbconnect friend' block from the 'build/block' menu if you want
