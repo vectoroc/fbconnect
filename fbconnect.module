@@ -374,8 +374,8 @@ function _facebook_client_load_include() {
 function facebook_client() {
   static $fb = NULL;
   if (!$fb instanceof Facebook 
-    && $conf = fbconnect_get_config()
     && _facebook_client_load_include()
+    && $conf = fbconnect_get_config()
   ) {
     $fb = new Facebook($conf['api_key'], $conf['secret_api_key']);
     /*
