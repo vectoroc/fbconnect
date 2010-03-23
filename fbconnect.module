@@ -222,7 +222,7 @@ function fbconnect_form_alter(&$form, $form_state, $form_id) {
     case 'user_profile_form':
       if (variable_get('user_pictures', 0)) {
         $user = user_load(arg(1));
-        if ($user->fb_avatar) {
+        if ($user->fb_avatar && isset($form['picture'])) {
           $form['picture']['fb_avatar'] = array(
             '#value' => t('You are currently using your Facebook picture, if you delete or load a new picture, your facebook picture will no longer be updated.'),
             '#weight' => 0,
