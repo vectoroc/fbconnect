@@ -105,7 +105,13 @@ function fbconnect_admin_settings() {
     '#title' => t('Destination, after user\'s valid or skip invite friend form'),
     '#default_value' => variable_get('fbconnect_invite_dest', $base_url),
   );
-
+  
+  $form['site']['fbconnect_reg_options'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Disable linking accounts during registration'),
+    '#default_value' => variable_get('fbconnect_reg_options', 0),
+    '#description' => t('Disables the option to link local account to a FB account on registration'),
+  );
   
   $form['display'] = array(
     '#title' => t('Display Settings'),

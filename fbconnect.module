@@ -37,12 +37,13 @@ function fbconnect_menu() {
     'file' => 'fbconnect.pages.inc',    
   );
 
-  $items['user/%user/edit/fbconnect'] = array(
+  $items['user/%user_category/edit/fbconnect'] = array(
     'title' => 'Facebook',
     'page callback' => 'fbconnect_user_identities',
     'page arguments' => array(1),
     'access callback' => 'user_edit_access',
     'access arguments' => array(1),
+    'load arguments' => array('%map', '%index'),
     'type' => MENU_LOCAL_TASK,
     'file' => 'fbconnect.pages.inc',
   );
@@ -183,6 +184,7 @@ function fbconnect_redirect_submit($form, &$form_state) {
  * Impletementation of hook_form_alter.
  */
 function fbconnect_form_alter(&$form, $form_state, $form_id) {
+  global $user;
   // if (in_array($form_id, array('user_profile_form', 'user_edit_form', 'user_register'))) {
   
   // variable to catch any content type edit form's name
@@ -222,7 +224,7 @@ function fbconnect_form_alter(&$form, $form_state, $form_id) {
     case 'user_profile_form':
       if (variable_get('user_pictures', 0)) {
         $user = user_load(arg(1));
-        if ($user->fb_avatar) {
+        if ($user->fb_avatar && isset($form['picture'])) {
           $form['picture']['fb_avatar'] = array(
             '#value' => t('You are currently using your Facebook picture, if you delete or load a new picture, your facebook picture will no longer be updated.'),
             '#weight' => 0,
@@ -234,7 +236,8 @@ function fbconnect_form_alter(&$form, $form_state, $form_id) {
 
     // Facebook feed checkbox on comment form.
     case 'comment_form':
-      if (fbconnect_get_fbuid()) {
+      $fbuid = fbconnect_get_fbuid();
+      if ($fbuid && _is_fbconnect_user($fbuid) == $user->uid && ($form['uid']['#value'] == 0 || $form['uid']['#value'] == $user->uid)) {
         $favicon = '<img src="http://wiki.developers.facebook.com/images/1/17/Connect_light_small_short.gif" />';
         $form['fbconnect_feed'] = array(
           '#type' => 'checkbox',
@@ -374,8 +377,8 @@ function _facebook_client_load_include() {
 function facebook_client() {
   static $fb = NULL;
   if (!$fb instanceof Facebook 
-    && $conf = fbconnect_get_config()
     && _facebook_client_load_include()
+    && $conf = fbconnect_get_config()
   ) {
     $fb = new Facebook($conf['api_key'], $conf['secret_api_key']);
     /*
@@ -599,7 +602,12 @@ function fbconnect_autoconnect_form_submit($form, &$form_state) {
       $form_state['values']['fbuid'] = $fbuid;
       
       if (!$uid) {
-        $form_state['redirect'] = 'fbconnect/register/prompt';
+        if (variable_get('fbconnect_reg_options', 0) == 1) {
+          $form_state['redirect'] = array( 'fbconnect/register/create', drupal_get_destination() );
+        }
+        else {
+          $form_state['redirect'] = array( 'fbconnect/register/prompt', drupal_get_destination() );
+        }
       }
       elseif ($uid) {
         $user = user_load($uid);
@@ -621,7 +629,14 @@ function fbconnect_user($op, &$edit, &$user, $category = NULL) {
     case 'delete':
       db_query('DELETE FROM {fbconnect_users} WHERE uid = %d', $user->uid);
       break;
-      
+    case 'categories':
+      return array(
+        array(
+          'name' => 'fbconnect',
+          'title' => 'Facebook',
+          'weight' => 3,
+        ),
+      );
 //    case 'logout':
 //      $conf = fbconnect_get_config();
 //      $fbuid = fbconnect_get_fbuid();

@@ -56,6 +56,7 @@ function fbconnect_register_page($form_state = array()) {
       '#default_value' => 1,
     );  
   }
+  $form['#redirect'] = isset($_REQUEST['destination']) ? $_REQUEST['destination'] : '';
   $form['#submit'][] = 'fbconnect_register_form_submit';  
   
   // Fast registration mode, we by pass std drupal reg form.
@@ -119,16 +120,19 @@ function fbconnect_user_identities($account) {
   $fbuid = fbconnect_get_fbuid();
   $uid   = _is_fbconnect_user($fbuid);
   
+  drupal_set_title(check_plain($account->name));
+  
   if ($account->fbuid) { 
     return drupal_get_form('fbconnect_user_settings_form', $account);
   }
   elseif ($uid && $account->uid != $uid) {
-    return t(
-      "Your current Facebook session is associated to another account on our site.\n"
-     ."You can logout of facebook and attempt to associate another Facebook account to your"
-     ."!site_name account, or you need to disconnect the current association."
-     ,array('!site_name' => $conf['invite_name'])  
+    $message = t(
+        "Your current Facebook session is associated to another account on our site.\n"
+      . "You can logout of facebook and attempt to associate another Facebook account to your "
+      . "!site_name account, or you need to disconnect the current association."
+      , array('!site_name' => $conf['invite_name'])  
     );
+    return '<div>' . $message . '</div>';
   }
   else {
     return '<div>'
