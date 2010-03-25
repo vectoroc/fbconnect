@@ -37,12 +37,13 @@ function fbconnect_menu() {
     'file' => 'fbconnect.pages.inc',    
   );
 
-  $items['user/%user/edit/fbconnect'] = array(
+  $items['user/%user_category/edit/fbconnect'] = array(
     'title' => 'Facebook',
     'page callback' => 'fbconnect_user_identities',
     'page arguments' => array(1),
     'access callback' => 'user_edit_access',
     'access arguments' => array(1),
+    'load arguments' => array('%map', '%index'),
     'type' => MENU_LOCAL_TASK,
     'file' => 'fbconnect.pages.inc',
   );
@@ -621,7 +622,14 @@ function fbconnect_user($op, &$edit, &$user, $category = NULL) {
     case 'delete':
       db_query('DELETE FROM {fbconnect_users} WHERE uid = %d', $user->uid);
       break;
-      
+    case 'categories':
+      return array(
+        array(
+          'name' => 'fbconnect',
+          'title' => 'Facebook',
+          'weight' => 3,
+        ),
+      );
 //    case 'logout':
 //      $conf = fbconnect_get_config();
 //      $fbuid = fbconnect_get_fbuid();
