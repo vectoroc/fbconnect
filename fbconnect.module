@@ -600,7 +600,12 @@ function fbconnect_autoconnect_form_submit($form, &$form_state) {
       $form_state['values']['fbuid'] = $fbuid;
       
       if (!$uid) {
-        $form_state['redirect'] = 'fbconnect/register/prompt';
+        if (variable_get('fbconnect_reg_options', 0) == 1) {
+          $form_state['redirect'] = array( 'fbconnect/register/create', drupal_get_destination() );
+        }
+        else {
+          $form_state['redirect'] = array( 'fbconnect/register/prompt', drupal_get_destination() );
+        }
       }
       elseif ($uid) {
         $user = user_load($uid);

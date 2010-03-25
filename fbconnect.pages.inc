@@ -56,6 +56,7 @@ function fbconnect_register_page($form_state = array()) {
       '#default_value' => 1,
     );  
   }
+  $form['#redirect'] = isset($_REQUEST['destination']) ? $_REQUEST['destination'] : '';
   $form['#submit'][] = 'fbconnect_register_form_submit';  
   
   // Fast registration mode, we by pass std drupal reg form.
