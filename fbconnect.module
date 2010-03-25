@@ -184,6 +184,7 @@ function fbconnect_redirect_submit($form, &$form_state) {
  * Impletementation of hook_form_alter.
  */
 function fbconnect_form_alter(&$form, $form_state, $form_id) {
+  global $user;
   // if (in_array($form_id, array('user_profile_form', 'user_edit_form', 'user_register'))) {
   
   // variable to catch any content type edit form's name
@@ -235,7 +236,8 @@ function fbconnect_form_alter(&$form, $form_state, $form_id) {
 
     // Facebook feed checkbox on comment form.
     case 'comment_form':
-      if (fbconnect_get_fbuid()) {
+      $fbuid = fbconnect_get_fbuid();
+      if ($fbuid && _is_fbconnect_user($fbuid) == $user->uid && ($form['uid']['#value'] == 0 || $form['uid']['#value'] == $user->uid)) {
         $favicon = '<img src="http://wiki.developers.facebook.com/images/1/17/Connect_light_small_short.gif" />';
         $form['fbconnect_feed'] = array(
           '#type' => 'checkbox',
