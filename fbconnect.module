@@ -782,6 +782,7 @@ function fbconnect_theme_registry_alter(&$theme_registry) {
     $theme_registry['user_picture'] = array(
       'arguments' => array('account' => NULL),
       'function' => 'fbconnect_theme_user_picture_override',
+      'preprocess functions' => array(),
     );
   }
 }
