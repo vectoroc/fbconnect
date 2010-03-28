@@ -571,10 +571,8 @@ function fbconnect_render_js() {
 function fbconnect_footer() {
   if ($config = fbconnect_get_config()) {
     $footer = '<script type="text/javascript" src="' . $config['featureLoader_url'] . '"></script>';
-    if (fbconnect_get_fbuid() && user_is_anonymous()) {
-      // Display the autoconnect form.
-      $footer .= '<div style="display: none">' . drupal_get_form('fbconnect_autoconnect_form') . '</div>';
-    }
+    // Display the autoconnect form.
+    $footer .= '<div style="display: none">' . drupal_get_form('fbconnect_autoconnect_form') . '</div>';
     //initialize facebooks javascript
     $footer .= '<script type="text/javascript">FB.init("' . $config['api_key'] . '");</script>';
     return $footer;
