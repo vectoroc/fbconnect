@@ -79,21 +79,17 @@ function fbconnect_theme() {
   );
 }
 
+function fbconnect_block_info() {
+  $blocks[0]['info']  = t('Fbconnect friend');
+  $blocks[0]['cache'] = BLOCK_NO_CACHE;
+  return $blocks;
+}
+
 /**
  * Implementation of hook_block().
  */
-function fbconnect_block($op = 'list', $delta = 0, $edit = array()) {
-  switch ($op) {
-    case 'list':
-      $blocks[0]['info']  = t('Fbconnect friend');
-      $blocks[0]['cache'] = BLOCK_NO_CACHE;
-      return $blocks;
-
-    case 'view':
-      /*
-      TODO revoir la visi du bloc,
-      session fb ne correspond pas au global $user.
-      */
+function fbconnect_block_view($delta = 0) {
+  if ($delta == 0) {
       $fbuid  = fbconnect_get_fbuid();
 
       if (user_is_logged_in() && $fbuid) {
@@ -110,7 +106,7 @@ function fbconnect_block($op = 'list', $delta = 0, $edit = array()) {
               $row[] = theme('username', $friend);
             }
             $content = theme('item_list', $row);
-            cache_set($cid, $content, 'cache_block' , time() + 3600);
+            cache_set($cid, $content, 'cache_block' , REQUEST_TIME + 3600);
           }
         }
 
@@ -183,7 +179,7 @@ function fbconnect_redirect_submit($form, &$form_state) {
 /**
  * Impletementation of hook_form_alter.
  */
-function fbconnect_form_alter(&$form, $form_state, $form_id) {
+function fbconnect_form_alter(&$form, &$form_state, $form_id) {
   global $user;
   // if (in_array($form_id, array('user_profile_form', 'user_edit_form', 'user_register'))) {
   
@@ -301,12 +297,12 @@ function fbconnect_comment_feed_submit($form, &$form_state) {
   if ($form_state['values']['fbconnect_feed']) {
     $node = node_load($form_state['values']['nid']);
      
-    $_SESSION['fbconnect_feed'] = array(
+    drupal_set_session('fbconnect_feed', array(
       'type'    => 'comment',
       'comment' => $form_state['values']['comment'],
       'title'   => $node->title,
       'nodeurl' => url('node/' . $node->nid, array('absolute' => TRUE)),
-    );
+    ));
   }
 }
 
@@ -452,7 +448,7 @@ function fbconnect_init() {
     $fbuid = fbconnect_get_fbuid();
     if ($fbuid && _is_fbconnect_user($fbuid)) { 
       $form_state = array('values' => array('op' => 'connect'));
-      drupal_execute('fbconnect_autoconnect_form', $form_state);
+      drupal_form_submit('fbconnect_autoconnect_form', $form_state);
       drupal_goto($form_state['redirect']);
     }
   } 
@@ -561,21 +557,25 @@ function fbconnect_render_js() {
       . ');});', 'inline', 'footer'
     );
 
-    unset($_SESSION['fbconnect_feed']);
+    drupal_set_session('fbconnect_feed', null);
   }
 }
 
 /**
- * Implementation of hook_footer().
+ * Implements hook_page_alter().
  */
-function fbconnect_footer() {
+function fbconnect_page_alter(&$page) {
   if ($config = fbconnect_get_config()) {
     $footer = '<script type="text/javascript" src="' . $config['featureLoader_url'] . '"></script>';
     // Display the autoconnect form.
     $footer .= '<div style="display: none">' . drupal_get_form('fbconnect_autoconnect_form') . '</div>';
     //initialize facebooks javascript
     $footer .= '<script type="text/javascript">FB.init("' . $config['api_key'] . '");</script>';
-    return $footer;
+
+    $page['page_bottom']['fbconnect']= array(
+      '#type' => 'markup',
+      '#markup' => $footer,
+    );
   }
 }
 
@@ -620,36 +620,21 @@ function fbconnect_autoconnect_form_submit($form, &$form_state) {
 }
 
 /**
- * Implementation of hook_user().
+ * Implementation of hook_user_categories().
  */
-function fbconnect_user($op, &$edit, &$user, $category = NULL) {
-  switch ($op) {
-    case 'delete':
-      db_query('DELETE FROM {fbconnect_users} WHERE uid = %d', $user->uid);
-      break;
-    case 'categories':
-      return array(
-        array(
-          'name' => 'fbconnect',
-          'title' => 'Facebook',
-          'weight' => 3,
-        ),
-      );
-//    case 'logout':
-//      $conf = fbconnect_get_config();
-//      $fbuid = fbconnect_get_fbuid();
-//      if ($fbuid && $user->fbuid == $fbuid && $conf['loginout_mode'] == 'auto') {
-//        try {
-//          facebook_client()->expire_session();
-//        } 
-//        catch (Exception $e) {
-//          $msg  = 'Exception thrown while using facebook_client()->expire_session: @code';
-//          $args = array('@code' => $e->getMessage());
-//          watchdog('fbconnect', $msg, $args, WATCHDOG_WARNING);
-//        }
-//      }
-//      break;
-  }
+function fbconnect_user_categories() {
+  return array(array(
+    'name' => 'fbconnect',
+    'title' => 'Facebook',
+    'weight' => 3,
+  ));	
+}
+
+/**
+ * Implementation of hook_user_delete().
+ */
+function fbconnect_user_delete($account) {
+  db_query('DELETE FROM {fbconnect_users} WHERE uid = %d', $account->uid);
 }
 
 /**
@@ -699,7 +684,7 @@ function fbconnect_register($uid, $fbuid) {
   $insert_query = 'INSERT INTO {fbconnect_users} (uid, fbuid, timestamp) VALUES (%d, \'%s\', %d)';  
   
   db_query($delete_query, $uid);
-  if (db_query($insert_query, $uid, $fbuid, time())) {  
+  if (db_query($insert_query, $uid, $fbuid, REQUEST_TIME)) {  
     user_save(user_load($uid), array('fbuid' => $fbuid));
     return TRUE;
   }
@@ -718,7 +703,7 @@ function fbconnect_unregister($fbuid) {
     $fb = facebook_client();
     $fb->api_client->auth_revokeAuthorization($fbuid);
     
-    db_query('DELETE FROM {fbconnect_users} WHERE fbuid = %s', $fbuid);
+    db_query("DELETE FROM {fbconnect_users} WHERE fbuid = '%s'", $fbuid);
     user_save(user_load($uid), array('fbuid' => NULL));
     
     watchdog(
@@ -818,18 +803,22 @@ function fbconnect_post_remove_callback() {
 }
 
 /***
- * Implementation of hook_nodeapi()
+ * Implementation of hook_node_validate()
  */
-function fbconnect_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
-  if ($op == 'validate') {
-    $_SESSION['fbconnect_feed']['submit'] = ($a3['fbconnect_feed']['#post']['fbconnect_feed']) ? TRUE : FALSE;
-  }
-  if ($op == 'insert' && $_SESSION['fbconnect_feed']['submit'] === TRUE) {
-    $_SESSION['fbconnect_feed'] = array(
+function hook_node_validate($node, $form) {
+  $_SESSION['fbconnect_feed']['submit'] = ($a3['fbconnect_feed']['#post']['fbconnect_feed']) ? TRUE : FALSE;
+}
+
+/***
+ * Implementation of hook_node_insert()
+ */
+function fbconnect_node_insert($node) {
+  if ($_SESSION['fbconnect_feed']['submit'] === TRUE) {
+    drupal_set_session('fbconnect_feed', array(
       'type'    => 'node',
       'title'   => $node->title,
       'nodeurl' => url('node/' . $node->nid, array('absolute' => TRUE)),
-    );
+    ));
   }
 }
 

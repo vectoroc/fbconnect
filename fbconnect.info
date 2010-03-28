@@ -3,9 +3,9 @@ name = Fbconnect
 description = Allows users to connect with Facebook account
 package = "Authentication"
 php = 5.2
-core = "6.x"
-; Information added by drupal.org packaging script on 2010-03-22
-version = "6.x-1.x-dev"
-core = "6.x"
-project = "fbconnect"
-datestamp = "1269216360"
+core = "7.x"
+files[] = fbconnect.module
+files[] = fbconnect.admin.inc
+files[] = fbconnect.pages.inc
+files[] = fbconnect.install
+files[] = xd_receiver.inc
