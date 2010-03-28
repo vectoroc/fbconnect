@@ -481,8 +481,8 @@ function fbconnect_render_js() {
     drupal_add_js(array('fbconnect' => $config), 'setting');
     drupal_add_js($module_path . '/fbconnect.js');
   }
-
-  if ($_SESSION['fbconnect_feed']) {
+  
+  if ($config && $_SESSION['fbconnect_feed']) {
     $site = variable_get('site_name', $base_url);
     $feed = $_SESSION['fbconnect_feed'];
 
@@ -555,11 +555,11 @@ function fbconnect_render_js() {
      * FB.Connect.streamPublish(user_message, attachment, action_links, target_id, user_management_promt, callback, auto_publish, actor_id)
      */
     drupal_add_js(
-    '$(document).ready(function() {FB.Connect.streamPublish("", ' 
-    . drupal_to_js($feed_js) . ', '. drupal_to_js($action_links)
-    . ', "", "' . t('Something to say?') . '", "", ' . $autopublish
-    . ');});', 'inline', 'footer'
-  );
+      'FB_RequireFeatures(["Connect"], function() {FB.Connect.streamPublish("", ' 
+      . drupal_to_js($feed_js) . ', '. drupal_to_js($action_links)
+      . ', "", "' . t('Something to say?') . '", "", ' . $autopublish
+      . ');});', 'inline', 'footer'
+    );
 
     unset($_SESSION['fbconnect_feed']);
   }
@@ -571,8 +571,10 @@ function fbconnect_render_js() {
 function fbconnect_footer() {
   if ($config = fbconnect_get_config()) {
     $footer = '<script type="text/javascript" src="' . $config['featureLoader_url'] . '"></script>';
-    // Display the autoconnect form.
-    $footer .= drupal_get_form('fbconnect_autoconnect_form');
+    if (fbconnect_get_fbuid() && user_is_anonymous()) {
+      // Display the autoconnect form.
+      $footer .= '<div style="display: none">' . drupal_get_form('fbconnect_autoconnect_form') . '</div>';
+    }
     //initialize facebooks javascript
     $footer .= '<script type="text/javascript">FB.init("' . $config['api_key'] . '");</script>';
     return $footer;
@@ -586,8 +588,6 @@ function fbconnect_autoconnect_form() {
   $form['connect'] = array(
     '#type'   => 'submit',
     '#value'  => 'Connect',
-    '#prefix' => '<!--',
-    '#suffix' => '-->',
   );
 
   return $form;
@@ -765,14 +765,6 @@ function fbconnect_get_info_from_fb($fbuid, $fields) {
  *
  */
 function fbconnect_theme_registry_alter(&$theme_registry) {
-  //  // Re-register the original theme function under a new name.
-  //  $theme_registry['fbconnect_username_orig'] = $theme_registry['username'];
-  //  // Override theme username
-  //  $theme_registry['username'] = array(
-  //    'arguments' => array('object' => NULL),
-  //    'function' => 'fbconnect_theme_username_override',
-  //  );
-  
   // Only change image handling if user have the permission to use the image.
   $conf = fbconnect_get_config();
   if ($conf['user_pictures'] == 'allow') {
