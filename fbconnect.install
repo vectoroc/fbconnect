@@ -7,6 +7,7 @@
  */
 function fbconnect_install() {
   drupal_install_schema('fbconnect'); 
+  _fbconnect_change_user_mail_field();
 }
  
 /** 
@@ -14,6 +15,7 @@ function fbconnect_install() {
  */ 
 function fbconnect_uninstall() { 
   drupal_uninstall_schema('fbconnect');
+  _fbconnect_change_user_mail_field('uninstall');
   // Delete our module's variable from the variables table. 
   variable_del('fbconnect_key');
   variable_del('fbconnect_skey');  
@@ -76,16 +78,8 @@ function fbconnect_update_6003() {
   return $ret;
 }
 
-
-/**
- * Extend maximum email length to 320 chars
- */
 function fbconnect_update_6004() {
-  $res = array();
-  $schema = user_schema();
-  fbconnect_schema_alter($schema);
-  db_change_field($res, 'users', 'mail', 'mail', $schema['users']['fields']['mail']);
-  return $res;
+  return _fbconnect_change_user_mail_field();
 }
 
 
@@ -105,4 +99,14 @@ function fbconnect_update_6005() {
  */
 function fbconnect_schema_alter(&$schema) {
   $schema['users']['fields']['mail']['length'] = 320;
+}
+
+/**
+ * Extend maximum email length to 320 chars
+ */
+function _fbconnect_change_user_mail_field($action = 'install') {
+  $schema = array('users' => drupal_get_schema('users'));
+  if ($action == 'install') fbconnect_schema_alter($schema);
+  db_change_field($res, 'users', 'mail', 'mail', $schema['users']['fields']['mail']);	
+  return $res;
 }
