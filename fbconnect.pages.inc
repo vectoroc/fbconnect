@@ -42,14 +42,20 @@ function fbconnect_register_page($form_state = array()) {
   drupal_prepare_form('user_register', $form, $form_state);   
   
   $form['name']['#default_value'] = $data['name'];
-  $form['fb_visible'] = array(
+
+  $form['fbconnect'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Facebook Connect'),
+  );
+
+  $form['fbconnect']['fb_visible'] = array(
     '#type' => 'checkbox',
     '#title' => t('Let my Facebook friends see me on @sitename', array('@sitename' => $site)),
     '#default_value' => 1,
   );
   
   if (variable_get('user_pictures', 0) && $conf['user_pictures'] == 'allow') {
-    $form['fb_avatar'] = array(
+    $form['fbconnect']['fb_avatar'] = array(
       '#type' => 'checkbox',
       '#title' => t('Use my Facebook picture as user picture'),
       '#description' => t('Your picture will be loaded from facebook.'),

@@ -17,18 +17,22 @@ function fbconnect_uninstall() {
   // Delete our module's variable from the variables table. 
   variable_del('fbconnect_key');
   variable_del('fbconnect_skey');  
-  variable_del('fbconnect_invite_msg');
-  variable_del('fbconnect_invite_name');  
-  variable_del('fbconnect_button');  
-  variable_del('fbconnect_invite_dest');
-  
   variable_del('fbconnect_base_domaine');
   variable_del('fbconnect_connect_url');
-  variable_del('fbconnect_fast_reg');
+  variable_del('fbconnect_language_code');
+  variable_del('fbconnect_debug');
   
-
-  variable_del('fbconnect_reg_feed_id');
-  variable_del('fbconnect_com_feed_id');
+  variable_del('fbconnect_fast_reg');
+  variable_del('fbconnect_reg_options');
+  variable_del('fbconnect_loginout_mode');
+  variable_del('fbconnect_invite_msg');
+  variable_del('fbconnect_invite_name');  
+  variable_del('fbconnect_invite_dest');
+  variable_del('fbconnect_button');  
+  variable_del('fbconnect_button_text');
+  variable_del('fbconnect_pic_allow');
+  variable_del('fbconnect_pic_size');
+  variable_del('fbconnect_pic_logo');
 }
 
 /** 
@@ -48,8 +52,8 @@ function fbconnect_schema() {
 }
 
 function fbconnect_update_6002() {
-  variable_set('fbconnect_reg_feed_id', FBCONNECT_REG_FEED_BUNDLEID);
-  variable_set('fbconnect_com_feed_id', FBCONNECT_COMMENT_FEED_BUNDLEID);
+//  variable_set('fbconnect_reg_feed_id', FBCONNECT_REG_FEED_BUNDLEID);
+//  variable_set('fbconnect_com_feed_id', FBCONNECT_COMMENT_FEED_BUNDLEID);
 
   $ret = array();
   db_drop_field($ret, 'fbconnect_users', 'import_setting');
@@ -78,9 +82,9 @@ function fbconnect_update_6003() {
  */
 function fbconnect_update_6004() {
   $res = array();
-  $scheme = user_schema();
-  $scheme['users']['fields']['mail']['length'] = 320;
-  db_change_field($res, 'users', 'mail', 'mail', $scheme['users']['fields']['mail']);
+  $schema = user_schema();
+  fbconnect_schema_alter($schema);
+  db_change_field($res, 'users', 'mail', 'mail', $schema['users']['fields']['mail']);
   return $res;
 }
 
@@ -95,6 +99,10 @@ function fbconnect_update_6005() {
   return $res;
 }
 
+/**
+ * Implementation of hook_schema_alter()
+ * @param array $schema
+ */
 function fbconnect_schema_alter(&$schema) {
   $schema['users']['fields']['mail']['length'] = 320;
 }
