@@ -208,7 +208,7 @@ function fbconnect_form_alter(&$form, $form_state, $form_id) {
 
     // Render fbconnect on login block.
     case 'user_login_block':
-      if ($_GET['destination'] != 'fbconnect') {
+      if ($_GET['destination'] != 'fbconnect' && fbconnect_get_config()) {
         
         $form['fbconnect_button'] = array(
           '#type' => 'item',
