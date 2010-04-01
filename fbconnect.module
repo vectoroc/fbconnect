@@ -554,12 +554,8 @@ function fbconnect_render_js() {
      * for more info about used params here
      * FB.Connect.streamPublish(user_message, attachment, action_links, target_id, user_management_promt, callback, auto_publish, actor_id)
      */
-    drupal_add_js(
-      'FB_RequireFeatures(["Connect"], function() {FB.Connect.streamPublish("", ' 
-      . drupal_to_js($feed_js) . ', '. drupal_to_js($action_links)
-      . ', "", "' . t('Something to say?') . '", "", ' . $autopublish
-      . ');});', 'inline', 'footer'
-    );
+    $streamPublishArgs = array("", $feed_js, $action_links, "", t('Something to say?'), "", $autopublish);
+    drupal_add_js(array('FB.streamPublish' => $streamPublishArgs), 'setting');
 
     unset($_SESSION['fbconnect_feed']);
   }
@@ -573,8 +569,6 @@ function fbconnect_footer() {
     $footer = '<script type="text/javascript" src="' . $config['featureLoader_url'] . '"></script>';
     // Display the autoconnect form.
     $footer .= '<div style="display: none">' . drupal_get_form('fbconnect_autoconnect_form') . '</div>';
-    //initialize facebooks javascript
-    $footer .= '<script type="text/javascript">FB.init("' . $config['api_key'] . '");</script>';
     return $footer;
   }
 }
