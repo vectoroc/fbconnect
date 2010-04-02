@@ -198,7 +198,7 @@ function fbconnect_form_alter(&$form, $form_state, $form_id) {
   
   switch ($form_id):
     case 'user_login':
-      if ($_GET['destination'] == 'fbconnect') {
+      if (@$_GET['destination'] == 'fbconnect') {
         unset($_REQUEST['destination']);
 
         drupal_set_message(t('Please log in, in order to link your account with Facebook Connect'));
@@ -208,7 +208,7 @@ function fbconnect_form_alter(&$form, $form_state, $form_id) {
 
     // Render fbconnect on login block.
     case 'user_login_block':
-      if ($_GET['destination'] != 'fbconnect' && fbconnect_get_config()) {
+      if (@$_GET['destination'] != 'fbconnect' && fbconnect_get_config()) {
         
         $form['fbconnect_button'] = array(
           '#type' => 'item',
@@ -476,13 +476,13 @@ function fbconnect_render_js() {
     $config['fbuid'] = fbconnect_get_fbuid();
     $config['user']  = array(
       'uid'   => $user->uid,
-      'fbuid' => $user->fbuid,
+      'fbuid' => @$user->fbuid,
     );
     drupal_add_js(array('fbconnect' => $config), 'setting');
     drupal_add_js($module_path . '/fbconnect.js');
   }
   
-  if ($config && $_SESSION['fbconnect_feed']) {
+  if ($config && isset($_SESSION['fbconnect_feed'])) {
     $site = variable_get('site_name', $base_url);
     $feed = $_SESSION['fbconnect_feed'];
 
