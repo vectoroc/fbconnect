@@ -282,7 +282,7 @@ function fbconnect_render_friends_invite_form() {
 /**
  * Make rendering of facebook user picture themeable
  */
-function theme_fbconnect_user_picture_override($fbuid = '', $account = '', $user_url = '', $size = 'square', $logo = TRUE) {
+function theme_fbconnect_user_picture_override($fbuid = '', $account = null, $user_url = '', $size = 'square', $logo = TRUE) {
   if ($logo) $logo = 'true';
   $output = <<<PIC
       <div class="picture">

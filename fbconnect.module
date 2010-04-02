@@ -775,6 +775,11 @@ function fbconnect_theme_registry_alter(&$theme_registry) {
  * Our replacement for theme('user_picture', ...)
  */
 function fbconnect_theme_user_picture_override($account) {
+  if (!isset($account->fbuid)) {
+    $user_data = unserialize(db_result(db_query('SELECT data FROM {users} WHERE uid = %d', $account->uid)));
+    $account->fbuid     = @$user_data['fbuid'];
+    $account->fb_avatar = @$user_data['fb_avatar'];
+  }
   // First learn the Facebook id
   $fbuid    = $account->fbuid;
   $user_url = url('user/' . $account->uid);
