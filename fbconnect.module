@@ -198,7 +198,7 @@ function fbconnect_form_alter(&$form, $form_state, $form_id) {
   
   switch ($form_id):
     case 'user_login':
-      if ($_GET['destination'] == 'fbconnect') {
+      if (@$_GET['destination'] == 'fbconnect') {
         unset($_REQUEST['destination']);
 
         drupal_set_message(t('Please log in, in order to link your account with Facebook Connect'));
@@ -208,7 +208,7 @@ function fbconnect_form_alter(&$form, $form_state, $form_id) {
 
     // Render fbconnect on login block.
     case 'user_login_block':
-      if ($_GET['destination'] != 'fbconnect') {
+      if (@$_GET['destination'] != 'fbconnect' && fbconnect_get_config()) {
         
         $form['fbconnect_button'] = array(
           '#type' => 'item',
@@ -223,8 +223,8 @@ function fbconnect_form_alter(&$form, $form_state, $form_id) {
     // Warning msg on user edit.
     case 'user_profile_form':
       if (variable_get('user_pictures', 0)) {
-        $user = user_load(arg(1));
-        if ($user->fb_avatar && isset($form['picture'])) {
+        $account = $form['_account']['#value'];
+        if ($account->fb_avatar && isset($form['picture'])) {
           $form['picture']['fb_avatar'] = array(
             '#value' => t('You are currently using your Facebook picture, if you delete or load a new picture, your facebook picture will no longer be updated.'),
             '#weight' => 0,
@@ -476,13 +476,13 @@ function fbconnect_render_js() {
     $config['fbuid'] = fbconnect_get_fbuid();
     $config['user']  = array(
       'uid'   => $user->uid,
-      'fbuid' => $user->fbuid,
+      'fbuid' => @$user->fbuid,
     );
     drupal_add_js(array('fbconnect' => $config), 'setting');
     drupal_add_js($module_path . '/fbconnect.js');
   }
   
-  if ($config && $_SESSION['fbconnect_feed']) {
+  if ($config && isset($_SESSION['fbconnect_feed'])) {
     $site = variable_get('site_name', $base_url);
     $feed = $_SESSION['fbconnect_feed'];
 
@@ -554,12 +554,8 @@ function fbconnect_render_js() {
      * for more info about used params here
      * FB.Connect.streamPublish(user_message, attachment, action_links, target_id, user_management_promt, callback, auto_publish, actor_id)
      */
-    drupal_add_js(
-      'FB_RequireFeatures(["Connect"], function() {FB.Connect.streamPublish("", ' 
-      . drupal_to_js($feed_js) . ', '. drupal_to_js($action_links)
-      . ', "", "' . t('Something to say?') . '", "", ' . $autopublish
-      . ');});', 'inline', 'footer'
-    );
+    $streamPublishArgs = array("", $feed_js, $action_links, "", t('Something to say?'), "", $autopublish);
+    drupal_add_js(array('FB.streamPublish' => $streamPublishArgs), 'setting');
 
     unset($_SESSION['fbconnect_feed']);
   }
@@ -573,8 +569,6 @@ function fbconnect_footer() {
     $footer = '<script type="text/javascript" src="' . $config['featureLoader_url'] . '"></script>';
     // Display the autoconnect form.
     $footer .= '<div style="display: none">' . drupal_get_form('fbconnect_autoconnect_form') . '</div>';
-    //initialize facebooks javascript
-    $footer .= '<script type="text/javascript">FB.init("' . $config['api_key'] . '");</script>';
     return $footer;
   }
 }
@@ -781,6 +775,11 @@ function fbconnect_theme_registry_alter(&$theme_registry) {
  * Our replacement for theme('user_picture', ...)
  */
 function fbconnect_theme_user_picture_override($account) {
+  if (!isset($account->fbuid)) {
+    $user_data = unserialize(db_result(db_query('SELECT data FROM {users} WHERE uid = %d', $account->uid)));
+    $account->fbuid     = @$user_data['fbuid'];
+    $account->fb_avatar = @$user_data['fb_avatar'];
+  }
   // First learn the Facebook id
   $fbuid    = $account->fbuid;
   $user_url = url('user/' . $account->uid);

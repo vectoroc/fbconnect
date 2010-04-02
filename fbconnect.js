@@ -28,7 +28,11 @@ Drupal.behaviors.fbconnect = function(context) {
 			$(context).each(function() {
 				var elem = $(this).get(0);
 				FB.XFBML.Host.parseDomElement(elem);
-			});			
+			});
+
+			if (Drupal.settings['FB.streamPublish']) {
+				FB.Connect.streamPublish.apply(FB.Connect, Drupal.settings['FB.streamPublish']);
+			}
 		});
 
 		switch (settings.loginout_mode) {
