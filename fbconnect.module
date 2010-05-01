@@ -188,9 +188,9 @@ function fbconnect_form_alter(&$form, $form_state, $form_id) {
   // if (in_array($form_id, array('user_profile_form', 'user_edit_form', 'user_register'))) {
   
   // variable to catch any content type edit form's name
-  $ctype = preg_match('/([a-z0-9_]+)_node_form$/', $form_id, $matches);
-  $ctype = $matches[1];
-  $ctypeformid = $matches[1] . '_node_form';
+  preg_match('/([a-z0-9_]+)_node_form$/', $form_id, $matches);
+  $ctype = isset($matches[1]) ? $matches[1] : '';
+  $ctypeformid = $ctype . '_node_form'; 
   
   if (isset($form['account'])) {
     $form['account']['mail']['#maxlength'] = 320;
