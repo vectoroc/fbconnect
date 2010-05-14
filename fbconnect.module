@@ -116,8 +116,9 @@ function fbconnect_block($op = 'list', $delta = 0, $edit = array()) {
 
         $blocks['subject'] = t('Facebook friends');
         $blocks['content'] = l(t('Invite friends'), 'fbconnect/invite/friends') . $content;
+        return $blocks;
       }
-      return $blocks;
+      break;
   }
 }
 
@@ -188,9 +189,9 @@ function fbconnect_form_alter(&$form, $form_state, $form_id) {
   // if (in_array($form_id, array('user_profile_form', 'user_edit_form', 'user_register'))) {
   
   // variable to catch any content type edit form's name
-  $ctype = preg_match('/([a-z0-9_]+)_node_form$/', $form_id, $matches);
-  $ctype = $matches[1];
-  $ctypeformid = $matches[1] . '_node_form';
+  preg_match('/([a-z0-9_]+)_node_form$/', $form_id, $matches);
+  $ctype = isset($matches[1]) ? $matches[1] : '';
+  $ctypeformid = $ctype . '_node_form'; 
   
   if (isset($form['account'])) {
     $form['account']['mail']['#maxlength'] = 320;
@@ -820,8 +821,8 @@ function fbconnect_post_remove_callback() {
  * Implementation of hook_nodeapi()
  */
 function fbconnect_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
-  if ($op == 'validate') {
-    $_SESSION['fbconnect_feed']['submit'] = ($a3['fbconnect_feed']['#post']['fbconnect_feed']) ? TRUE : FALSE;
+  if ($op == 'validate' && $a3['fbconnect_feed']['#post']['fbconnect_feed']) {
+    $_SESSION['fbconnect_feed']['submit'] = TRUE;
   }
   if ($op == 'insert' && $_SESSION['fbconnect_feed']['submit'] === TRUE) {
     $_SESSION['fbconnect_feed'] = array(
