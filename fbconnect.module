@@ -820,8 +820,8 @@ function fbconnect_post_remove_callback() {
  * Implementation of hook_nodeapi()
  */
 function fbconnect_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
-  if ($op == 'validate') {
-    $_SESSION['fbconnect_feed']['submit'] = ($a3['fbconnect_feed']['#post']['fbconnect_feed']) ? TRUE : FALSE;
+  if ($op == 'validate' && $a3['fbconnect_feed']['#post']['fbconnect_feed']) {
+    $_SESSION['fbconnect_feed']['submit'] = TRUE;
   }
   if ($op == 'insert' && $_SESSION['fbconnect_feed']['submit'] === TRUE) {
     $_SESSION['fbconnect_feed'] = array(
