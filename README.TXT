@@ -31,7 +31,7 @@ Facebook API key: http://www.facebook.com/developers/
 
   1. Upload the 'fbconnect' folder into your module directory, 
   
-  2. Download the Facebook PHP libraries from http://svn.facebook.com/svnroot/platform/clients/packages/facebook-platform.tar.gz. 
+  2. Download the Facebook PHP libraries from http://wiki.developers.facebook.com/index.php/User:Client_Libraries
     Copy the content of the "php" folder into the "facebook-client" folder (see facebook-client/README.TXT)
       
   3. Create a new application: http://www.facebook.com/developers/createapp.php  
