@@ -5,7 +5,7 @@
  * Implementation of hook_menu().
  */
 function fbconnect_menu() {
-  $items['admin/settings/fbconnect'] = array(
+  $items['admin/config/fbconnect'] = array(
     'title' => 'Facebook connect', 
     'page callback' => 'drupal_get_form', 
     'page arguments' => array('fbconnect_admin_settings'), 
