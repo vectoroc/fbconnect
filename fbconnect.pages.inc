@@ -251,10 +251,10 @@ function fbconnect_user_settings_form_submit($form, &$form_state) {
  */
 function fbconnect_render_friends_invite_form() {
   global $base_url;
-  $site      = drupal_to_js(variable_get('site_name', $base_url));  
-  $actiontxt = drupal_to_js(t('Please select the Facebook friends you want to invite'));
-  $action    = drupal_to_js(variable_get('fbconnect_invite_dest', $base_url));
-  $type      = drupal_to_js(variable_get('fbconnect_invite_name', $site));
+  $site      = drupal_json_encode(variable_get('site_name', $base_url));  
+  $actiontxt = drupal_json_encode(t('Please select the Facebook friends you want to invite'));
+  $action    = drupal_json_encode(variable_get('fbconnect_invite_dest', $base_url));
+  $type      = drupal_json_encode(variable_get('fbconnect_invite_name', $site));
   $content   = check_plain(variable_get('fbconnect_invite_msg', t('Enjoy'))) .'  <fb:req-choice url=\''. $base_url .'\' label=\'Become a Member!\' />';
   $output    = '<fb:serverfbml>
                 <script type="text/fbml">

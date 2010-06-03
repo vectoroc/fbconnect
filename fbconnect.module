@@ -465,7 +465,7 @@ function fbconnect_render_js() {
   global $base_url;
   global $user;
   $module_path = drupal_get_path('module', 'fbconnect');
-  $escaped_urL = drupal_to_js($base_url);
+  $escaped_urL = drupal_json_encode($base_url);
   
   if ($config = fbconnect_get_config()) {
     unset($config['secret_api_key']);
@@ -552,7 +552,7 @@ function fbconnect_render_js() {
      */
     drupal_add_js(
       'FB_RequireFeatures(["Connect"], function() {FB.Connect.streamPublish("", ' 
-      . drupal_to_js($feed_js) . ', '. drupal_to_js($action_links)
+      . drupal_json_encode($feed_js) . ', '. drupal_json_encode($action_links)
       . ', "", "' . t('Something to say?') . '", "", ' . $autopublish
       . ');});', 'inline', 'footer'
     );
