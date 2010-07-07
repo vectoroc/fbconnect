@@ -453,6 +453,7 @@ function fbconnect_get_config() {
     $config['debug'] = variable_get('fbconnect_debug', FALSE);
     $config['loginout_mode'] = variable_get('fbconnect_loginout_mode', 'manual');
     $config['invite_name'] = variable_get('fbconnect_invite_name', variable_get('site_name', $base_url));
+    $config['fast_reg_mode'] = variable_get('fbconnect_fast_reg', null);
 
     // allow third party modules to change settings
     drupal_alter('fbconnect_config', $config);
