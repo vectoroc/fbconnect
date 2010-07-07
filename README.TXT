@@ -23,7 +23,7 @@ If this parameter is enabled, the user's will be visible by her Facebook friends
 -- REQUIREMENTS --
 PHP 5.2 or higher versions. 
 Drupal 6.x. 
-Facebook PHP Library: http://svn.facebook.com/svnroot/platform/clients/packages/facebook-platform.tar.gz 
+Facebook PHP Library: http://github.com/downloads/vectoroc/fbconnect/facebook-client.zip
 Facebook API key: http://www.facebook.com/developers/
 
 
@@ -31,23 +31,28 @@ Facebook API key: http://www.facebook.com/developers/
 
   1. Upload the 'fbconnect' folder into your module directory, 
   
-  2. Download the Facebook PHP libraries from http://wiki.developers.facebook.com/index.php/User:Client_Libraries
-    Copy the content of the "php" folder into the "facebook-client" folder (see facebook-client/README.TXT)
+  2. Download the Facebook PHP libraries from http://github.com/downloads/vectoroc/fbconnect/facebook-client.zip
+    and place it into the fbconnect module folder
+    
+- Note! You can use drush_make script instead of steps 1 and 2 
+
+ projects[fbconnect][download][type] = "git"
+ projects[fbconnect][download][url] = "git://github.com/vectoroc/fbconnect.git"
+ libraries[facebook-client][download][type] = "get"
+ libraries[facebook-client][download][url] = "http://github.com/downloads/vectoroc/fbconnect/facebook-client.zip"
+ libraries[facebook-client][destination] = "modules/fbconnect"
+
+  3. Activate the module through your website's modules administration pages,
       
-  3. Create a new application: http://www.facebook.com/developers/createapp.php  
+  4. Create a new application: http://www.facebook.com/developers/createapp.php  
     (more information here: http://developers.facebook.com/get_started.php), leave app default settings.
     
-  4. Enter the Connect URL on Connect settings tab (e.g. copy value from admin/settings/fbconnect field “Connect url”).
+  5. Enter the Connect URL on Connect settings tab (e.g. copy value from admin/settings/fbconnect field “Connect url”).
   
-  5. Add your server to the Server Whitelist on Advanced settings tab on Facebook or disable Session Secret Whitelist Exception. 
+  6. Add your server to the Server Whitelist on Advanced settings tab on Facebook or disable Session Secret Whitelist Exception. 
 
-  6. Activate the module through your website's modules administration pages, 
-  
-  7. Configure the module through the 'Fbconnect' section of the 'Site configuration' menu, using the information 
-    provided by Facebook (API key, Secret API key).  When editing configuration, make sure your facebook session's 
-    is active. If it is'nt active then perhaps you will see message "Unable to autoconfigure your application settings, 
-    make sure you are logged into Facebook". In this case do 6 from this instruction and try to connect your drupal 
-    admin account with Facebook (developper of the App) on '/user/1/edit/fbconnect' page.
+  7. Configure the module through the Fbconnect module (admin/settings/fbconnect) using the information provided by Facebook 
+    (API key, Secret API key). If you are unsure what to do on tab  App Settings just press the Save configuration button.
      
   8. Edit the "page.tpl.php" file of your current theme. edit the <html> tag and add the facebook xmlns for rendering XFBML.
     example :
@@ -57,4 +62,4 @@ Facebook API key: http://www.facebook.com/developers/
 
     Ensure that your page.tpl.php contains <?php print $closure ?> code. 
      
-  9. Activate the 'fbconnect friend' block from the 'build/block' menu if you want
+  9. If you wish activate the 'fbconnect friend' block from the 'build/block' menu. 
