@@ -44,8 +44,8 @@ Facebook API key: http://www.facebook.com/developers/
 
   3. Activate the module through your website's modules administration pages,
       
-  4. Create a new application: http://www.facebook.com/developers/createapp.php  
-    (more information here: http://developers.facebook.com/get_started.php), leave app default settings.
+  4. Create a new application: http://www.facebook.com/developers/createapp.php
+    (more information here: http://wiki.developers.facebook.com/index.php/Connect/Setting_Up_Your_Site).
     
   5. Enter the Connect URL on Connect settings tab (e.g. copy value from admin/settings/fbconnect field “Connect url”).
   

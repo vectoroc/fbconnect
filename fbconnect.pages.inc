@@ -23,19 +23,21 @@ function fbconnect_prompt_page_links() {
   $reg_msg  = t('Click here to create a new !site_name account with Facebook', $params);
   $link_msg = t('Click here to connect your existing !site_name account with Facebook', $params);
 
-  
-  $reg_js  = <<<JS
-  function DoFastRegistration(link) {
-    FB.Connect.showPermissionDialog("email", function(perm) {
-      if (perm) {
-        window.location.href = link.href;
-      }
-    });
-  }
+  $reg_attr = array();
+  if ($conf['fast_reg_mode']) {
+	  $reg_js  = <<<JS
+	  function DoFastRegistration(link) {
+	    FB.Connect.showPermissionDialog("email", function(perm) {
+	      if (perm) {
+	        window.location.href = link.href;
+	      }
+	    });
+	  }
 JS;
-  drupal_add_js($reg_js, 'inline');
+	  drupal_add_js($reg_js, 'inline');
+	  $reg_attr = array('attributes' => array('onclick' => 'DoFastRegistration(this); return false;'));
+	}
   
-  $reg_attr = array('attributes' => array('onclick' => 'DoFastRegistration(this); return false;'));
   $reg_choice  = l($reg_msg, 'fbconnect/register/create', $reg_attr);
   $link_choice = l($link_msg, 'user', array('query' => 'destination=fbconnect'));
   return array($reg_choice, $link_choice);
