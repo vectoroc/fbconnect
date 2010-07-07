@@ -191,7 +191,6 @@ function fbconnect_get_connected_friends($fbuid) {
 function fbconnect_redirect_submit($form, &$form_state) {
   global $user;
   
-//  $form_state['redirect'] = 'user/'. $user->uid .'/edit/fbconnect';
   drupal_get_messages('status');
   $fbuid = fbconnect_get_fbuid();
   if ($fbuid) {
@@ -199,10 +198,18 @@ function fbconnect_redirect_submit($form, &$form_state) {
       drupal_set_message(t('Your Facebook connect link is now active'));
     }
     else {
-      drupal_set_message(t('Error linking your account.'));
-      $msg = 'Error linking account for @fbuid, code : @uid';
-      watchdog('fbconnect', $msg, array('@fbuid' => $fbuid, '@uid' => $user->uid));
+    	if (_get_user_fbuid($user->uid)) {
+    		drupal_set_message(t('This user had been already linked another Facebook account.'), 'error');
+    	}
+      if (_is_fbconnect_user($fbuid)) {
+      	drupal_set_message(t('This Facebook account had been already linked to another user.'), 'error');
+      }
     }
+  }
+  
+  if ($_REQUEST['destination'] == 'fbconnect') {
+    unset($_REQUEST['destination']);
+    $form_state['redirect'] = 'user/'. $user->uid .'/edit/fbconnect';
   }
 }
 
@@ -224,9 +231,7 @@ function fbconnect_form_alter(&$form, $form_state, $form_id) {
   
   switch ($form_id):
     case 'user_login':
-      if (@$_GET['destination'] == 'fbconnect') {
-        unset($_REQUEST['destination']);
-
+      if (@$_REQUEST['destination'] == 'fbconnect') {      	
         drupal_set_message(t('Please log in, in order to link your account with Facebook Connect'));
         $form['#submit'][] = 'fbconnect_redirect_submit';
       }
@@ -234,7 +239,7 @@ function fbconnect_form_alter(&$form, $form_state, $form_id) {
 
     // Render fbconnect on login block.
     case 'user_login_block':
-      if (@$_GET['destination'] != 'fbconnect' && fbconnect_get_config()) {
+      if (@$_REQUEST['destination'] != 'fbconnect' && fbconnect_get_config()) {
         
         $form['fbconnect_button'] = array(
           '#type' => 'item',
@@ -718,6 +723,7 @@ function _get_user_fbuid($uid) {
  *   Facebook user id
  */
 function fbconnect_register($uid, $fbuid) {
+	if (_get_user_fbuid($uid)) return FALSE;
   if (_is_fbconnect_user($fbuid)) return FALSE;
   
   $delete_query = 'DELETE FROM {fbconnect_users} WHERE uid = %d';
