@@ -360,7 +360,7 @@ function fbconnect_render_button($attr = array()) {
     'onlogin'    => 'facebook_onlogin_ready();',
     'background' => 'dark',
     'v'          => 2,
-  ); 
+  );
   
   $attr = array_merge($default_attr, $attr);
   drupal_alter('fbconnect_login_button', $attr);
@@ -593,7 +593,7 @@ function fbconnect_render_js() {
 function fbconnect_footer() {
   if ($config = fbconnect_get_config()) {
     $footer = '<script type="text/javascript" src="' . $config['featureLoader_url'] . '"></script>';
-    if (!fbconnect_get_fbuid()) {
+    if (!fbconnect_get_fbuid() || user_is_anonymous()) {
       // Display the autoconnect form.
       $footer .= '<div style="display: none">' . drupal_get_form('fbconnect_autoconnect_form') . '</div>';
     }
@@ -628,6 +628,9 @@ function fbconnect_autoconnect_form_submit($form, &$form_state) {
         else {
           $form_state['redirect'] = array( 'fbconnect/register/prompt', drupal_get_destination() );
         }
+        
+        #805846 : No linking with FB page appears, when "destination" variable exist in url
+        unset($_REQUEST['destination']);
       }
       elseif ($uid) {
         $user = user_load($uid);
