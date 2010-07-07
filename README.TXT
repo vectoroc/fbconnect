@@ -62,4 +62,4 @@ Facebook API key: http://www.facebook.com/developers/
 
     Ensure that your page.tpl.php contains <?php print $closure ?> code. 
      
-  9. If you wish activate the 'fbconnect friend' block from the 'build/block' menu. 
+  9. If you wish activate the 'fbconnect friend' block from the 'build/block' menu. Check "invite facebook friends" permission.
