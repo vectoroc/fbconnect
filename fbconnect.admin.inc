@@ -6,63 +6,48 @@
  * Administration page callbacks for the fbconnect module. 
  */ 
 
-/** 
- * Form builder. Configure fbconnect. 
- *
- * @see system_settings_form(). 
- */
-function fbconnect_admin_settings() {
-  global $base_url;
-  $module_path = drupal_get_path('module', 'fbconnect') . '/images/';
-   
-  $form['global'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Facebook API Settings'),
-    '#collapsible' => TRUE,
-    '#collapsed' => FALSE,
-  );
 
-  $form['global']['fbconnect_key'] = array( 
+function fbconnect_api_keys_settings(&$form_state) {
+  $form['fbconnect_key'] = array( 
     '#type' => 'textfield', 
+    '#required' => true,
     '#title' => t('Facebook key'), 
     '#default_value' => variable_get('fbconnect_key', NULL),
     '#description' => t('Your public API key'),
   );
   
-  $form['global']['fbconnect_skey'] = array(
+  $form['fbconnect_skey'] = array(
     '#type' => 'textfield',
+    '#required' => true,
     '#title' => t('Facebook Secret key'),
     '#default_value' => variable_get('fbconnect_skey', NULL),
     '#description' => t('Do not share your secret key with anyone'),
   );
   
-  $form['global']['fbconnect_base_domaine'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Base domain url'),
-    '#description' => t('Use this to enable your Facebook Connect implementation to span multiple subdomains (e.g., using example.com would enable  www.example.com, foo.example.com or bar.example.com,).'),
-    '#default_value' => variable_get('fbconnect_base_domaine', NULL),
-  );
-  
-  $form['global']['fbconnect_connect_url'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Connect url'),
-    '#description' => t('Your site\'s main URL'),
-    '#default_value' => variable_get('fbconnect_connect_url', $base_url . base_path()),
-  );
-  
-  $form['global']['fbconnect_language_code'] = array(
+  $form['fbconnect_language_code'] = array(
     '#type' => 'textfield',
     '#title' => t('Language code'),
     '#description' => t('Enter your country code here to get translated versions of facebook connect. (e.g. en_US or de_DE)'),
     '#default_value' => variable_get('fbconnect_language_code', 'en_US'),
   );
   
-  $form['global']['fbconnect_debug'] = array(
+  $form['fbconnect_debug'] = array(
     '#type' => 'checkbox',
     '#title' => t('Debug mode'),      
     '#default_value' => variable_get('fbconnect_debug', FALSE),
   );  
   
+  $form['fbconnect_connect_url'] = array(
+    '#type' => 'item',
+    '#title' => t('Connect url'),
+    '#description' => t('Copy this value into Facebook Applications on Connect settings tab'),
+    '#value' => variable_get('fbconnect_connect_url', $GLOBALS['base_url'] . base_path()),
+  );
+    
+  return system_settings_form($form);
+}
+
+function fbconnect_appearance_settings(&$form_state) {
   $form['site'] = array(
     '#type' => 'fieldset',
     '#title' => t('Settings for !site', array('!site' => variable_get('site_name', t('Your Site')))),
@@ -171,12 +156,61 @@ function fbconnect_admin_settings() {
     '#default_value' => variable_get('fbconnect_pic_logo', TRUE),
   );
 
+  return system_settings_form($form);
+}
+
+
+function fbconnect_fbapp_settings(&$form_state) {
+	if (!facebook_client()) {
+		drupal_set_message(t('Ensure that you entered valid api keys.'), 'error');
+		drupal_goto('admin/settings/fbconnect');
+	}
+	
+	if (!fbconnect_get_fbuid()) {
+		$button_attr = array('text' => t('Connect with your Facebook account'));
+		$form['fbconnect'] = array(
+		  '#value' => fbconnect_render_button($button_attr),
+		);
+		
+		return $form;
+	}
+	
+  $form['fbconnect_base_domaine'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Base Domain Url'),
+    '#description' => t('Use this to enable your Facebook Connect implementation to span multiple subdomains (e.g., using example.com would enable  www.example.com, foo.example.com or bar.example.com,).'),
+    '#default_value' => variable_get('fbconnect_base_domaine', NULL),
+  );
+  
+  $form['fbconnect_connect_url'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Connect Url'),
+    '#description' => t('Your site\'s main URL.'),
+    '#default_value' => variable_get('fbconnect_connect_url', $GLOBALS['base_url'] . base_path()),
+  );
+  
+  $form['fbconnect_uninstall_url'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Post-Remove Callback Url'),
+    '#description' => t('Facebook pings this URL when a user removes your application.'),
+    '#default_value' => variable_get(
+      'fbconnect_uninstall_url',
+      url('fbconnect/post-remove', array('absolute' => TRUE))
+    ),
+  );
+	
   $form = system_settings_form($form);
-  $form['#submit'][] = 'fbconnect_set_appproperties';
+  $form['#submit'][] = 'fbconnect_fbapp_settings_submit';
   return $form;
 }
 
-function fbconnect_set_appproperties($form, &$form_state) {
+function fbconnect_fbapp_settings_submit($form, &$form_state) {
+  $properties = array(
+    'connect_url'   => $form_state['values']['fbconnect_connect_url'],
+    'base_domain'   => $form_state['values']['fbconnect_base_domaine'],
+    'uninstall_url' => $form_state['values']['fbconnect_uninstall_url'],
+  );
+  
   if (!facebook_client()) {
     drupal_set_message(t('Unable to get a facebook client, check your api key'), 'error');
     return FALSE;  
@@ -186,13 +220,8 @@ function fbconnect_set_appproperties($form, &$form_state) {
     return FALSE;
   }
   
-  $properties = array(
-    'connect_url'   => $form_state['values']['fbconnect_connect_url'],
-    'base_domain'   => $form_state['values']['fbconnect_base_domaine'],
-    'uninstall_url' => url('fbconnect/post-remove', array('absolute' => TRUE)),
-  );
   try {
-    $res = facebook_client()->api_client->admin_setAppProperties($properties);
+    $res = facebook_client()->api_client->admin_setAppProperties(array_filter($properties));
   }
   catch (Exception $e) {
     drupal_set_message(t('Exception thrown while using admin_setAppProperties : @code', array('@code' => $e->getMessage())), 'error');
@@ -203,5 +232,4 @@ function fbconnect_set_appproperties($form, &$form_state) {
   else {
     drupal_set_message(t('Your facebook app settings has been updated'));      
   }
-    
 }

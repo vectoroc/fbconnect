@@ -6,13 +6,38 @@
  */
 function fbconnect_menu() {
   $items['admin/settings/fbconnect'] = array(
-    'title' => 'Facebook connect', 
+    'title' => 'Facebook Connect', 
     'page callback' => 'drupal_get_form', 
-    'page arguments' => array('fbconnect_admin_settings'), 
+    'page arguments' => array('fbconnect_api_keys_settings'), 
     'access arguments' => array('administer site configuration'),
     'file' => 'fbconnect.admin.inc',
   );
-
+  
+  $items['admin/settings/fbconnect/api-keys'] = array(
+    'title' => 'Api Keys', 
+    'type' => MENU_DEFAULT_LOCAL_TASK, 
+    'file' => 'fbconnect.admin.inc',
+  );
+  
+  $items['admin/settings/fbconnect/apperance'] = array(
+    'title' => 'Appearance', 
+    'type' => MENU_LOCAL_TASK, 
+    'page callback' => 'drupal_get_form', 
+    'page arguments' => array('fbconnect_appearance_settings'), 
+    'access arguments' => array('administer site configuration'),
+    'file' => 'fbconnect.admin.inc',
+  );
+  
+  $items['admin/settings/fbconnect/fb-app'] = array(
+    'title' => 'App Settings', 
+    'type' => MENU_LOCAL_TASK, 
+    'page callback' => 'drupal_get_form', 
+    'page arguments' => array('fbconnect_fbapp_settings'), 
+    'access arguments' => array('administer site configuration'),
+    'file' => 'fbconnect.admin.inc',
+    'weight' => 3,
+  );
+  
   $items['fbconnect/register/prompt'] = array(
     'title' => 'Facebook connect',  
     'page callback' => 'fbconnect_prompt_page',
@@ -166,7 +191,7 @@ function fbconnect_get_connected_friends($fbuid) {
 function fbconnect_redirect_submit($form, &$form_state) {
   global $user;
   
-  $form_state['redirect'] = 'user/'. $user->uid .'/edit/fbconnect';
+//  $form_state['redirect'] = 'user/'. $user->uid .'/edit/fbconnect';
   drupal_get_messages('status');
   $fbuid = fbconnect_get_fbuid();
   if ($fbuid) {
@@ -568,8 +593,10 @@ function fbconnect_render_js() {
 function fbconnect_footer() {
   if ($config = fbconnect_get_config()) {
     $footer = '<script type="text/javascript" src="' . $config['featureLoader_url'] . '"></script>';
-    // Display the autoconnect form.
-    $footer .= '<div style="display: none">' . drupal_get_form('fbconnect_autoconnect_form') . '</div>';
+    if (!fbconnect_get_fbuid()) {
+      // Display the autoconnect form.
+      $footer .= '<div style="display: none">' . drupal_get_form('fbconnect_autoconnect_form') . '</div>';
+    }
     return $footer;
   }
 }
