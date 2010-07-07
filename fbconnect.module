@@ -57,7 +57,7 @@ function fbconnect_menu() {
   $items['fbconnect/invite/friends'] = array(
     'title' => t('Invite my Facebook friends'),
     'page callback' => 'fbconnect_render_friends_invite_form',
-    'access callback' => 'user_is_logged_in',
+    'access arguments' => array('invite facebook friends'),
     'type' => MENU_CALLBACK,
     'file' => 'fbconnect.pages.inc',    
   );
@@ -93,6 +93,13 @@ function fbconnect_menu() {
 }
 
 /**
+ * Implementation of hook_perm()
+ */
+function fbconnect_perm() {
+	return array('invite facebook friends');
+}
+
+/**
  * Implementation of hook_theme()
  */
 function fbconnect_theme() {
@@ -115,12 +122,7 @@ function fbconnect_block($op = 'list', $delta = 0, $edit = array()) {
       return $blocks;
 
     case 'view':
-      /*
-      TODO revoir la visi du bloc,
-      session fb ne correspond pas au global $user.
-      */
-      $fbuid  = fbconnect_get_fbuid();
-
+      $fbuid  = fbconnect_get_fbuid(true);
       if (user_is_logged_in() && $fbuid) {
         $cid    = 'fbconnect:'. $fbuid;
         $cached = cache_get($cid, 'cache_block');
@@ -463,13 +465,26 @@ function fbconnect_get_config() {
 
 /**
  * Check facebook session.
+ * 
+ * @param boolean $check_connected
+ *   ensure that active user is connected with active facebook account
  *
  * @return integer
  *   facebook user id
  */
-function fbconnect_get_fbuid() {
+function fbconnect_get_fbuid($check_connected = false) {
+	global $user;
+	
   if (facebook_client()) {
-    return facebook_client()->get_loggedin_user();
+    $fbuid = facebook_client()->get_loggedin_user();
+    
+    if ($check_connected && $fbuid) {
+    	if (_get_user_fbuid($user->uid) != $fbuid) { 
+    	  $fbuid = null; 
+      }
+    }
+    
+    return $fbuid;
   }
 }
 
