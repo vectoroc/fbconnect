@@ -614,7 +614,7 @@ function fbconnect_render_js() {
 function fbconnect_footer() {
   if ($config = fbconnect_get_config()) {
     $footer = '<script type="text/javascript" src="' . $config['featureLoader_url'] . '"></script>';
-    if (!fbconnect_get_fbuid() || user_is_anonymous()) {
+    if (!fbconnect_get_fbuid(true)) {
       // Display the autoconnect form.
       $footer .= '<div style="display: none">' . drupal_get_form('fbconnect_autoconnect_form') . '</div>';
     }
