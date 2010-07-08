@@ -44,6 +44,12 @@ function fbconnect_api_keys_settings(&$form_state) {
     '#value' => variable_get('fbconnect_connect_url', $GLOBALS['base_url'] . base_path()),
   );
     
+//  locale
+//  connect_logo_url
+//  about_url
+//  base_domain
+//  tos_url
+
   return system_settings_form($form);
 }
 
@@ -221,7 +227,10 @@ function fbconnect_fbapp_settings_submit($form, &$form_state) {
   }
   
   try {
-    $res = facebook_client()->api_client->admin_setAppProperties(array_filter($properties));
+    $res = facebook_client()->api(array(
+      'method' => 'admin.setAppProperties',
+      'properties' => array_filter($properties),
+    ));
   }
   catch (Exception $e) {
     drupal_set_message(t('Exception thrown while using admin_setAppProperties : @code', array('@code' => $e->getMessage())), 'error');

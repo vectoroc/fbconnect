@@ -1,57 +1,45 @@
 // $Id: fbconnect.js,v 1.4 2010/03/21 16:26:03 vectoroc Exp $
 
-Drupal.behaviors.fbconnect = function(context) {
-	if (window.FB && Drupal.settings.fbconnect && Drupal.settings.fbconnect.api_key) {
-		var settings = Drupal.settings.fbconnect;
-		
-		FB.Bootstrap.requireFeatures(["Connect","XFBML"], function() {
-			if (settings.debug) {
-				FB.FBDebug.isEnabled = true;
-				FB.FBDebug.logLevel = 4;
-			}
-			
-			var appInitSettins = {
-				ifUserConnected    : function(fbuid) {
-					$.event.trigger('fbconnect:ifUserConnected', [fbuid, settings.fbuid]);
-				},
-				ifUserNotConnected : function(fbuid) {
-					$.event.trigger('fbconnect:ifUserNotConnected', [fbuid, settings.fbuid]);
-				}
-			};
-			
-			FB.Facebook.init(
-				settings.api_key, 
-				Drupal.settings.basePath + settings.xd_path,
-				appInitSettins
-			);
-			
-			$(context).each(function() {
-				var elem = $(this).get(0);
-				FB.XFBML.Host.parseDomElement(elem);
-			});
-
-			if (Drupal.settings['FB.streamPublish']) {
-				FB.Connect.streamPublish.apply(FB.Connect, Drupal.settings['FB.streamPublish']);
-			}
-		});
-
-		switch (settings.loginout_mode) {
-			case 'auto':
-				Drupal.fbconnect.initLogoutLinks(context);
-				$(document.body).bind(
-						'fbconnect:ifUserConnected',
-						Drupal.fbconnect.reload_ifUserConnected
-					);
-				break;
-				
-			case 'ask':
-				Drupal.fbconnect.initLogoutLinks(context);
-				break;
-		}
-	}
-};
-
 Drupal.fbconnect = {};
+Drupal.fbconnect.init = function () {
+	Drupal.behaviors.fbconnect = function(context) {
+		FB.XFBML.parse(context);
+//		switch (Drupal.settings.fbconnect.loginout_mode) {
+//		case 'auto':
+//			Drupal.fbconnect.initLogoutLinks(context);
+//			$(document.body).bind(
+//					'fbconnect:ifUserConnected',
+//					Drupal.fbconnect.reload_ifUserConnected
+//				);
+//			break;
+//			
+//		case 'ask':
+//			Drupal.fbconnect.initLogoutLinks(context);
+//			break;
+//		}
+	}
+	
+	Drupal.behaviors.fbconnect(document);
+	
+	
+//	FB.Event.subscribe('auth.sessionChange', function(response) {
+//	console.dir(response);
+//});
+
+//FB.Bootstrap.requireFeatures(["Connect","XFBML"], function() {//			
+//	var appInitSettins = {
+//		ifUserConnected    : function(fbuid) {
+//			$.event.trigger('fbconnect:ifUserConnected', [fbuid, settings.fbuid]);
+//		},
+//		ifUserNotConnected : function(fbuid) {
+//			$.event.trigger('fbconnect:ifUserNotConnected', [fbuid, settings.fbuid]);
+//		}
+//	};
+//});
+
+
+}
+
 Drupal.fbconnect.reload_ifUserConnected = function(e, fbuid, old_fbuid) {
 	if (Drupal.settings.fbconnect.user.uid) return;
 	if (fbuid != old_fbuid) window.location.reload();
@@ -83,7 +71,8 @@ Drupal.fbconnect.initLogoutLinks = function(context) {
 			    	'label': Drupal.t('!site_name Only', t_args), 
 			    	'click': function() {
 				    	this.close();
-				    	window.location.href = logout_url; 
+				    	console.log('window.location.href = ' + logout_url);
+//				    	window.location.href = logout_url; 
 			    	}
 			    }					    
 			];
