@@ -1,11 +1,6 @@
-; $Id: fbconnect.info,v 1.10 2010/03/21 16:26:03 vectoroc Exp $
 name = Fbconnect
 description = Allows users to connect with Facebook account
 package = "Authentication"
 php = 5.2
 core = "6.x"
-; Information added by drupal.org packaging script on 2010-03-22
-version = "6.x-1.x-dev"
-core = "6.x"
-project = "fbconnect"
-datestamp = "1269216360"
+version = "6.x-2.x-dev"
