@@ -23,25 +23,16 @@ If this parameter is enabled, the user's will be visible by her Facebook friends
 -- REQUIREMENTS --
 PHP 5.2 or higher versions. 
 Drupal 6.x. 
-Facebook PHP Library: http://github.com/downloads/vectoroc/fbconnect/facebook-client.zip
+Facebook PHP Library: http://github.com/facebook/php-sdk/
 Facebook API key: http://www.facebook.com/developers/
 
 
 -- INSTALLATION --
 
-  1. Upload the 'fbconnect' folder into your module directory, 
+  1. Upload the 'fbconnect' folder into your module directory,
   
-  2. Download the Facebook PHP libraries from http://github.com/downloads/vectoroc/fbconnect/facebook-client.zip
-    and place it into the fbconnect module folder
-    
-- Note! You can use drush_make script instead of steps 1 and 2 
-
- projects[fbconnect][download][type] = "git"
- projects[fbconnect][download][url] = "git://github.com/vectoroc/fbconnect.git"
- libraries[facebook-client][download][type] = "get"
- libraries[facebook-client][download][url] = "http://github.com/downloads/vectoroc/fbconnect/facebook-client.zip"
- libraries[facebook-client][destination] = "modules/fbconnect"
-
+  2. Nothing here now, go to next step,  
+  
   3. Activate the module through your website's modules administration pages,
       
   4. Create a new application: http://www.facebook.com/developers/createapp.php
@@ -54,12 +45,15 @@ Facebook API key: http://www.facebook.com/developers/
   7. Configure the module through the Fbconnect module (admin/settings/fbconnect) using the information provided by Facebook 
     (API key, Secret API key). If you are unsure what to do on tab  App Settings just press the Save configuration button.
      
-  8. Edit the "page.tpl.php" file of your current theme. edit the <html> tag and add the facebook xmlns for rendering XFBML.
-    example :
-    <html xmlns:fb="http://www.facebook.com/2008/fbml" 
-       xmlns="http://www.w3.org/1999/xhtml" xml:lang="<?php print $language->language ?>" 
-       lang="<?php print $language->language ?>" dir="<?php print $language->dir ?>">     
-
-    Ensure that your page.tpl.php contains <?php print $closure ?> code. 
+  8. In order for the user's browser to correctly recognize XFBML tags, you need to specify that the page is in XHTML. 
+    Edit the "page.tpl.php" file of your current theme. edit the <html> tag and add the facebook xmlns for rendering XFBML.
+    
+    Example : <html xmlns:fb="http://www.facebook.com/2008/fbml" 
+                    xmlns="http://www.w3.org/1999/xhtml" xml:lang="<?php print $language->language ?>" 
+                    lang="<?php print $language->language ?>" dir="<?php print $language->dir ?>">
+       
+    Note: The xmlns:fb attribute (xmlns:fb="http://www.facebook.com/2008/fbml") is required for proper rendering on IE. 
+     (Namespaces don't have to point to a valid page, they just need to be a valid Internationalized Resource Identifier (IRI).     
+     
      
   9. If you wish activate the 'fbconnect friend' block from the 'build/block' menu. Check "invite facebook friends" permission.

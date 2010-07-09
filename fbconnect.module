@@ -80,15 +80,6 @@ function fbconnect_menu() {
     'type' => MENU_CALLBACK,
   );
 
-  // Cross-domain receiver.
-  $items['fbconnect/receiver'] = array(
-    'page callback' => 'fbconnect_receiver',
-    'access callback' => TRUE,
-    'type' => MENU_CALLBACK,
-    'file' => 'xd_receiver.inc',
-  );
-
-
   return $items;
 }
 
@@ -149,6 +140,8 @@ function fbconnect_block($op = 'list', $delta = 0, $edit = array()) {
   }
 }
 
+
+
 /**
  * Get facebook friend who has_added_app.
  */
@@ -157,7 +150,10 @@ function fbconnect_get_connected_friends($fbuid) {
     $query = 'SELECT uid, has_added_app FROM user WHERE uid IN '.
       '(SELECT uid2 FROM friend WHERE uid1 = '. $fbuid .')';
     try {
-      $rows = facebook_client()->api_client->fql_query($query);
+      $rows = facebook_client()->api(array(
+       'method' => 'fql.query',
+       'query'  => $query,
+      ));
     }
     catch (Exception $e) {
       $msg  = 'Exception thrown while using fbconnect_get_connected_friends: @code';
@@ -413,7 +409,13 @@ function facebook_client() {
     && _facebook_client_load_include()
     && $conf = fbconnect_get_config()
   ) {
-    $fb = new Facebook($conf['api_key'], $conf['secret_api_key']);
+    $initParams = array(
+      'appId'  => $conf['api_key'],
+      'secret' => $conf['secret_api_key'],
+      'cookie' => true,
+    );
+
+    $fb = new Facebook($initParams);
     /*
      * If a page is loaded via HTTPS, then all images and static
      * resources need to be printed with HTTPS urls to avoid
@@ -441,16 +443,11 @@ function fbconnect_get_config() {
     $config['api_key'] = variable_get('fbconnect_key', NULL);
     $config['secret_api_key'] = variable_get('fbconnect_skey', NULL);
     $config['xd_path'] = 'fbconnect/receiver';
+    $config['debug'] = variable_get('fbconnect_debug', FALSE);
 
     $config['user_pictures'] = variable_get('fbconnect_pic_allow', 'allow');
     $config['language_code'] = variable_get('fbconnect_language_code', 'en_US');
 
-    $url = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on')
-         ? "https://ssl.connect.facebook.com/js/api_lib/v0.4/FeatureLoader.js.php/" . $config['language_code']
-         : "http://static.ak.connect.facebook.com/js/api_lib/v0.4/FeatureLoader.js.php/" . $config['language_code'] ;
-
-    $config['featureLoader_url'] = $url;
-    $config['debug'] = variable_get('fbconnect_debug', FALSE);
     $config['loginout_mode'] = variable_get('fbconnect_loginout_mode', 'manual');
     $config['invite_name'] = variable_get('fbconnect_invite_name', variable_get('site_name', $base_url));
     $config['fast_reg_mode'] = variable_get('fbconnect_fast_reg', null);
@@ -476,8 +473,8 @@ function fbconnect_get_config() {
 function fbconnect_get_fbuid($check_connected = false) {
   global $user;
 
-  if (facebook_client()) {
-    $fbuid = facebook_client()->get_loggedin_user();
+  if ($session = facebook_client()->getSession()) {
+    $fbuid = $session['uid'];
 
     if ($check_connected && $fbuid) {
       if (_get_user_fbuid($user->uid) != $fbuid) {
@@ -613,11 +610,45 @@ function fbconnect_render_js() {
  */
 function fbconnect_footer() {
   if ($config = fbconnect_get_config()) {
-    $footer = '<script type="text/javascript" src="' . $config['featureLoader_url'] . '"></script>';
+
+    $footer = <<<CODE
+<style>
+.dialog_header {background:#6d84b4; border:1px solid #3b5998; color:#fff; font-size:14px; font-weight:bold;}
+.dialog_header span {display: block; padding: 5px 10px;}
+.dialog_stripes{background:transparent url(http://static.ak.connect.facebook.com/images/confirmation_stripes.gif) repeat scroll 0 0;height:15px}
+.dialog_buttons{background:#F2F2F2 none repeat scroll 0 50%;border-top:1px solid #ccc;padding:8px 0 8px 8px;text-align:right;z-index:20}
+.dialog_content{margin:15px 30px 10px;width:auto}
+.dialog_inputbutton, .dialog_inputsubmit{margin:0 10px 0 0;background-color:#3b5998;border-color:#D9DFEA #0E1F5B #0E1F5B #d9dfea;border-style:solid;border-width:1px;color:#fff;font-family:"lucida grande",tahoma,verdana,arial,sans-serif;font-size:11px;padding:2px 15px 3px;text-align:center}
+.dialog_inputaux{background:#f0f0f0;color:#000;border-top-color:#e7e7e7;border-right-color:#666;border-bottom-color:#666;border-left-color:#e7e7e7}
+</style>
+
+      <div id="fb-root"></div>
+      <script>
+        window.fbAsyncInit = function() {
+          FB.init({
+            appId  : '$config[api_key]',
+            status : true, // check login status
+            cookie : true, // enable cookies to allow the server to access the session
+            logging: '$config[debug]',
+          });
+
+          Drupal.fbconnect.init();
+        };
+
+        (function() {
+          var e = document.createElement('script');
+          e.src = document.location.protocol + '//connect.facebook.net/$config[language_code]/all.js';
+          e.async = true;
+          document.getElementById('fb-root').appendChild(e);
+        }());
+      </script>
+CODE;
+
     if (!fbconnect_get_fbuid(true)) {
       // Display the autoconnect form.
       $footer .= '<div style="display: none">' . drupal_get_form('fbconnect_autoconnect_form') . '</div>';
     }
+
     return $footer;
   }
 }
@@ -763,7 +794,11 @@ function fbconnect_register($uid, $fbuid) {
 function fbconnect_unregister($fbuid) {
   if ($fbuid && $uid = _is_fbconnect_user($fbuid)) {
     $fb = facebook_client();
-    $fb->api_client->auth_revokeAuthorization($fbuid);
+    $params = array(
+      'method' => 'auth.revokeAuthorization',
+      'uid' => $fbuid,
+    );
+    $fb->api($params);
 
     db_query('DELETE FROM {fbconnect_users} WHERE fbuid = %s', $fbuid);
     user_save(user_load($uid), array('fbuid' => NULL));
@@ -791,7 +826,10 @@ function fbconnect_unregister($fbuid) {
 function fbconnect_get_info_from_fb($fbuid, $fields) {
   if (facebook_client() && $fields) {
     try {
-      $result = facebook_client()->api_client->fql_query("SELECT $fields FROM user WHERE uid = $fbuid");
+      $result = facebook_client()->api(array(
+        'method' => 'fql.query',
+        'query'  => "SELECT $fields FROM user WHERE uid = $fbuid",
+      ));
       return $result[0];
     } catch (Exception $e) {
       $msg = 'Exception thrown while using fbconnect_get_info_from_fb : @code';
