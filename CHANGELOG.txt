@@ -1,3 +1,6 @@
+2010/07
+  - Upgraded module to use new Facebook SDK`s
+   
 2009/12/16 - ambo
   - Change publishing to Facebook Stream
   - Some more use of t() Function

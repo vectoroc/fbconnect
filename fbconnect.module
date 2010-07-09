@@ -80,15 +80,6 @@ function fbconnect_menu() {
     'type' => MENU_CALLBACK,
   );
   
-  // Cross-domain receiver.
-  $items['fbconnect/receiver'] = array(
-    'page callback' => 'fbconnect_receiver',
-    'access callback' => TRUE,
-    'type' => MENU_CALLBACK,
-    'file' => 'xd_receiver.inc',
-  );
-
-
   return $items;
 }
 
