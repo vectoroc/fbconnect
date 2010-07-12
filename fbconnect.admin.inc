@@ -41,7 +41,7 @@ function fbconnect_api_keys_settings(&$form_state) {
     '#type' => 'item',
     '#title' => t('Connect url'),
     '#description' => t('Copy this value into Facebook Applications on Connect settings tab'),
-    '#value' => variable_get('fbconnect_connect_url', $GLOBALS['base_url'] . base_path()),
+    '#value' => variable_get('fbconnect_connect_url', $GLOBALS['base_url'] . '/'),
   );
     
 //  locale
@@ -192,7 +192,7 @@ function fbconnect_fbapp_settings(&$form_state) {
     '#type' => 'textfield',
     '#title' => t('Connect Url'),
     '#description' => t('Your site\'s main URL.'),
-    '#default_value' => variable_get('fbconnect_connect_url', $GLOBALS['base_url'] . base_path()),
+    '#default_value' => variable_get('fbconnect_connect_url', $GLOBALS['base_url'] . '/'),
   );
   
   $form['fbconnect_uninstall_url'] = array(
