@@ -97,6 +97,7 @@ function fbconnect_appearance_settings(&$form_state) {
     '#default_value' => variable_get('fbconnect_invite_dest', $base_url),
   );
   
+  // TODO: rename to more clear name 
   $form['site']['fbconnect_reg_options'] = array(
     '#type' => 'checkbox',
     '#title' => t('Disable linking accounts during registration'),
