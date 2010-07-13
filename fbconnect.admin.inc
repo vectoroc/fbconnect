@@ -8,18 +8,18 @@
 
 
 function fbconnect_api_keys_settings(&$form_state) {
-  $form['fbconnect_key'] = array( 
+  $form['fbconnect_appid'] = array( 
     '#type' => 'textfield', 
     '#required' => true,
-    '#title' => t('Facebook key'), 
+    '#title' => t('Application ID'), 
     '#default_value' => variable_get('fbconnect_key', NULL),
-    '#description' => t('Your public API key'),
+    '#description' => t('Your Application ID, <strong> not API Key </strong>'),
   );
   
   $form['fbconnect_skey'] = array(
     '#type' => 'textfield',
     '#required' => true,
-    '#title' => t('Facebook Secret key'),
+    '#title' => t('Application Secret'),
     '#default_value' => variable_get('fbconnect_skey', NULL),
     '#description' => t('Do not share your secret key with anyone'),
   );

@@ -410,7 +410,7 @@ function facebook_client() {
     && $conf = fbconnect_get_config()
   ) {
     $initParams = array(
-		  'appId'  => $conf['api_key'],
+		  'appId'  => $conf['app_id'],
 		  'secret' => $conf['secret_api_key'],
 		  'cookie' => true,
     );
@@ -440,7 +440,7 @@ function fbconnect_get_config() {
   static $config;
   
   if (!$config) {
-    $config['api_key'] = variable_get('fbconnect_key', NULL);
+    $config['app_id'] = $config['api_key'] = variable_get('fbconnect_key', NULL);
     $config['secret_api_key'] = variable_get('fbconnect_skey', NULL);
     $config['xd_path'] = 'fbconnect/receiver';
     $config['debug'] = variable_get('fbconnect_debug', FALSE);
@@ -456,7 +456,7 @@ function fbconnect_get_config() {
     drupal_alter('fbconnect_config', $config);
   }
   
-  if ($config['api_key'] && $config['secret_api_key']) {
+  if ($config['app_id'] && $config['secret_api_key']) {
     return $config;
   }
 }
@@ -626,7 +626,7 @@ function fbconnect_footer() {
 			<script>
 			  window.fbAsyncInit = function() {
 			    FB.init({
-			      appId  : '$config[api_key]',
+			      appId  : '$config[app_id]',
 			      status : true, // check login status
 			      cookie : true, // enable cookies to allow the server to access the session
 			      logging: '$config[debug]',

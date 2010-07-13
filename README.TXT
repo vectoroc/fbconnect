@@ -43,7 +43,7 @@ Facebook API key: http://www.facebook.com/developers/
   6. Add your server to the Server Whitelist on Advanced settings tab on Facebook or disable Session Secret Whitelist Exception. 
 
   7. Configure the module through the Fbconnect module (admin/settings/fbconnect) using the information provided by Facebook 
-    (API key, Secret API key). If you are unsure what to do on tab  App Settings just press the Save configuration button.
+    (Application ID, Application Secret). If you are unsure what to do on tab  App Settings just press the Save configuration button.
      
   8. In order for the user's browser to correctly recognize XFBML tags, you need to specify that the page is in XHTML. 
     Edit the "page.tpl.php" file of your current theme. edit the <html> tag and add the facebook xmlns for rendering XFBML.
