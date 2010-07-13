@@ -36,8 +36,7 @@ Facebook API key: http://www.facebook.com/developers/
     
 - Note! You can use drush_make script instead of steps 1 and 2 
 
- projects[fbconnect][download][type] = "git"
- projects[fbconnect][download][url] = "git://github.com/vectoroc/fbconnect.git"
+ projects[] = fbconnect
  libraries[facebook-client][download][type] = "get"
  libraries[facebook-client][download][url] = "http://github.com/downloads/vectoroc/fbconnect/facebook-client.zip"
  libraries[facebook-client][destination] = "modules/fbconnect"

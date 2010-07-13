@@ -378,28 +378,36 @@ function fbconnect_render_button($attr = array()) {
 }
 
 function _facebook_client_load_include() {
-  if (!class_exists('Facebook')) {  
-    if (module_exists('libraries')) {
-      $lib_path = libraries_get_path('facebook-platform') . '/php';
-    } 
-    else {
-      $lib_path = drupal_get_path('module', 'fbconnect') . '/facebook-client';
-      if (is_dir($lib_path . '/php')) {
-        $lib_path .= '/php';
-      }
-    }
-    $client_include = $lib_path . '/facebook.php';
-    if (!file_exists($client_include)) {
-      $message = t('Fbconnect : Facebook PHP library not found. See README.TXT');
-      drupal_set_message($message, 'warning', FALSE);
-    }
-    else {
-      // Include facebook.php
-      include_once($client_include);
-    }
+  if (!class_exists('Facebook')) {
+  	$lib_paths = array_filter(array(
+	  	drupal_get_path('module', 'fbconnect') . '/facebook-client',
+	  	module_invoke('libraries', 'get_path', 'facebook-platform'),
+	  	module_invoke('libraries', 'get_path', 'facebook-client'),
+	  	module_invoke('libraries', 'get_path', 'facebook-php-sdk'),
+	  ));
+	  
+	  
+	  foreach ($lib_paths as $dir) {
+      $lib_paths[] = $dir . '/php';
+      $lib_paths[] = $dir . '/src';
+	  }
+	  
+	  foreach ($lib_paths as $path) {
+	  	$client_include = $path . '/facebook.php';
+	  	if (file_exists($client_include)) {
+	  		include_once($client_include);
+	  		if (class_exists('Facebook')) {
+	  			return true;
+	  		}
+	  	}
+	  }
+	  
+    $message = t('Fbconnect : Facebook PHP library not found. See README.TXT');
+    drupal_set_message($message, 'warning', FALSE);
+    return false;
   }
   
-  return class_exists('Facebook');
+  return true;
 }
 
 /**
