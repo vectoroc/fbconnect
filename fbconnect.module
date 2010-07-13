@@ -448,7 +448,7 @@ function fbconnect_get_config() {
   static $config;
   
   if (!$config) {
-    $config['app_id'] = $config['api_key'] = variable_get('fbconnect_key', NULL);
+    $config['app_id'] = variable_get('fbconnect_appid', NULL);
     $config['secret_api_key'] = variable_get('fbconnect_skey', NULL);
     $config['xd_path'] = 'fbconnect/receiver';
     $config['debug'] = variable_get('fbconnect_debug', FALSE);
@@ -480,8 +480,10 @@ function fbconnect_get_config() {
  */
 function fbconnect_get_fbuid($check_connected = false) {
 	global $user;
+	
+	$client = facebook_client();
 
-  if ($session = facebook_client()->getSession()) {
+  if ($client && $session = $client->getSession()) {
     $fbuid = $session['uid'];
     
     if ($check_connected && $fbuid) {

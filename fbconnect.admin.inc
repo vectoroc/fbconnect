@@ -12,7 +12,7 @@ function fbconnect_api_keys_settings(&$form_state) {
     '#type' => 'textfield', 
     '#required' => true,
     '#title' => t('Application ID'), 
-    '#default_value' => variable_get('fbconnect_key', NULL),
+    '#default_value' => variable_get('fbconnect_appid', NULL),
     '#description' => t('Your Application ID, <strong> not API Key </strong>'),
   );
   
