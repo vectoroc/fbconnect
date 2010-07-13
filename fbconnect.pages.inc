@@ -27,11 +27,11 @@ function fbconnect_prompt_page_links() {
   if ($conf['fast_reg_mode']) {
 	  $reg_js  = <<<JS
 	  function DoFastRegistration(link) {
-	    FB.Connect.showPermissionDialog("email", function(perm) {
-	      if (perm) {
-	        window.location.href = link.href;
-	      }
-	    });
+			FB.login(function(response) {
+			  if (response.session && /email/.test(response.perms)) {
+          window.location.href = link.href;
+        }
+			}, {perms:'email'});
 	  }
 JS;
 	  drupal_add_js($reg_js, 'inline');
