@@ -32,7 +32,7 @@ Facebook API key: http://www.facebook.com/developers/
   1. Upload the 'fbconnect' folder into your module directory, 
   
   2. Download the Facebook PHP libraries from http://github.com/downloads/vectoroc/fbconnect/facebook-client.zip
-    and place it into the fbconnect module folder
+    and place it into the fbconnect module folder and unzip it.
     
 - Note! You can use drush_make script instead of steps 1 and 2 
 
