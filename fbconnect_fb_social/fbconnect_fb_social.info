@@ -1,0 +1,6 @@
+name =  fbconnect-fb_social integration
+description = Provides fb social module integration
+dependencies[] = fb_social
+dependencies[] = fbconnect
+package = "fb social"
+core = 6.x
