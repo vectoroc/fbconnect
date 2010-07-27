@@ -260,3 +260,5 @@ Drupal.theme.prototype.fbml_profile_pic = function(fbuid, options) {
 	
 	return output.join('');
 };
+
+$(document).bind('fb:init', Drupal.fbconnect.init);
