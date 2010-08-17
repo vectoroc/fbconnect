@@ -707,6 +707,9 @@ function fbconnect_autoconnect_form_submit($form, &$form_state) {
       elseif ($uid) {
         $user = user_load($uid);
         user_external_login($user);
+        
+        module_invoke('rules', 'invoke_event', 'fbconnect_user_login', $user);
+        
         $form_state['redirect'] = ($_GET['q'] == 'user/login' || $_GET['q'] == 'user/register' || $_GET['q'] == 'user/password') ? 'user' : $_GET['q'];
       }
     }
@@ -797,8 +800,13 @@ function fbconnect_register($uid, $fbuid) {
   $insert_query = 'INSERT INTO {fbconnect_users} (uid, fbuid, timestamp) VALUES (%d, \'%s\', %d)';  
   
   db_query($delete_query, $uid);
-  if (db_query($insert_query, $uid, $fbuid, time())) {  
-    user_save(user_load($uid), array('fbuid' => $fbuid));
+  if (db_query($insert_query, $uid, $fbuid, time())) {
+    $account = user_load($uid);
+    $account->fbuid = $fbuid;
+    
+    user_save($account, array('fbuid' => $fbuid));
+    module_invoke('rules', 'invoke_event', 'fbconnect_user_registered', $account); 
+    
     return TRUE;
   }
   return FALSE;
@@ -821,7 +829,11 @@ function fbconnect_unregister($fbuid) {
     $fb->api($params);
     
     db_query('DELETE FROM {fbconnect_users} WHERE fbuid = %s', $fbuid);
-    user_save(user_load($uid), array('fbuid' => NULL));
+    $account = user_load($uid);
+    unset($account->fbuid);
+    
+    user_save($account, array('fbuid' => NULL));
+    module_invoke('rules', 'invoke_event', 'fbconnect_user_unregistered');
     
     watchdog(
       'fbconnect', 
