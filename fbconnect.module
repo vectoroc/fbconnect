@@ -460,6 +460,15 @@ function fbconnect_get_config() {
     $config['user_pictures'] = variable_get('fbconnect_pic_allow', 'allow');
     $config['language_code'] = variable_get('fbconnect_language_code', 'en_US');
     
+    if (module_exists('i18n')) {
+      global $language;
+      $switch_code = variable_get('fbconnect_language_code_'. $language->language, '');
+
+      if ($switch_code) {
+        $config['language_code'] = $switch_code;
+      }
+    }    
+    
     $config['loginout_mode'] = variable_get('fbconnect_loginout_mode', 'manual');
     $config['invite_name'] = variable_get('fbconnect_invite_name', variable_get('site_name', $base_url));
     $config['fast_reg_mode'] = variable_get('fbconnect_fast_reg', null);
