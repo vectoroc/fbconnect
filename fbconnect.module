@@ -438,16 +438,6 @@ function facebook_client() {
     );
   	
     $fb = new Facebook($initParams);
-    /*
-     * If a page is loaded via HTTPS, then all images and static
-     * resources need to be printed with HTTPS urls to avoid
-     * mixed content warnings. If your page loads with an HTTPS
-     * url, then call set_use_ssl_resources to retrieve the correct
-     * urls.
-     */
-    if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on') {
-      $fb->api_client->set_use_ssl_resources(TRUE);
-    }
   }
   return $fb;
 }
