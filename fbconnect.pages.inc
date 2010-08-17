@@ -264,34 +264,50 @@ function fbconnect_user_settings_form_submit($form, &$form_state) {
 /**
  * Render the facebook friends invite form.
  */
-function fbconnect_render_friends_invite_form() {
+function fbconnect_invite_friends_page() {
   global $base_url;
-  $site      = drupal_to_js(variable_get('site_name', $base_url));  
-  $actiontxt = drupal_to_js(t('Please select the Facebook friends you want to invite'));
-  $action    = drupal_to_js(variable_get('fbconnect_invite_dest', $base_url));
-  $type      = drupal_to_js(variable_get('fbconnect_invite_name', $site));
-  $content   = check_plain(variable_get('fbconnect_invite_msg', t('Enjoy'))) .'  <fb:req-choice url=\''. $base_url .'\' label=\'Become a Member!\' />';
-  $output    = '<fb:serverfbml>
-                <script type="text/fbml">
-                  <fb:fbml>
-                    <fb:request-form
-                      action='. $action .'
-                      method="POST"
-                      invite="true"
-                      type='. $type .'
-                      content="'. $content .'">	
-                      <fb:multi-friend-selector
-                      cols="6"
-                      rows="6"
-                      showborder="false"
-                      actiontext='. $actiontxt .'
-                      max="35"
-                      bypass="cancel" />
-                    </fb:request-form>
-                  </fb:fbml>
-                </script>
-              </fb:serverfbml>';
-  return $output;
+  $site      = variable_get('site_name', $base_url);  
+  $actiontxt = check_plain(t('Please select the Facebook friends you want to invite'));
+  $action    = check_plain(variable_get('fbconnect_invite_dest', $base_url));
+  $type      = check_plain(variable_get('fbconnect_invite_name', $site));
+  $join_btn  = t('Become a Member!');
+  $content   = check_plain(variable_get('fbconnect_invite_msg', t('Enjoy'))) 
+             . " <fb:req-choice url=\"$base_url\" label=\"$join_btn\" />";
+  
+  $request_form_attributes = array(
+    'method'  => 'POST',
+    'action'  => $action,
+    'type'    => $type,
+    'content' => $content,
+  );
+  
+  $friends_selector_attributes = array(
+    'cols' => "6",
+    'rows' => "6",
+    'max' => "35",
+    'showborder' => "false",
+    'actiontext' => $actiontxt,
+    'bypass' => "cancel",
+  );
+  
+  return theme('fbconnect_invite_form', $request_form_attributes, $friends_selector_attributes);
+}
+
+function theme_fbconnect_invite_form($request_form_attributes, $friends_selector_attributes) {
+  $request_form_attr    = drupal_attributes($request_form_attributes);
+  $friend_selector_attr = drupal_attributes($friends_selector_attributes);
+
+  return <<<FBML
+    <fb:serverfbml>
+      <script type="text/fbml">
+        <fb:fbml>
+          <fb:request-form $request_form_attr >
+            <fb:multi-friend-selector $friend_selector_attr />
+          </fb:request-form>
+        </fb:fbml>
+      </script>
+    </fb:serverfbml>
+FBML;
 }
 
 /**

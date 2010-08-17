@@ -56,7 +56,7 @@ function fbconnect_menu() {
 
   $items['fbconnect/invite/friends'] = array(
     'title' => t('Invite my Facebook friends'),
-    'page callback' => 'fbconnect_render_friends_invite_form',
+    'page callback' => 'fbconnect_invite_friends_page',
     'access arguments' => array('invite facebook friends'),
     'type' => MENU_CALLBACK,
     'file' => 'fbconnect.pages.inc',    
@@ -99,6 +99,14 @@ function fbconnect_theme() {
       'arguments' => array('fbuid' => NULL, 'account' => NULL, 'user_url' => NULL, 'size' => '', 'logo' => TRUE),
       'file'      => 'fbconnect.pages.inc',
     ),
+    'fbconnect_invite_form' => array(
+      'arguments' => array(
+        'request_form_attributes' => array(), 
+        'friends_selector_attributes' => array(),        
+      ),
+      'file' => 'fbconnect.pages.inc',
+    ),
+    
   );
 }
 
