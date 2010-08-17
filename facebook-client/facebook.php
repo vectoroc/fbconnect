@@ -79,7 +79,7 @@ class Facebook
   /**
    * Version.
    */
-  const VERSION = '2.0.5';
+  const VERSION = '2.0.6';
 
   /**
    * Default options for curl.
@@ -97,6 +97,7 @@ class Facebook
    */
   protected static $DROP_QUERY_PARAMS = array(
     'session',
+    'signed_request',
   );
 
   /**
@@ -123,6 +124,11 @@ class Facebook
    * The active user session, if one is available.
    */
   protected $session;
+
+  /**
+   * The data from the signed_request token.
+   */
+  protected $signedRequest;
 
   /**
    * Indicates that we already loaded the session as best as we could.
@@ -238,6 +244,21 @@ class Facebook
   }
 
   /**
+   * Get the data from a signed_request token
+   *
+   * @return String the base domain
+   */
+  public function getSignedRequest() {
+    if (!$this->signedRequest) {
+      if (isset($_REQUEST['signed_request'])) {
+        $this->signedRequest = $this->parseSignedRequest(
+          $_REQUEST['signed_request']);
+      }
+    }
+    return $this->signedRequest;
+  }
+
+  /**
    * Set the Session.
    *
    * @param Array $session the session
@@ -256,7 +277,7 @@ class Facebook
 
   /**
    * Get the session object. This will automatically look for a signed session
-   * sent via the Cookie or Query Parameters if needed.
+   * sent via the signed_request, Cookie or Query Parameters if needed.
    *
    * @return Array the session
    */
@@ -265,8 +286,15 @@ class Facebook
       $session = null;
       $write_cookie = true;
 
+      // try loading session from signed_request in $_REQUEST
+      $signedRequest = $this->getSignedRequest();
+      if ($signedRequest) {
+        // sig is good, use the signedRequest
+        $session = $this->createSessionFromSignedRequest($signedRequest);
+      }
+
       // try loading session from $_REQUEST
-      if (isset($_REQUEST['session'])) {
+      if (!$session && isset($_REQUEST['session'])) {
         $session = json_decode(
           get_magic_quotes_gpc()
             ? stripslashes($_REQUEST['session'])
@@ -307,6 +335,21 @@ class Facebook
   public function getUser() {
     $session = $this->getSession();
     return $session ? $session['uid'] : null;
+  }
+
+  /**
+   * Gets a OAuth access token.
+   *
+   * @return String the access token
+   */
+  public function getAccessToken() {
+    $session = $this->getSession();
+    // either user session signed, or app signed
+    if ($session) {
+      return $session['access_token'];
+    } else {
+      return $this->getAppId() .'|'. $this->getApiSecret();
+    }
   }
 
   /**
@@ -351,14 +394,12 @@ class Facebook
    * @return String the URL for the logout flow
    */
   public function getLogoutUrl($params=array()) {
-    $session = $this->getSession();
     return $this->getUrl(
       'www',
       'logout.php',
       array_merge(array(
-        'api_key'     => $this->getAppId(),
-        'next'        => $this->getCurrentUrl(),
-        'session_key' => $session['session_key'],
+        'next'         => $this->getCurrentUrl(),
+        'access_token' => $this->getAccessToken(),
       ), $params)
     );
   }
@@ -469,13 +510,7 @@ class Facebook
    */
   protected function _oauthRequest($url, $params) {
     if (!isset($params['access_token'])) {
-      $session = $this->getSession();
-      // either user session signed, or app signed
-      if ($session) {
-        $params['access_token'] = $session['access_token'];
-      } else {
-        $params['access_token'] = $this->getAppId() .'|'. $this->getApiSecret();
-      }
+      $params['access_token'] = $this->getAccessToken();
     }
 
     // json_encode all params values that are not strings
@@ -505,6 +540,17 @@ class Facebook
     $opts = self::$CURL_OPTS;
     $opts[CURLOPT_POSTFIELDS] = http_build_query($params, null, '&');
     $opts[CURLOPT_URL] = $url;
+
+    // disable the 'Expect: 100-continue' behaviour. This causes CURL to wait
+    // for 2 seconds if the server does not support this header.
+    if (isset($opts[CURLOPT_HTTPHEADER])) {
+      $existing_headers = $opts[CURLOPT_HTTPHEADER];
+      $existing_headers[] = 'Expect:';
+      $opts[CURLOPT_HTTPHEADER] = $existing_headers;
+    } else {
+      $opts[CURLOPT_HTTPHEADER] = array('Expect:');
+    }
+
     curl_setopt_array($ch, $opts);
     $result = curl_exec($ch);
     if ($result === false) {
@@ -565,7 +611,7 @@ class Facebook
     }
 
     if (headers_sent()) {
-      self::error_log('Could not set cookie. Headers already sent.');
+      self::errorLog('Could not set cookie. Headers already sent.');
 
     // ignore for code coverage as we will never be able to setcookie in a CLI
     // environment
@@ -586,8 +632,6 @@ class Facebook
     // make sure some essential fields exist
     if (is_array($session) &&
         isset($session['uid']) &&
-        isset($session['session_key']) &&
-        isset($session['secret']) &&
         isset($session['access_token']) &&
         isset($session['sig'])) {
       // validate the signature
@@ -598,7 +642,7 @@ class Facebook
         $this->getApiSecret()
       );
       if ($session['sig'] != $expected_sig) {
-        self::error_log('Got invalid session signature in cookie.');
+        self::errorLog('Got invalid session signature in cookie.');
         $session = null;
       }
       // check expiry time
@@ -606,6 +650,67 @@ class Facebook
       $session = null;
     }
     return $session;
+  }
+
+  /**
+   * Returns something that looks like our JS session object from the
+   * signed token's data
+   *
+   * TODO: Nuke this once the login flow uses OAuth2
+   *
+   * @param Array the output of getSignedRequest
+   * @return Array Something that will work as a session
+   */
+  protected function createSessionFromSignedRequest($data) {
+    if (!isset($data['oauth_token'])) {
+      return null;
+    }
+
+    $session = array(
+      'uid'          => $data['user_id'],
+      'access_token' => $data['oauth_token'],
+      'expires'      => $data['expires'],
+    );
+
+    // put a real sig, so that validateSignature works
+    $session['sig'] = self::generateSignature(
+      $session,
+      $this->getApiSecret()
+    );
+
+    return $session;
+  }
+
+  /**
+   * Parses a signed_request and validates the signature.
+   * Then saves it in $this->signed_data
+   *
+   * @param String A signed token
+   * @param Boolean Should we remove the parts of the payload that
+   *                are used by the algorithm?
+   * @return Array the payload inside it or null if the sig is wrong
+   */
+  protected function parseSignedRequest($signed_request) {
+    list($encoded_sig, $payload) = explode('.', $signed_request, 2);
+
+    // decode the data
+    $sig = self::base64UrlDecode($encoded_sig);
+    $data = json_decode(self::base64UrlDecode($payload), true);
+
+    if (strtoupper($data['algorithm']) !== 'HMAC-SHA256') {
+      self::errorLog('Unknown algorithm. Expected HMAC-SHA256');
+      return null;
+    }
+
+    // check sig
+    $expected_sig = hash_hmac('sha256', $payload,
+                              $this->getApiSecret(), $raw = true);
+    if ($sig !== $expected_sig) {
+      self::errorLog('Bad Signed JSON signature!');
+      return null;
+    }
+
+    return $data;
   }
 
   /**
@@ -700,7 +805,7 @@ class Facebook
       $url .= $path;
     }
     if ($params) {
-      $url .= '?' . http_build_query($params);
+      $url .= '?' . http_build_query($params, null, '&');
     }
     return $url;
   }
@@ -727,7 +832,7 @@ class Facebook
         unset($params[$key]);
       }
       if (!empty($params)) {
-        $query = '?' . http_build_query($params);
+        $query = '?' . http_build_query($params, null, '&');
       }
     }
 
@@ -764,11 +869,11 @@ class Facebook
   }
 
   /**
-   * Prints to the error log if you aren't in command line mode. 
+   * Prints to the error log if you aren't in command line mode.
    *
    * @param String log message
    */
-  protected static function error_log($msg) {
+  protected static function errorLog($msg) {
     // disable error log if we are running in a CLI environment
     // @codeCoverageIgnoreStart
     if (php_sapi_name() != 'cli') {
@@ -777,5 +882,17 @@ class Facebook
     // uncomment this if you want to see the errors on the page
     // print 'error_log: '.$msg."\n";
     // @codeCoverageIgnoreEnd
+  }
+
+  /**
+   * Base64 encoding that doesn't need to be urlencode()ed.
+   * Exactly the same as base64_encode except it uses
+   *   - instead of +
+   *   _ instead of /
+   *
+   * @param String base64UrlEncodeded string
+   */
+  protected static function base64UrlDecode($input) {
+    return base64_decode(strtr($input, '-_', '+/'));
   }
 }
