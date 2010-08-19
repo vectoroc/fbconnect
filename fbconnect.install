@@ -2,6 +2,61 @@
 // $Id: fbconnect.install,v 1.12 2010/03/21 16:26:03 vectoroc Exp $
 
 /**
+ * Implementation of hook_requirements().
+ */
+function fbconnect_requirements($phase) {
+  $t = get_t();
+  $requirements = array();  
+  
+  if ($phase == 'runtime') {
+    $requirements['curl']['title'] = $t('cURL library');
+    if (function_exists('curl_init')) {
+      $curl_info = curl_version();
+      $requirements['curl']['value'] = $curl_info['version'];
+      $requirements['curl']['severity'] = REQUIREMENT_OK;
+    }
+    else {
+      $requirements['curl']['value'] = $t('Not installed');
+      $requirements['curl']['severity'] = REQUIREMENT_ERROR;
+      $requirements['curl']['description'] = $t('The cURL library is not installed. Please check the <a href="@url">PHP cURL documentation</a> for information on how to correct this.', array('@url' => 'http://www.php.net/manual/en/curl.setup.php'));
+    }
+    
+    $requirements['json']['title'] = $t('JSON extension');
+    if (function_exists('json_decode')) {
+      $requirements['json']['value'] = $t('Enabled');
+      $requirements['json']['severity'] = REQUIREMENT_OK;
+    }
+    else {
+      $requirements['json']['value'] = $t('Not installed');
+      $requirements['json']['severity'] = REQUIREMENT_ERROR;
+      $requirements['json']['description'] = $t('The JSON library is not installed. Facebook needs the JSON PHP extension');
+    }
+    
+    drupal_load('module', 'fbconnect');
+    _facebook_client_load_include();
+    
+    $requirements['facebook-php-sdk']['title'] = $t('Facebook PHP sdk');
+    if (!class_exists('Facebook')) {
+      $requirements['facebook-php-sdk']['value'] = $t('Not installed');
+      $requirements['facebook-php-sdk']['severity'] = REQUIREMENT_ERROR;
+      $requirements['facebook-php-sdk']['description'] = $t('Fbconnect : Facebook PHP library not found. See README.TXT');
+    }
+    elseif (!constant('Facebook::VERSION')) {
+      $requirements['facebook-php-sdk']['value'] = $t('Outdated version');
+      $requirements['facebook-php-sdk']['severity'] = REQUIREMENT_ERROR;
+      $requirements['facebook-php-sdk']['description'] = $t('Fbconnect : Installed Facebook PHP library is outdated. See README.TXT');
+    }
+    else {
+      $requirements['facebook-php-sdk']['value'] = l(constant('Facebook::VERSION'), 'http://github.com/facebook/php-sdk', array('external' => TRUE));
+      $requirements['facebook-php-sdk']['severity'] = REQUIREMENT_OK;
+    }
+  }
+
+  return $requirements;
+}
+
+
+/**
  * @file
  * Implementation of hook_install().
  */
