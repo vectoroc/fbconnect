@@ -811,7 +811,15 @@ function fbconnect_register($uid, $fbuid) {
     $account->fbuid = $fbuid;
     
     user_save($account, array('fbuid' => $fbuid));
-    module_invoke('rules', 'invoke_event', 'fbconnect_user_registered', $account); 
+    module_invoke('rules', 'invoke_event', 'fbconnect_user_registered', $account);
+     
+    watchdog(
+      'fbconnect', 
+      'User has connected his Facebook account (@fbuid)',
+      array('@fbuid' => $fbuid),
+      WATCHDOG_NOTICE,
+      l(t('edit'), "user/$uid/edit/fbconnect")
+    );
     
     return TRUE;
   }
@@ -851,15 +859,17 @@ function fbconnect_unregister($fbuid) {
         
     db_query('DELETE FROM {fbconnect_users} WHERE fbuid = %s', $fbuid);
     $account = user_load($uid);
-    unset($account->fbuid);
+    $account->fbuid = NULL;
     
     user_save($account, array('fbuid' => NULL));
-    module_invoke('rules', 'invoke_event', 'fbconnect_user_unregistered');
+    module_invoke('rules', 'invoke_event', 'fbconnect_user_unregistered', $account);
     
     watchdog(
       'fbconnect', 
       "Users authorization is revoked (fbuid: @fbuid)", 
-      array('@fbuid' => $fbuid)
+      array('@fbuid' => $fbuid),
+      WATCHDOG_NOTICE,
+      l(t('edit'), "user/$uid/edit/fbconnect")
     );
     
     return TRUE;

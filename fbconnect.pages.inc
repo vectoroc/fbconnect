@@ -222,6 +222,7 @@ function fbconnect_user_settings_form($form_state, $account) {
     '#type' => 'submit',
     '#description' => t('Click here to unlink this Facebook account'),
     '#value' => t('Unlink'),
+    '#access' => !!facebook_client(), // don't show unlink button if fbconnect is'nt properly configured
   ); 
   
   $form['submit'] = array(
@@ -247,11 +248,10 @@ function fbconnect_user_settings_form_submit($form, &$form_state) {
   if ($op == $form['fbconnect']['unlink']['#value']) {
     if (fbconnect_unregister($fbuid)) {
       $data['fb_visible'] = null;
-      $data['fb_avatar'] = null;
-      
-      // TODO remove this line before release module
-      // remove inconsistent data
-      $data['fbuid'] = null;      
+      $data['fb_avatar'] = null;      
+    }
+    else {
+      form_set_error('fbconnect', t("Something went wrong. Can't unlink account"));
     }
   }
   
