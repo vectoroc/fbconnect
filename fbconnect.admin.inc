@@ -83,7 +83,7 @@ function fbconnect_appearance_settings(&$form_state) {
     '#type' => 'checkbox',
     '#title' => t('Fast registration mode'),
     '#default_value' => variable_get('fbconnect_fast_reg', NULL),
-    '#description' => t('Unable this mode will bypass drupal\'s standard registration form.'),
+    '#description' => t('Enable this mode will bypass drupal\'s standard registration form.'),
   );
   
   $form['site']['fbconnect_loginout_mode'] = array(
