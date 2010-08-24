@@ -6,19 +6,18 @@
  * Administration page callbacks for the fbconnect module. 
  */ 
 
-
 function fbconnect_api_keys_settings(&$form_state) {
   $form['fbconnect_appid'] = array( 
     '#type' => 'textfield', 
-    '#required' => true,
+    '#required' => TRUE,
     '#title' => t('Application ID'), 
-    '#default_value' => variable_get('fbconnect_key', NULL),
+    '#default_value' => variable_get('fbconnect_appid', NULL),
     '#description' => t('Your Application ID, <strong> not API Key </strong>'),
   );
   
   $form['fbconnect_skey'] = array(
     '#type' => 'textfield',
-    '#required' => true,
+    '#required' => TRUE,
     '#title' => t('Application Secret'),
     '#default_value' => variable_get('fbconnect_skey', NULL),
     '#description' => t('Do not share your secret key with anyone'),
@@ -26,10 +25,29 @@ function fbconnect_api_keys_settings(&$form_state) {
   
   $form['fbconnect_language_code'] = array(
     '#type' => 'textfield',
-    '#title' => t('Language code'),
+    '#title' => (module_exists('i18n')) ? t('Default language code') : t('Language code'),
     '#description' => t('Enter your country code here to get translated versions of facebook connect. (e.g. en_US or de_DE)'),
     '#default_value' => variable_get('fbconnect_language_code', 'en_US'),
   );
+  
+  if (module_exists('i18n')) {
+    $form['language_codes'] = array(
+      '#type'          => 'fieldset',
+      '#title'         => t('Automatically Switch Language Code'),
+      '#description'   => t('Enable the fbconnect module to use a different language code for each of your site languages.'),
+      '#collapsible'   => TRUE,
+      '#collapsed'     => TRUE,
+    );
+
+    foreach (language_list() as $langcode => $language) {
+      $form['language_codes']['fbconnect_language_code_' . $langcode] = array(
+        '#type'          => 'select',
+        '#title'         => t('@name (@native) Language code', array('@name' => $language->name, '@native' => $language->native)),
+        '#default_value' => variable_get('fbconnect_language_code_' . $langcode, ''),
+        '#options'       => array('' => t('- Use default -')) + _fbconnect_language_codes(),
+      );
+    }
+  }  
   
   $form['fbconnect_debug'] = array(
     '#type' => 'checkbox',
@@ -64,7 +82,7 @@ function fbconnect_appearance_settings(&$form_state) {
     '#type' => 'checkbox',
     '#title' => t('Fast registration mode'),
     '#default_value' => variable_get('fbconnect_fast_reg', NULL),
-    '#description' => t('Unable this mode will bypass drupal\'s standard registration form.'),
+    '#description' => t('Enable this mode will bypass drupal\'s standard registration form.'),
   );
   
   $form['site']['fbconnect_loginout_mode'] = array(
@@ -79,24 +97,7 @@ function fbconnect_appearance_settings(&$form_state) {
     '#description' => t('Login to drupal/logout from facebook. Enable this if you don\'t want to logout automatically from facebook.'),
   );
   
-  $form['site']['fbconnect_invite_msg'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Invite message'),      
-    '#default_value' => variable_get('fbconnect_invite_msg', t('Enjoy facebook connect')),
-  );
-  
-  $form['site']['fbconnect_invite_name'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Your site name'),      
-    '#default_value' => variable_get('fbconnect_invite_name', variable_get('site_name', NULL)),
-  );
-  
-  $form['site']['fbconnect_invite_dest'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Destination, after user\'s valid or skip invite friend form'),
-    '#default_value' => variable_get('fbconnect_invite_dest', $base_url),
-  );
-  
+  // TODO: rename to more clear name 
   $form['site']['fbconnect_reg_options'] = array(
     '#type' => 'checkbox',
     '#title' => t('Disable linking accounts during registration'),
@@ -167,20 +168,20 @@ function fbconnect_appearance_settings(&$form_state) {
 
 
 function fbconnect_fbapp_settings(&$form_state) {
-	if (!facebook_client()) {
-		drupal_set_message(t('Ensure that you entered valid api keys.'), 'error');
-		drupal_goto('admin/settings/fbconnect');
-	}
-	
-	if (!fbconnect_get_fbuid()) {
-		$button_attr = array('text' => t('Connect with your Facebook account'));
-		$form['fbconnect'] = array(
-		  '#value' => fbconnect_render_button($button_attr),
-		);
-		
-		return $form;
-	}
-	
+  if (!facebook_client()) {
+    drupal_set_message(t('Ensure that you entered valid api keys.'), 'error');
+    drupal_goto('admin/settings/fbconnect');
+  }
+  
+  if (!fbconnect_get_fbuid()) {
+    $button_attr = array('text' => t('Connect with your Facebook account'));
+    $form['fbconnect'] = array(
+      '#value' => fbconnect_render_button($button_attr),
+    );
+    
+    return $form;
+  }
+  
   $form['fbconnect_base_domaine'] = array(
     '#type' => 'textfield',
     '#title' => t('Base Domain Url'),
@@ -204,7 +205,7 @@ function fbconnect_fbapp_settings(&$form_state) {
       url('fbconnect/post-remove', array('absolute' => TRUE))
     ),
   );
-	
+  
   $form = system_settings_form($form);
   $form['#submit'][] = 'fbconnect_fbapp_settings_submit';
   return $form;
@@ -241,4 +242,122 @@ function fbconnect_fbapp_settings_submit($form, &$form_state) {
   else {
     drupal_set_message(t('Your facebook app settings has been updated'));      
   }
+}
+
+/**
+ * Returns a list of valid Facebook language codes.
+ *
+ * see: http://wiki.developers.facebook.com/index.php/Facebook_Locales
+ */
+function _fbconnect_language_codes() {
+  return array(
+    'af_ZA' => 'Afrikaans',
+    'ar_AR' => 'Arabic',
+    'ay_BO' => 'Aymara',
+    'az_AZ' => 'Azeri',
+    'be_BY' => 'Belarusian',
+    'bg_BG' => 'Bulgarian',
+    'bn_IN' => 'Bengali',
+    'bs_BA' => 'Bosnian',
+    'ca_ES' => 'Catalan',
+    'ck_US' => 'Cherokee',
+    'cs_CZ' => 'Czech',
+    'cy_GB' => 'Welsh',
+    'da_DK' => 'Danish',
+    'de_DE' => 'German',
+    'el_GR' => 'Greek',
+    'en_GB' => 'English (UK)',
+    'en_PI' => 'English (Pirate)',
+    'en_UD' => 'English (Upside Down)',
+    'en_US' => 'English (US)',
+    'eo_EO' => 'Esperanto',
+    'es_CL' => 'Spanish (Chile)',
+    'es_CO' => 'Spanish (Colombia)',
+    'es_ES' => 'Spanish (Spain)',
+    'es_LA' => 'Spanish',
+    'es_MX' => 'Spanish (Mexico)',
+    'es_VE' => 'Spanish (Venezuela)',
+    'et_EE' => 'Estonian',
+    'eu_ES' => 'Basque',
+    'fa_IR' => 'Persian',
+    'fb_FI' => 'Finnish (test)',
+    'fb_LT' => 'Leet Speak',
+    'fi_FI' => 'Finnish',
+    'fo_FO' => 'Faroese',
+    'fr_CA' => 'French (Canada)',
+    'fr_FR' => 'French (France)',
+    'ga_IE' => 'Irish',
+    'gl_ES' => 'Galician',
+    'gn_PY' => 'Guaraní',
+    'gu_IN' => 'Gujarati',
+    'he_IL' => 'Hebrew',
+    'hi_IN' => 'Hindi',
+    'hr_HR' => 'Croatian',
+    'hu_HU' => 'Hungarian',
+    'hy_AM' => 'Armenian',
+    'id_ID' => 'Indonesian',
+    'is_IS' => 'Icelandic',
+    'it_IT' => 'Italian',
+    'ja_JP' => 'Japanese',
+    'jv_ID' => 'Javanese',
+    'ka_GE' => 'Georgian',
+    'kk_KZ' => 'Kazakh',
+    'km_KH' => 'Khmer',
+    'kn_IN' => 'Kannada',
+    'ko_KR' => 'Korean',
+    'ku_TR' => 'Kurdish',
+    'la_VA' => 'Latin',
+    'li_NL' => 'Limburgish',
+    'lt_LT' => 'Lithuanian',
+    'lv_LV' => 'Latvian',
+    'mg_MG' => 'Malagasy',
+    'mk_MK' => 'Macedonian',
+    'ml_IN' => 'Malayalam',
+    'mn_MN' => 'Mongolian',
+    'mr_IN' => 'Marathi',
+    'ms_MY' => 'Malay',
+    'mt_MT' => 'Maltese',
+    'nb_NO' => 'Norwegian (bokmal)',
+    'ne_NP' => 'Nepali',
+    'nl_BE' => 'Dutch (België)',
+    'nl_NL' => 'Dutch',
+    'nn_NO' => 'Norwegian (nynorsk)',
+    'pa_IN' => 'Punjabi',
+    'pl_PL' => 'Polish',
+    'ps_AF' => 'Pashto',
+    'pt_BR' => 'Portuguese (Brazil)',
+    'pt_PT' => 'Portuguese (Portugal)',
+    'qu_PE' => 'Quechua',
+    'rm_CH' => 'Romansh',
+    'ro_RO' => 'Romanian',
+    'ru_RU' => 'Russian',
+    'sa_IN' => 'Sanskrit',
+    'se_NO' => 'Northern Sámi',
+    'sk_SK' => 'Slovak',
+    'sl_SI' => 'Slovenian',
+    'so_SO' => 'Somali',
+    'sq_AL' => 'Albanian',
+    'sr_RS' => 'Serbian',
+    'sv_SE' => 'Swedish',
+    'sw_KE' => 'Swahili',
+    'sy_SY' => 'Syriac',
+    'ta_IN' => 'Tamil',
+    'te_IN' => 'Telugu',
+    'tg_TJ' => 'Tajik',
+    'th_TH' => 'Thai',
+    'tl_PH' => 'Filipino',
+    'tl_ST' => 'Klingon',
+    'tr_TR' => 'Turkish',
+    'tt_RU' => 'Tatar',
+    'uk_UA' => 'Ukrainian',
+    'ur_PK' => 'Urdu',
+    'uz_UZ' => 'Uzbek',
+    'vi_VN' => 'Vietnamese',
+    'xh_ZA' => 'Xhosa',
+    'yi_DE' => 'Yiddish',
+    'zh_CN' => 'Simplified Chinese (China)',
+    'zh_HK' => 'Traditional Chinese (Hong Kong)',
+    'zh_TW' => 'Traditional Chinese (Taiwan)',
+    'zu_ZA' => 'Zulu',
+  );
 }

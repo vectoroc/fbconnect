@@ -2,6 +2,66 @@
 // $Id$
 
 /**
+ * Implementation of hook_requirements().
+ */
+function fbconnect_requirements($phase) {
+  $requirements = array();  
+  
+  if ($phase == 'runtime') {
+    $requirements['curl']['title'] = t('cURL library');
+    if (function_exists('curl_init')) {
+      $curl_info = curl_version();
+      $requirements['curl']['value'] = $curl_info['version'];
+      $requirements['curl']['severity'] = REQUIREMENT_OK;
+    }
+    else {
+      $requirements['curl']['value'] = t('Not installed');
+      $requirements['curl']['severity'] = REQUIREMENT_ERROR;
+      $requirements['curl']['description'] = t('The cURL library is not installed. Please check the <a href="@url">PHP cURL documentation</a> for information on how to correct this.', array('@url' => 'http://www.php.net/manual/en/curl.setup.php'));
+    }
+    
+    if (!function_exists('json_decode')) {
+      $requirements['json']['title'] = t('JSON extension');
+      $requirements['json']['value'] = t('Not installed');
+      $requirements['json']['severity'] = REQUIREMENT_ERROR;
+      $requirements['json']['description'] = t('The JSON library is not installed. Facebook needs the JSON PHP extension');
+    }
+    
+    drupal_load('module', 'fbconnect');
+    _facebook_client_load_include();
+    
+    $requirements['facebook-php-sdk']['title'] = t('Facebook PHP sdk');
+    if (!class_exists('Facebook')) {
+      $requirements['facebook-php-sdk']['value'] = t('Not installed');
+      $requirements['facebook-php-sdk']['severity'] = REQUIREMENT_ERROR;
+      $requirements['facebook-php-sdk']['description'] = t('Fbconnect : Facebook PHP library not found. See README.TXT');
+    }
+    elseif (!constant('Facebook::VERSION')) {
+      $requirements['facebook-php-sdk']['value'] = t('Outdated version');
+      $requirements['facebook-php-sdk']['severity'] = REQUIREMENT_ERROR;
+      $requirements['facebook-php-sdk']['description'] = t('Fbconnect : Installed Facebook PHP library is outdated. See README.TXT');
+    }
+    else {
+      $requirements['facebook-php-sdk']['value'] = l(constant('Facebook::VERSION'), 'http://github.com/facebook/php-sdk', array('external' => TRUE));
+      $requirements['facebook-php-sdk']['severity'] = REQUIREMENT_OK;
+    }
+    
+    if (!fbconnect_get_config()) {
+      $requirements['fbconnect_conf'] = array(
+        'title' => t('FBConnect'),
+        'value' => t('Not configured'),
+        'severity' => REQUIREMENT_WARNING,
+        'description' => t('Please ensure that you entered Application ID and Secret Key. !link', array('!link' => l(t('Settings page'), 'admin/settings/fbconnect'))),
+      );
+    }
+    
+  }
+
+  return $requirements;
+}
+
+
+/**
  * @file
  * Implementation of hook_install().
  */
@@ -107,6 +167,6 @@ function fbconnect_schema_alter(&$schema) {
 function _fbconnect_change_user_mail_field($action = 'install') {
   $schema = array('users' => drupal_get_schema('users'));
   if ($action == 'install') fbconnect_schema_alter($schema);
-  db_change_field($res, 'users', 'mail', 'mail', $schema['users']['fields']['mail']);	
+  db_change_field($res, 'users', 'mail', 'mail', $schema['users']['fields']['mail']);
   return $res;
 }

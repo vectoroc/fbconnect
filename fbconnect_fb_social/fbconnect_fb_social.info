@@ -1,0 +1,7 @@
+; $Id$
+name =  fbconnect-fb_social integration
+description = Provides fb social module integration
+dependencies[] = fb_social
+dependencies[] = fbconnect
+package = "Facebook Social"
+core = 6.x

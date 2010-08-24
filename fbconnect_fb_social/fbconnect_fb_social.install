@@ -1,0 +1,13 @@
+<?php
+// $Id$
+
+/**
+ * Implementation of hook_enable().
+ */
+function fbconnect_fb_social_enable() {
+  if (!variable_get('fb_social_appid', NULL)) {
+    if ($fbconnect_appid = variable_get('fbconnect_appid', NULL)) {
+      variable_set('fb_social_appid', $fbconnect_appid);
+    }
+  }
+}

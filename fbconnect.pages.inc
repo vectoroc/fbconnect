@@ -1,6 +1,11 @@
 <?php
 // $Id$
 
+/** 
+ * @file 
+ * User pages callbacks for the fbconnect module. 
+ */ 
+
 /**
  * Menu callback.
  * Called when user perform facebook registration
@@ -25,18 +30,10 @@ function fbconnect_prompt_page_links() {
 
   $reg_attr = array();
   if ($conf['fast_reg_mode']) {
-	  $reg_js  = <<<JS
-	  function DoFastRegistration(link) {
-			FB.login(function(response) {
-			  if (response.session && /email/.test(response.perms)) {
-          window.location.href = link.href;
-        }
-			}, {perms:'email'});
-	  }
-JS;
-	  drupal_add_js($reg_js, 'inline');
-	  $reg_attr = array('attributes' => array('onclick' => 'DoFastRegistration(this); return false;'));
-	}
+    $reg_attr = array('attributes' => array(
+      'onclick' => 'Drupal.fbconnect.DoFastRegistration(this); return false;'
+    ));
+  }
   
   $reg_choice  = l($reg_msg, 'fbconnect/register/create', $reg_attr);
   $link_choice = l($link_msg, 'user', array('query' => 'destination=fbconnect'));
@@ -208,8 +205,8 @@ function fbconnect_user_settings_form($form_state, $account) {
   $form['fbconnect'] = array(
     '#title' => t('Facebook account'),
     '#type' => 'fieldset',
-    '#collapsed' => true,
-    '#collapsible' => true,
+    '#collapsed' => TRUE,
+    '#collapsible' => TRUE,
   );
   
   $form['fbconnect']['profile'] = array(
@@ -222,6 +219,7 @@ function fbconnect_user_settings_form($form_state, $account) {
     '#type' => 'submit',
     '#description' => t('Click here to unlink this Facebook account'),
     '#value' => t('Unlink'),
+    '#access' => !!facebook_client(), // don't show unlink button if fbconnect is'nt properly configured
   ); 
   
   $form['submit'] = array(
@@ -246,12 +244,11 @@ function fbconnect_user_settings_form_submit($form, &$form_state) {
   
   if ($op == $form['fbconnect']['unlink']['#value']) {
     if (fbconnect_unregister($fbuid)) {
-      $data['fb_visible'] = null;
-      $data['fb_avatar'] = null;
-      
-      // TODO remove this line before release module
-      // remove inconsistent data
-      $data['fbuid'] = null;      
+      $data['fb_visible'] = NULL;
+      $data['fb_avatar'] = NULL;      
+    }
+    else {
+      form_set_error('fbconnect', t("Something went wrong. Can't unlink account"));
     }
   }
   
@@ -262,49 +259,16 @@ function fbconnect_user_settings_form_submit($form, &$form_state) {
 }
 
 /**
- * Render the facebook friends invite form.
- */
-function fbconnect_render_friends_invite_form() {
-  global $base_url;
-  $site      = drupal_to_js(variable_get('site_name', $base_url));  
-  $actiontxt = drupal_to_js(t('Please select the Facebook friends you want to invite'));
-  $action    = drupal_to_js(variable_get('fbconnect_invite_dest', $base_url));
-  $type      = drupal_to_js(variable_get('fbconnect_invite_name', $site));
-  $content   = check_plain(variable_get('fbconnect_invite_msg', t('Enjoy'))) .'  <fb:req-choice url=\''. $base_url .'\' label=\'Become a Member!\' />';
-  $output    = '<fb:serverfbml>
-                <script type="text/fbml">
-                  <fb:fbml>
-                    <fb:request-form
-                      action='. $action .'
-                      method="POST"
-                      invite="true"
-                      type='. $type .'
-                      content="'. $content .'">	
-                      <fb:multi-friend-selector
-                      cols="6"
-                      rows="6"
-                      showborder="false"
-                      actiontext='. $actiontxt .'
-                      max="35"
-                      bypass="cancel" />
-                    </fb:request-form>
-                  </fb:fbml>
-                </script>
-              </fb:serverfbml>';
-  return $output;
-}
-
-/**
  * Make rendering of facebook user picture themeable
  */
-function theme_fbconnect_user_picture_override($fbuid = '', $account = null, $user_url = '', $size = 'square', $logo = TRUE) {
+function theme_fbconnect_user_picture_override($fbuid = '', $account = NULL, $user_url = '', $size = 'square', $logo = TRUE) {
   if ($logo) $logo = 'true';
   $output = <<<PIC
-      <div class="picture">
-        <a href="$user_url">
-         <fb:profile-pic uid="$fbuid" linked="false" size="$size" facebook-logo="$logo"></fb:profile-pic>
-        </a>
-      </div>
+    <div class="picture">
+      <a href="$user_url">
+        <fb:profile-pic uid="$fbuid" linked="false" size="$size" facebook-logo="$logo"></fb:profile-pic>
+      </a>
+    </div>
 PIC;
   return $output;
 }

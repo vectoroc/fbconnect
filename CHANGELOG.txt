@@ -1,3 +1,7 @@
+2010/08
+ - Moved steam.publish and friends invite functions to separate module
+ - Added fbconnect_fb_social module
+
 2010/07
   - Upgraded module to use new Facebook SDK`s
    
