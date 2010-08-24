@@ -1,6 +1,12 @@
 <?php
 // $Id: fbconnect.pages.inc,v 1.18 2010/03/21 16:26:03 vectoroc Exp $
 
+/** 
+ * @file 
+ * User pages callbacks for the fbconnect module. 
+ */ 
+
+
 /**
  * Menu callback.
  * Called when user perform facebook registration
@@ -25,18 +31,18 @@ function fbconnect_prompt_page_links() {
 
   $reg_attr = array();
   if ($conf['fast_reg_mode']) {
-	  $reg_js  = <<<JS
-	  function DoFastRegistration(link) {
-			FB.login(function(response) {
-			  if (response.session && /email/.test(response.perms)) {
+    $reg_js  = <<<JS
+    function DoFastRegistration(link) {
+      FB.login(function(response) {
+        if (response.session && /email/.test(response.perms)) {
           window.location.href = link.href;
         }
-			}, {perms:'email'});
-	  }
+      }, {perms:'email'});
+    }
 JS;
-	  drupal_add_js($reg_js, 'inline');
-	  $reg_attr = array('attributes' => array('onclick' => 'DoFastRegistration(this); return false;'));
-	}
+    drupal_add_js($reg_js, 'inline');
+    $reg_attr = array('attributes' => array('onclick' => 'DoFastRegistration(this); return false;'));
+  }
   
   $reg_choice  = l($reg_msg, 'fbconnect/register/create', $reg_attr);
   $link_choice = l($link_msg, 'user', array('query' => 'destination=fbconnect'));
@@ -208,8 +214,8 @@ function fbconnect_user_settings_form($form_state, $account) {
   $form['fbconnect'] = array(
     '#title' => t('Facebook account'),
     '#type' => 'fieldset',
-    '#collapsed' => true,
-    '#collapsible' => true,
+    '#collapsed' => TRUE,
+    '#collapsible' => TRUE,
   );
   
   $form['fbconnect']['profile'] = array(
@@ -247,8 +253,8 @@ function fbconnect_user_settings_form_submit($form, &$form_state) {
   
   if ($op == $form['fbconnect']['unlink']['#value']) {
     if (fbconnect_unregister($fbuid)) {
-      $data['fb_visible'] = null;
-      $data['fb_avatar'] = null;      
+      $data['fb_visible'] = NULL;
+      $data['fb_avatar'] = NULL;      
     }
     else {
       form_set_error('fbconnect', t("Something went wrong. Can't unlink account"));
@@ -313,7 +319,7 @@ FBML;
 /**
  * Make rendering of facebook user picture themeable
  */
-function theme_fbconnect_user_picture_override($fbuid = '', $account = null, $user_url = '', $size = 'square', $logo = TRUE) {
+function theme_fbconnect_user_picture_override($fbuid = '', $account = NULL, $user_url = '', $size = 'square', $logo = TRUE) {
   if ($logo) $logo = 'true';
   $output = <<<PIC
       <div class="picture">

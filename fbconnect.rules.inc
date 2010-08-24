@@ -1,4 +1,14 @@
 <?php
+// $Id$
+
+/**
+ * @file rules integration for the fbconnect module
+ *
+ * @addtogroup rules
+ * @{
+ */
+
+
 /**
  * Implementation of hook_rules_event_info().
  */
@@ -27,3 +37,7 @@ function fbconnect_rules_event_info() {
     ),
   );
 }
+
+/**
+ * @}
+ */

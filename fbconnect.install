@@ -167,6 +167,6 @@ function fbconnect_schema_alter(&$schema) {
 function _fbconnect_change_user_mail_field($action = 'install') {
   $schema = array('users' => drupal_get_schema('users'));
   if ($action == 'install') fbconnect_schema_alter($schema);
-  db_change_field($res, 'users', 'mail', 'mail', $schema['users']['fields']['mail']);	
+  db_change_field($res, 'users', 'mail', 'mail', $schema['users']['fields']['mail']);
   return $res;
 }

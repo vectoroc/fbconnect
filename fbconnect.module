@@ -477,7 +477,7 @@ function fbconnect_get_config() {
     
     $config['loginout_mode'] = variable_get('fbconnect_loginout_mode', 'manual');
     $config['invite_name'] = variable_get('fbconnect_invite_name', variable_get('site_name', $base_url));
-    $config['fast_reg_mode'] = variable_get('fbconnect_fast_reg', null);
+    $config['fast_reg_mode'] = variable_get('fbconnect_fast_reg', NULL);
 
     // allow third party modules to change settings
     drupal_alter('fbconnect_config', $config);
@@ -507,7 +507,7 @@ function fbconnect_get_fbuid($check_connected = FALSE) {
     
     if ($check_connected && $fbuid) {
       if (_get_user_fbuid($user->uid) != $fbuid) { 
-        $fbuid = null; 
+        $fbuid = NULL; 
       }
     }
     
@@ -835,7 +835,7 @@ function fbconnect_register($uid, $fbuid) {
  */
 function fbconnect_unregister($fbuid) {
   if (!facebook_client()) {
-    return false;
+    return FALSE;
   }
   
   if ($fbuid && $uid = _is_fbconnect_user($fbuid)) {

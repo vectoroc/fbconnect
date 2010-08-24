@@ -6,11 +6,10 @@
  * Administration page callbacks for the fbconnect module. 
  */ 
 
-
 function fbconnect_api_keys_settings(&$form_state) {
   $form['fbconnect_appid'] = array( 
     '#type' => 'textfield', 
-    '#required' => true,
+    '#required' => TRUE,
     '#title' => t('Application ID'), 
     '#default_value' => variable_get('fbconnect_appid', NULL),
     '#description' => t('Your Application ID, <strong> not API Key </strong>'),
@@ -18,7 +17,7 @@ function fbconnect_api_keys_settings(&$form_state) {
   
   $form['fbconnect_skey'] = array(
     '#type' => 'textfield',
-    '#required' => true,
+    '#required' => TRUE,
     '#title' => t('Application Secret'),
     '#default_value' => variable_get('fbconnect_skey', NULL),
     '#description' => t('Do not share your secret key with anyone'),
@@ -187,20 +186,20 @@ function fbconnect_appearance_settings(&$form_state) {
 
 
 function fbconnect_fbapp_settings(&$form_state) {
-	if (!facebook_client()) {
-		drupal_set_message(t('Ensure that you entered valid api keys.'), 'error');
-		drupal_goto('admin/settings/fbconnect');
-	}
-	
-	if (!fbconnect_get_fbuid()) {
-		$button_attr = array('text' => t('Connect with your Facebook account'));
-		$form['fbconnect'] = array(
-		  '#value' => fbconnect_render_button($button_attr),
-		);
-		
-		return $form;
-	}
-	
+  if (!facebook_client()) {
+    drupal_set_message(t('Ensure that you entered valid api keys.'), 'error');
+    drupal_goto('admin/settings/fbconnect');
+  }
+  
+  if (!fbconnect_get_fbuid()) {
+    $button_attr = array('text' => t('Connect with your Facebook account'));
+    $form['fbconnect'] = array(
+      '#value' => fbconnect_render_button($button_attr),
+    );
+    
+    return $form;
+  }
+  
   $form['fbconnect_base_domaine'] = array(
     '#type' => 'textfield',
     '#title' => t('Base Domain Url'),
@@ -224,7 +223,7 @@ function fbconnect_fbapp_settings(&$form_state) {
       url('fbconnect/post-remove', array('absolute' => TRUE))
     ),
   );
-	
+  
   $form = system_settings_form($form);
   $form['#submit'][] = 'fbconnect_fbapp_settings_submit';
   return $form;

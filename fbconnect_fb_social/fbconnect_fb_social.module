@@ -1,4 +1,5 @@
 <?php
+// $Id$
 
 /**
  * Implemetation of hook_fbconnect_config_alter().
