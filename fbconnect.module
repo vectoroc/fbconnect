@@ -649,7 +649,7 @@ function fbconnect_footer() {
             appId  : '$config[app_id]',
             status : true, // check login status
             cookie : true, // enable cookies to allow the server to access the session
-            logging: '$config[debug]',
+            logging: '$config[debug]'
           });
           
           jQuery.event.trigger('fb:init');
