@@ -1,0 +1,5 @@
+; $Id$
+name = Facebook Friends Invite
+dependencies[] = fbconnect
+package = "Facebook Social"
+core = 6.x

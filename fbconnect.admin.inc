@@ -97,24 +97,6 @@ function fbconnect_appearance_settings(&$form_state) {
     '#description' => t('Login to drupal/logout from facebook. Enable this if you don\'t want to logout automatically from facebook.'),
   );
   
-  $form['site']['fbconnect_invite_msg'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Invite message'),      
-    '#default_value' => variable_get('fbconnect_invite_msg', t('Enjoy facebook connect')),
-  );
-  
-  $form['site']['fbconnect_invite_name'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Your site name'),      
-    '#default_value' => variable_get('fbconnect_invite_name', variable_get('site_name', NULL)),
-  );
-  
-  $form['site']['fbconnect_invite_dest'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Destination, after user\'s valid or skip invite friend form'),
-    '#default_value' => variable_get('fbconnect_invite_dest', $base_url),
-  );
-  
   // TODO: rename to more clear name 
   $form['site']['fbconnect_reg_options'] = array(
     '#type' => 'checkbox',

@@ -2,6 +2,5 @@
 name = Fbconnect
 description = Allows users to connect with Facebook account
 package = "Authentication"
-php = 5.2
 core = "6.x"
 version = "6.x-2.x-dev"

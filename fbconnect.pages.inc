@@ -6,7 +6,6 @@
  * User pages callbacks for the fbconnect module. 
  */ 
 
-
 /**
  * Menu callback.
  * Called when user perform facebook registration
@@ -31,17 +30,9 @@ function fbconnect_prompt_page_links() {
 
   $reg_attr = array();
   if ($conf['fast_reg_mode']) {
-    $reg_js  = <<<JS
-    function DoFastRegistration(link) {
-      FB.login(function(response) {
-        if (response.session && /email/.test(response.perms)) {
-          window.location.href = link.href;
-        }
-      }, {perms:'email'});
-    }
-JS;
-    drupal_add_js($reg_js, 'inline');
-    $reg_attr = array('attributes' => array('onclick' => 'DoFastRegistration(this); return false;'));
+    $reg_attr = array('attributes' => array(
+      'onclick' => 'Drupal.fbconnect.DoFastRegistration(this); return false;'
+    ));
   }
   
   $reg_choice  = l($reg_msg, 'fbconnect/register/create', $reg_attr);
@@ -268,65 +259,16 @@ function fbconnect_user_settings_form_submit($form, &$form_state) {
 }
 
 /**
- * Render the facebook friends invite form.
- */
-function fbconnect_invite_friends_page() {
-  global $base_url;
-  $site      = variable_get('site_name', $base_url);  
-  $actiontxt = check_plain(t('Please select the Facebook friends you want to invite'));
-  $action    = check_plain(variable_get('fbconnect_invite_dest', $base_url));
-  $type      = check_plain(variable_get('fbconnect_invite_name', $site));
-  $join_btn  = t('Become a Member!');
-  $content   = check_plain(variable_get('fbconnect_invite_msg', t('Enjoy'))) 
-             . " <fb:req-choice url=\"$base_url\" label=\"$join_btn\" />";
-  
-  $request_form_attributes = array(
-    'method'  => 'POST',
-    'action'  => $action,
-    'type'    => $type,
-    'content' => $content,
-  );
-  
-  $friends_selector_attributes = array(
-    'cols' => "6",
-    'rows' => "6",
-    'max' => "35",
-    'showborder' => "false",
-    'actiontext' => $actiontxt,
-    'bypass' => "cancel",
-  );
-  
-  return theme('fbconnect_invite_form', $request_form_attributes, $friends_selector_attributes);
-}
-
-function theme_fbconnect_invite_form($request_form_attributes, $friends_selector_attributes) {
-  $request_form_attr    = drupal_attributes($request_form_attributes);
-  $friend_selector_attr = drupal_attributes($friends_selector_attributes);
-
-  return <<<FBML
-    <fb:serverfbml>
-      <script type="text/fbml">
-        <fb:fbml>
-          <fb:request-form $request_form_attr >
-            <fb:multi-friend-selector $friend_selector_attr />
-          </fb:request-form>
-        </fb:fbml>
-      </script>
-    </fb:serverfbml>
-FBML;
-}
-
-/**
  * Make rendering of facebook user picture themeable
  */
 function theme_fbconnect_user_picture_override($fbuid = '', $account = NULL, $user_url = '', $size = 'square', $logo = TRUE) {
   if ($logo) $logo = 'true';
   $output = <<<PIC
-      <div class="picture">
-        <a href="$user_url">
-         <fb:profile-pic uid="$fbuid" linked="false" size="$size" facebook-logo="$logo"></fb:profile-pic>
-        </a>
-      </div>
+    <div class="picture">
+      <a href="$user_url">
+        <fb:profile-pic uid="$fbuid" linked="false" size="$size" facebook-logo="$logo"></fb:profile-pic>
+      </a>
+    </div>
 PIC;
   return $output;
 }

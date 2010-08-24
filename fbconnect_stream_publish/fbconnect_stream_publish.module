@@ -1,0 +1,199 @@
+<?php
+// $Id$
+
+/**
+ * Impletementation of hook_init().
+ */
+function fbconnect_stream_publish_init() {
+  global $base_url;
+  
+  if (isset($_SESSION['fbconnect_feed'])) {
+    $site = variable_get('site_name', $base_url);
+    $feed = $_SESSION['fbconnect_feed'];
+
+    switch ($feed['type']) {
+      case 'comment' :
+        $autopublish = 'false';
+        $attachment = array(
+          'name'        => $feed['title'],
+          'href'        => $feed['nodeurl'],
+          'caption'     => t("{*actor*} commented at !site", array("!site" => $site)),
+          'description' => strip_tags($feed["comment"]),
+        );
+        $action_links = array(
+          array(
+            'text'  => $site,
+            'href'  => $base_url,
+          ),
+        );
+        $message = '';
+        break;
+
+      case 'node' :
+        $autopublish = 'false';
+        $attachment = array(
+          'name'        => $feed['title'],
+          'href'        => $feed['nodeurl'],
+          'caption'     => t("{*actor*} created some content at !site", array("!site" => $site)),
+        );
+        $action_links = array(
+          array(
+            'text'  => $site,
+            'href'  => $base_url,
+          ),
+        );
+        $message = '';
+        break;
+
+      case 'register' :
+        $autopublish = 'true';
+        $attachment = array(
+          'name'        => t('Welcome to @site', array('@site' => $site)),
+          'href'        => $base_url,
+          'caption'     => t("{*actor*} has registered at !site", array("!site" => $site)),
+        );
+        $action_links = array(
+          array(
+            'text'  => $site,
+            'href'  => $base_url,
+          ),
+        );
+        $message = '';
+        break;
+    }
+    
+    /**
+     * @see http://developers.facebook.com/docs/reference/rest/stream.publish
+     * @see http://developers.facebook.com/docs/guides/attachments
+     */
+    $method = 'stream.publish';    
+    $user_message_prompt = t('Share your thoughts');
+    $streamPublishArgs = compact('method', 'message', 'attachment', 'action_links', 'user_management_promt');
+    
+//    drupal_alter('fbconnect_stream_publish', $streamPublishArgs);
+    drupal_add_js(array('FB.streamPublish' => $streamPublishArgs), 'setting');
+    drupal_add_js(drupal_get_path('module', 'fbconnect_stream_publish') .'/fbconnect_stream_publish.js');
+
+    unset($_SESSION['fbconnect_feed']);
+  }
+}
+
+/**
+ * Implementation of hook_nodeapi()
+ */
+function fbconnect_stream_publish_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
+  if ($op == 'validate' && $a3['fbconnect_feed']['#post']['fbconnect_feed']) {
+    $_SESSION['fbconnect_feed']['submit'] = TRUE;
+  }
+  if ($op == 'insert' && $_SESSION['fbconnect_feed']['submit'] === TRUE) {
+    $_SESSION['fbconnect_feed'] = array(
+      'type'    => 'node',
+      'title'   => $node->title,
+      'nodeurl' => url('node/' . $node->nid, array('absolute' => TRUE)),
+    );
+  }
+}
+
+/**
+ * Impletementation of hook_form_alter().
+ */
+function fbconnect_stream_publish_form_alter(&$form, $form_state, $form_id) {
+  global $user;
+  
+  // variable to catch any content type edit form's name
+  preg_match('/^([a-z0-9_]+)_node_form$/', $form_id, $matches);
+  $ctype = isset($matches[1]) ? $matches[1] : '';
+  $ctypeformid = $ctype . '_node_form';
+   
+  switch ($form_id):
+    // Facebook feed checkbox on comment form.
+    case 'comment_form':
+//      $fbuid = fbconnect_get_fbuid();
+/*$fbuid && _is_fbconnect_user($fbuid) == $user->uid && */
+      if ($form['uid']['#value'] == 0 || $form['uid']['#value'] == $user->uid) {
+        $favicon = '<img src="http://wiki.developers.facebook.com/images/1/17/Connect_light_small_short.gif" />';
+        $form['fbconnect_feed'] = array(
+          '#type' => 'checkbox',
+          '#title' => $favicon .' '. t('Publish To Facebook'),
+          '#default_value' => 1,
+          '#weight' => 9,
+        );
+        $form['#submit'][] = 'fbconnect_stream_publish_comment_feed_submit';
+      }
+      break;
+
+    // admin settings for enabling/disabling the ability to publish to facebook, per node type
+    case 'node_type_form':
+      $form['fbconnect_settings'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Facebook Stream Publish'),
+        '#collapsible' => TRUE,
+        '#collapsed' => TRUE,
+      );
+      $form['fbconnect_settings']['onoff'] = array(
+        '#type' => 'checkbox',
+        '#title' => t('Allow this content type to publish to facebook'),
+        '#default_value' => variable_get('fbconnect_' . $form['#node_type']->type . '_onoff', 0),
+      );
+      $form['#submit'][] = 'fbconnect_stream_publish_node_type_form_save';
+      break;
+
+    // Facebook feed checkbox on node edit/create form.
+    // only show this on the create new forms, not the edit forms
+    case $ctypeformid:
+      if ($form['nid']['#value'] == NULL && variable_get('fbconnect_' . $ctype . '_onoff', 0) === 1) {
+        $favicon = '<img src="http://wiki.developers.facebook.com/images/1/17/Connect_light_small_short.gif" />';
+        $form['fbconnect_feed'] = array(
+          '#type' => 'checkbox',
+          '#title' => $favicon .' '. t('Publish To Facebook'),
+          '#default_value' => 1,
+          '#weight' => 0,
+        );
+      }
+      break;
+    
+  endswitch;
+}
+
+/**
+ *  Implement CCK's hook_content_extra_fields().
+ */
+function fbconnect_stream_publish_content_extra_fields($type_name) {
+  $extra = array();
+  if (variable_get('fbconnect_'. $type_name .'_onoff', 0)) {
+    $extra['fbconnect'] = array(
+      'label' => t('Facebook Connect'),
+      'description' => t('Facebook Connect Confirmation'),
+      'weight' => 100,
+    );
+  }
+  return $extra;
+}
+
+/**
+ * Form submit handler.
+ *
+ * This captures the value of the additional fbconnect settings and saves it as a Drupal variable.
+ *
+ * @param Array $form
+ * @param Array $form_state
+ */
+function fbconnect_stream_publish_node_type_form_save(&$form, &$form_state) {
+  variable_set('fbconnect_' . $form_state['values']['type'] . '_onoff', $form_state['values']['onoff']);
+}
+
+/**
+ * Stock informations used by the facebook feed javascript function.
+ */
+function fbconnect_stream_publish_comment_feed_submit($form, &$form_state) {
+  if ($form_state['values']['fbconnect_feed']) {
+    $node = node_load($form_state['values']['nid']);
+     
+    $_SESSION['fbconnect_feed'] = array(
+      'type'    => 'comment',
+      'comment' => $form_state['values']['comment'],
+      'title'   => $node->title,
+      'nodeurl' => url('node/' . $node->nid, array('absolute' => TRUE)),
+    );
+  }
+}
