@@ -435,6 +435,10 @@ CODE;
  * This form is submitted by javascript when facebook session is detected.
  */
 function fbconnect_autoconnect_form() {
+  if (arg(0) != 'user' || !in_array(arg(1), array('login', 'register', 'password'))) {
+    $form['#action'] = url($_GET['q'], array('query' => drupal_get_destination()));
+  }
+  
   $form['connect'] = array(
     '#type'   => 'submit',
     '#value'  => 'Connect',
@@ -463,12 +467,9 @@ function fbconnect_autoconnect_form_submit($form, &$form_state) {
         unset($_REQUEST['destination']);
       }
       elseif ($uid) {
-        $user = user_load($uid);
-        user_external_login($user);
-        
-        module_invoke('rules', 'invoke_event', 'fbconnect_user_login', $user);
-        
-        $form_state['redirect'] = ($_GET['q'] == 'user/login' || $_GET['q'] == 'user/register' || $_GET['q'] == 'user/password') ? 'user' : $_GET['q'];
+        $account = user_load($uid);
+        user_external_login($account);
+        module_invoke('rules', 'invoke_event', 'fbconnect_user_login', $account);
       }
     }
   }
