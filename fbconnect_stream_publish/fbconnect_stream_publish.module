@@ -26,7 +26,7 @@ function fbconnect_stream_publish_init() {
             'href'  => $base_url,
           ),
         );
-        $message = '';
+        $message = t('I posted a comment on !site_name.', array('!site_name' => variable_get('site_name', 'Drupal')));
         break;
 
       case 'node' :
@@ -42,7 +42,7 @@ function fbconnect_stream_publish_init() {
             'href'  => $base_url,
           ),
         );
-        $message = '';
+        $message = t('I posted new content on !site_name.', array('!site_name' => variable_get('site_name', 'Drupal')));
         break;
 
       case 'register' :
@@ -58,7 +58,7 @@ function fbconnect_stream_publish_init() {
             'href'  => $base_url,
           ),
         );
-        $message = '';
+        $message = t('I just became a member at !site_name!', array('!site_name' => variable_get('site_name', 'Drupal')));
         break;
     }
     
