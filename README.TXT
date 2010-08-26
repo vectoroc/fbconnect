@@ -20,6 +20,8 @@ The profile picture will be displayed directly from Facebook via FBML.
 - the "Let my Facebook friends see me" setting
 If this parameter is enabled, the user's will be visible by her Facebook friends.
 
+Also this tab allows to unlink your Facebook account.
+
 -- REQUIREMENTS --
 PHP 5.2 or higher versions. 
 Drupal 6.x. 
@@ -28,24 +30,21 @@ Facebook API key: http://www.facebook.com/developers/
 
 
 -- INSTALLATION --
-
-  1. Upload the 'fbconnect' folder into your module directory,
+  1. Upload the 'fbconnect' folder into your module directory and activate the module,
   
-  2. Nothing here now, go to next step,  
-  
-  3. Activate the module through your website's modules administration pages,
-      
-  4. Create a new application: http://www.facebook.com/developers/createapp.php
-    (more information here: http://wiki.developers.facebook.com/index.php/Connect/Setting_Up_Your_Site).
+  2. Upload facebook-php-sdk (http://github.com/facebook/php-sdk/) into fbconnect module folder (or into libraries folder, 
+    if you want to use it with the libraries module)
     
-  5. Enter the Connect URL on Connect settings tab (e.g. copy value from admin/settings/fbconnect field “Connect url”).
+     To ensure that you installed correctly check file : <fbconnect folder>/facebook-php-sdk/src/facebook.php must be accessible
   
-  6. Add your server to the Server Whitelist on Advanced settings tab on Facebook or disable Session Secret Whitelist Exception. 
-
-  7. Configure the module through the Fbconnect module (admin/settings/fbconnect) using the information provided by Facebook 
-    (Application ID, Application Secret). If you are unsure what to do on tab  App Settings just press the Save configuration button.
+  2. Create a new facebook application: http://www.facebook.com/developers/createapp.php
+    
+  3. Enter the Connect URL on Connect settings tab (e.g. copy value from admin/settings/fbconnect field “Connect url”).
+  
+  4. Configure the module through admin interface (admin/settings/fbconnect) using the information provided by Facebook 
+    (Application ID, Application Secret).  
      
-  8. In order for the user's browser to correctly recognize XFBML tags, you need to specify that the page is in XHTML. 
+  5. In order for the user's browser to correctly recognize XFBML tags, you need to specify that the page is in XHTML. 
     Edit the "page.tpl.php" file of your current theme. edit the <html> tag and add the facebook xmlns for rendering XFBML.
     
     Example : <html xmlns:fb="http://www.facebook.com/2008/fbml" 
@@ -54,6 +53,3 @@ Facebook API key: http://www.facebook.com/developers/
        
     Note: The xmlns:fb attribute (xmlns:fb="http://www.facebook.com/2008/fbml") is required for proper rendering on IE. 
      (Namespaces don't have to point to a valid page, they just need to be a valid Internationalized Resource Identifier (IRI).     
-     
-     
-  9. If you wish activate the 'fbconnect friend' block from the 'build/block' menu. Check "invite facebook friends" permission.
