@@ -39,7 +39,7 @@ Facebook API key: http://www.facebook.com/developers/
   
   2. Create a new facebook application: http://www.facebook.com/developers/createapp.php
     
-  3. Enter the Connect URL on Connect settings tab (e.g. copy value from admin/settings/fbconnect field “Connect url”).
+  3. Enter the Site URL on Web Site settings tab (e.g. copy value from admin/settings/fbconnect field “Connect url”).
   
   4. Configure the module through admin interface (admin/settings/fbconnect) using the information provided by Facebook 
     (Application ID, Application Secret).  
@@ -53,3 +53,12 @@ Facebook API key: http://www.facebook.com/developers/
        
     Note: The xmlns:fb attribute (xmlns:fb="http://www.facebook.com/2008/fbml") is required for proper rendering on IE. 
      (Namespaces don't have to point to a valid page, they just need to be a valid Internationalized Resource Identifier (IRI).     
+     
+-- FAQ --
+
+Q: How to skip linking local account to FB account?
+A: Enable "Disable linking accounts during registration" checkbox on admin/settings/fbconnect/apperance page 
+
+Q: Connect button does not appear
+A: Check 5th step of installation instructions. Check for error messages on page admin/reports/status.
+
