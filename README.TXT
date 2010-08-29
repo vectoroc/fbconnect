@@ -45,14 +45,14 @@ libraries[facebook-php-sdk][download][type] = "get"
 libraries[facebook-php-sdk][download][url] = "http://github.com/facebook/php-sdk/tarball/v2.1.1"
 libraries[facebook-php-sdk][destination] = "modules/fbconnect"   
   
-  2. Create a new facebook application: http://www.facebook.com/developers/createapp.php
+  3. Create a new facebook application: http://www.facebook.com/developers/createapp.php
     
-  3. Enter the Site URL on Web Site settings tab (e.g. copy value from admin/settings/fbconnect field “Connect url”).
+  4. Enter the Site URL on Web Site settings tab (e.g. copy value from admin/settings/fbconnect field “Connect url”).
   
-  4. Configure the module through admin interface (admin/settings/fbconnect) using the information provided by Facebook 
+  5. Configure the module through admin interface (admin/settings/fbconnect) using the information provided by Facebook 
     (Application ID, Application Secret).  
      
-  5. In order for the user's browser to correctly recognize XFBML tags, you need to specify that the page is in XHTML. 
+  6. In order for the user's browser to correctly recognize XFBML tags, you need to specify that the page is in XHTML. 
     Edit the "page.tpl.php" file of your current theme. edit the <html> tag and add the facebook xmlns for rendering XFBML.
     
     Example : <html xmlns:fb="http://www.facebook.com/2008/fbml" 
