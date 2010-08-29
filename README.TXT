@@ -36,6 +36,14 @@ Facebook API key: http://www.facebook.com/developers/
     if you want to use it with the libraries module)
     
      To ensure that you installed correctly check file : <fbconnect folder>/facebook-php-sdk/src/facebook.php must be accessible
+     
+ -- OR -- 
+  Use drush_make script instead of steps 1 and 2:
+ 
+projects[] = fbconnect
+libraries[facebook-php-sdk][download][type] = "get"
+libraries[facebook-php-sdk][download][url] = "http://github.com/facebook/php-sdk/tarball/v2.1.1"
+libraries[facebook-php-sdk][destination] = "modules/fbconnect"   
   
   2. Create a new facebook application: http://www.facebook.com/developers/createapp.php
     
