@@ -73,3 +73,8 @@ A: Check 5th step of installation instructions. Check for error messages on page
 Q: Fbconnect redirects to the Facebook homepage in popup
 Q: I'm getting error "Application Unavailable - The application you are trying to access is unavailable or restricted"
 A: Try to disable all other facebook* modules. If you're using fb_social you have to enable fbconnect_fb_social.
+
+Q: Cannot login to drupal site after sucessully logged in to facebook.
+A: Check your Application Secret on admin/settings/fbconnect page.
+
+Still did not solve problem ? Check admin/reports/dblog, php logs, post issue on http://drupal.org/project/issues/fbconnect
