@@ -241,15 +241,20 @@ function fbconnect_render_button($attr = array()) {
   return '<fb:login-button ' . drupal_attributes($attr) . '>' . $text . '</fb:login-button>';
 }
 
+function _facebook_client_search_paths() {
+  return array_filter(array(
+    drupal_get_path('module', 'fbconnect') .'/facebook-php-sdk',
+    module_invoke('libraries', 'get_path', 'facebook-php-sdk'),
+    drupal_get_path('module', 'fbconnect') .'/facebook-client',
+    drupal_get_path('module', 'fbconnect'),
+    module_invoke('libraries', 'get_path', 'facebook-platform'),
+    module_invoke('libraries', 'get_path', 'facebook-client'),
+  ));
+} 
+
 function _facebook_client_load_include() {
   if (!class_exists('Facebook')) {
-    $lib_paths = array_filter(array(
-      drupal_get_path('module', 'fbconnect'),
-      drupal_get_path('module', 'fbconnect') .'/facebook-client',
-      module_invoke('libraries', 'get_path', 'facebook-platform'),
-      module_invoke('libraries', 'get_path', 'facebook-client'),
-      module_invoke('libraries', 'get_path', 'facebook-php-sdk'),
-    ));
+    $lib_paths = _facebook_client_search_paths(); 
     
     foreach ($lib_paths as $dir) {
       $lib_paths[] = $dir . '/php';

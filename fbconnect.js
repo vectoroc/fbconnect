@@ -94,6 +94,10 @@ Drupal.fbconnect.DoFastRegistration =  function(link) {
 
 
 function facebook_onlogin_ready() {
+  // http://github.com/facebook/connect-js/issues/194
+  if (!FB.getSession()) {
+    return;
+  }
   $("#fbconnect-autoconnect-form").submit();
 }
 
