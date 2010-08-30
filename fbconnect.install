@@ -155,7 +155,7 @@ function fbconnect_update_6005() {
   return $res;
 }
 
-function fbconnect_update_6100() {
+function fbconnect_update_6200() {
   $res = array();
   $res[] = update_sql("UPDATE {variable} SET name = 'fbconnect_appid' WHERE name = 'fbconnect_key'");
   $res[] = update_sql('UPDATE {blocks} SET module = "fbconnect_invite" WHERE module = "fbconnect" AND delta = 0');
