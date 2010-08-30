@@ -157,7 +157,7 @@ function fbconnect_update_6005() {
 
 function fbconnect_update_6100() {
   $res = array();
-  $res[] = update_sql("DELETE FROM {variable} WHERE name = 'fbconnect_key'");
+  $res[] = update_sql("UPDATE {variable} SET name = 'fbconnect_appid' WHERE name = 'fbconnect_key'");
   $res[] = update_sql('UPDATE {blocks} SET module = "fbconnect_invite" WHERE module = "fbconnect" AND delta = 0');
   
   return $res;

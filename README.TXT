@@ -70,3 +70,6 @@ A: Enable "Disable linking accounts during registration" checkbox on admin/setti
 Q: Connect button does not appear
 A: Check 5th step of installation instructions. Check for error messages on page admin/reports/status.
 
+Q: Fbconnect redirects to the Facebook homepage in popup
+Q: I'm getting error "Application Unavailable - The application you are trying to access is unavailable or restricted"
+A: Try to disable all other facebook* modules. If you're using fb_social you have to enable fbconnect_fb_social.
