@@ -271,7 +271,7 @@ function _facebook_client_load_include() {
       }
     }
     
-    return FALSE;
+    return constant('Facebook::VERSION');
   }
   
   return TRUE;
