@@ -453,8 +453,16 @@ function fbconnect_autoconnect_form() {
 }
 
 function fbconnect_autoconnect_form_submit($form, &$form_state) {
+  $fbuid = fbconnect_get_fbuid();  
+  if (!$fbuid) {
+    $error_msg = 'fbconnect_autoconnect_form_submit has been called without valid facebook session. ' 
+               . 'Check your Application Secret on fbconnect settings page';
+               
+    watchdog('fbconnect', $error_msg, array(), WATCHDOG_ALERT, l(t('configure'), 'admin/settings/fbconnect'));
+    return ;
+  }
+  
   if (user_is_anonymous()) {
-    $fbuid = fbconnect_get_fbuid();
     if ($fbuid) {
       $uid = _is_fbconnect_user($fbuid);
       $form_state['values']['uid']   = $uid;
@@ -495,7 +503,7 @@ function _is_fbconnect_user($fbuid) {
     $query = <<<SQL
       SELECT u.uid FROM {users} u 
       INNER JOIN {fbconnect_users} f ON u.uid = f.uid 
-      WHERE fbuid = '%s' AND u.status = 1
+      WHERE fbuid = '%s'
 SQL;
     return db_result(db_query($query, $fbuid));
   }
