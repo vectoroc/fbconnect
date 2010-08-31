@@ -388,7 +388,7 @@ function fbconnect_render_js() {
     );
     drupal_add_js(array('fbconnect' => $config), 'setting');
     drupal_add_js($module_path . '/fbconnect.js');
-    drupal_add_js($module_path . '/fbconnect.css');
+    drupal_add_css($module_path . '/fbconnect.css');
   }
 }
 
@@ -442,7 +442,10 @@ CODE;
  * This form is submitted by javascript when facebook session is detected.
  */
 function fbconnect_autoconnect_form() {
-  if (arg(0) != 'user' || !in_array(arg(1), array('login', 'register', 'password'))) {
+  if (arg(0) == 'user' && in_array(arg(1), array('login', 'register', 'password')) && isset($_REQUEST['destination'])) {
+    $form['#action'] = url('user');
+  }
+  else {
     $form['#action'] = url($_GET['q'], array('query' => drupal_get_destination()));
   }
   
@@ -622,6 +625,9 @@ function fbconnect_unregister($fbuid) {
  * @return array
  */
 function fbconnect_get_info_from_fb($fbuid, $fields) {
+  if (is_array($fields)) {
+    $fields = join(', ', $fields);
+  }
   if (facebook_client() && $fields) {
     try {
       try {
