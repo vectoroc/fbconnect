@@ -388,6 +388,7 @@ function fbconnect_render_js() {
     );
     drupal_add_js(array('fbconnect' => $config), 'setting');
     drupal_add_js($module_path . '/fbconnect.js');
+    drupal_add_js($module_path . '/fbconnect.css');
   }
 }
 
