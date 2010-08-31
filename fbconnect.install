@@ -166,6 +166,7 @@ function fbconnect_update_6200() {
 /**
  * Implementation of hook_schema_alter()
  * @param array $schema
+ * @todo remove it / create updating tool 
  */
 function fbconnect_schema_alter(&$schema) {
   $schema['users']['fields']['mail']['length'] = 320;

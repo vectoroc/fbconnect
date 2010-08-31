@@ -620,22 +620,18 @@ function fbconnect_unregister($fbuid) {
 }
 
 /**
- * Query information from facebook user table.
+ * Make FQL Query.
  *
  * @return array
  */
-function fbconnect_get_info_from_fb($fbuid, $fields) {
-  if (is_array($fields)) {
-    $fields = join(', ', $fields);
-  }
-  if (facebook_client() && $fields) {
+function fbconnect_fql_query($query) {
+  if (facebook_client() && $query) {
     try {
       try {
-        $result = facebook_client()->api(array(
+        return facebook_client()->api(array(
           'method' => 'fql.query',
-          'query'  => "SELECT $fields FROM user WHERE uid = $fbuid",
+          'query'  => $query,
         ));
-        return $result[0];
       } 
       catch (FacebookApiException $e) {
         drupal_set_message($e->getMessage(), 'error');
@@ -643,10 +639,70 @@ function fbconnect_get_info_from_fb($fbuid, $fields) {
       }
     }
     catch (Exception $e) {
-      $msg = 'Exception thrown while using fbconnect_get_info_from_fb : @code';
+      $msg = 'Exception thrown while using fbconnect_fql_query : @code';
       watchdog('fbconnect', $msg, array('@code' => $e->getMessage()), WATCHDOG_WARNING);
     }
+  }  
+}
+
+/**
+ * Make Graph Query.
+ *
+ * @param string $path
+ * @return array
+ */
+function fbconnect_graph_query($path, $params = array()) {
+  if (facebook_client() && $path) {
+    try {
+      try {
+        return facebook_client()->api($path, $params);
+      } 
+      catch (FacebookApiException $e) {
+        drupal_set_message($e->getMessage(), 'error');
+        throw $e;
+      }
+    }
+    catch (Exception $e) {
+      $msg = 'Exception thrown while using fbconnect_graph_query : @code';
+      watchdog('fbconnect', $msg, array('@code' => $e->getMessage()), WATCHDOG_WARNING);
+    }
+  }  
+}
+
+
+/**
+ * Query information from facebook user table.
+ *
+ * @return array
+ */
+function fbconnect_get_user_info($fields = array(), $fbuid = null) {
+  $params = array();
+  
+  if (!$fbuid) {
+    $fbuid = fbconnect_get_fbuid();
   }
+  
+  if (is_array($fields) && count($fields)) {
+    $params['fields'] = join(',', $fields);
+  }
+  elseif ($fields) {
+    $params['fields'] = $fields;
+  }
+
+  if ($fbuid) {
+    return fbconnect_graph_query("/". $fbuid, $params);
+  }
+}
+
+/**
+ * Query information from facebook user table.
+ *
+ * @deprecated
+ * @see fbconnect_get_user_info
+ * @return array
+ */
+function fbconnect_get_info_from_fb($fbuid, $fields) {
+  return fbconnect_sql_query("SELECT $fields FROM user WHERE fbuid = $fbuid");
 }
 
 /**

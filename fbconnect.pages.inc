@@ -46,8 +46,7 @@ function fbconnect_prompt_page_links() {
  */
 function fbconnect_register_page($form_state = array()) {
   $conf  = fbconnect_get_config();
-  $fbuid = fbconnect_get_fbuid();
-  $data  = fbconnect_get_info_from_fb($fbuid, 'name, proxied_email');    
+  $data  = fbconnect_get_user_info('name, email');    
   $form  = drupal_retrieve_form('user_register', $form_state);
   $site  = $conf['invite_name'];
   
