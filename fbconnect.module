@@ -83,7 +83,10 @@ function fbconnect_theme() {
     'fbconnect_user_picture_override' => array(
       'arguments' => array('fbuid' => NULL, 'account' => NULL, 'user_url' => NULL, 'size' => '', 'logo' => TRUE),
       'file'      => 'fbconnect.pages.inc',
-    ),    
+    ),
+    'fbconnect_login_button' => array(
+      'arguments' => array('text' => '', 'attr' => ''),
+    ),
   );
 }
 
@@ -226,19 +229,17 @@ function fbconnect_user_edit_submit($form, &$form_state) {
 function fbconnect_render_button($attr = array()) {
   list($size, $length) = explode('_', variable_get('fbconnect_button', NULL));
   $default_attr = array(
-    'text'       => t(variable_get('fbconnect_button_text', 'Connect')), 
-    'size'       => $size, 
+    'text'       => variable_get('fbconnect_button_text', t('Connect')),
+    'size'       => $size,
     'onlogin'    => 'facebook_onlogin_ready();',
     'background' => 'dark',
     'v'          => 2,
   );
   
   $attr = array_merge($default_attr, $attr);
-  drupal_alter('fbconnect_login_button', $attr);
-  $text = $attr['text'];
   unset($attr['text']);
 
-  return '<fb:login-button ' . drupal_attributes($attr) . '>' . $text . '</fb:login-button>';
+  return theme('fbconnect_login_button', $text, $attr);
 }
 
 function _facebook_client_search_paths() {
@@ -706,4 +707,8 @@ function fbconnect_post_remove_callback() {
 //      );
 //    }
 //  }
+}
+
+function theme_fbconnect_login_button($text, $attr) {
+  return '<fb:login-button ' . drupal_attributes($attr) . '>' . $text . '</fb:login-button>';
 }

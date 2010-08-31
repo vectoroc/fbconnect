@@ -1,4 +1,5 @@
 2010/08
+ - Removed hook_fbconnect_login_button_alter (now you can override theme_fbconnect_login_button) 
  - Moved steam.publish and friends invite functions to separate module
  - Added fbconnect_fb_social module
  - Added rules module integration
