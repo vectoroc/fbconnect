@@ -131,6 +131,7 @@ function fbconnect_user($op, &$edit, &$user, $category = NULL) {
 
 /**
  *  Redirects the user to the account linking page.
+ *  @todo refactor it
  */
 function fbconnect_redirect_submit($form, &$form_state) {
   global $user;
@@ -266,16 +267,12 @@ function _facebook_client_load_include() {
       $client_include = $path . '/facebook.php';
       if (file_exists($client_include)) {
         include_once($client_include);
-        if (class_exists('Facebook') && constant('Facebook::VERSION')) {
-          return TRUE;
-        }
+        break;
       }
     }
-    
-    return constant('Facebook::VERSION');
   }
   
-  return TRUE;
+  return class_exists('Facebook') && constant('Facebook::VERSION');
 }
 
 /**
