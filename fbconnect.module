@@ -83,7 +83,10 @@ function fbconnect_theme() {
     'fbconnect_user_picture_override' => array(
       'arguments' => array('fbuid' => NULL, 'account' => NULL, 'user_url' => NULL, 'size' => '', 'logo' => TRUE),
       'file'      => 'fbconnect.pages.inc',
-    ),    
+    ),
+    'fbconnect_login_button' => array(
+      'arguments' => array('text' => '', 'attr' => ''),
+    ),
   );
 }
 
@@ -128,6 +131,7 @@ function fbconnect_user($op, &$edit, &$user, $category = NULL) {
 
 /**
  *  Redirects the user to the account linking page.
+ *  @todo refactor it
  */
 function fbconnect_redirect_submit($form, &$form_state) {
   global $user;
@@ -226,19 +230,17 @@ function fbconnect_user_edit_submit($form, &$form_state) {
 function fbconnect_render_button($attr = array()) {
   list($size, $length) = explode('_', variable_get('fbconnect_button', NULL));
   $default_attr = array(
-    'text'       => t(variable_get('fbconnect_button_text', 'Connect')), 
-    'size'       => $size, 
+    'text'       => variable_get('fbconnect_button_text', t('Connect')),
+    'size'       => $size,
     'onlogin'    => 'facebook_onlogin_ready();',
     'background' => 'dark',
     'v'          => 2,
   );
   
   $attr = array_merge($default_attr, $attr);
-  drupal_alter('fbconnect_login_button', $attr);
-  $text = $attr['text'];
   unset($attr['text']);
 
-  return '<fb:login-button ' . drupal_attributes($attr) . '>' . $text . '</fb:login-button>';
+  return theme('fbconnect_login_button', $text, $attr);
 }
 
 function _facebook_client_search_paths() {
@@ -265,16 +267,12 @@ function _facebook_client_load_include() {
       $client_include = $path . '/facebook.php';
       if (file_exists($client_include)) {
         include_once($client_include);
-        if (class_exists('Facebook') && constant('Facebook::VERSION')) {
-          return TRUE;
-        }
+        break;
       }
     }
-    
-    return FALSE;
   }
   
-  return TRUE;
+  return class_exists('Facebook') && constant('Facebook::VERSION');
 }
 
 /**
@@ -387,6 +385,7 @@ function fbconnect_render_js() {
     );
     drupal_add_js(array('fbconnect' => $config), 'setting');
     drupal_add_js($module_path . '/fbconnect.js');
+    drupal_add_css($module_path . '/fbconnect.css');
   }
 }
 
@@ -440,7 +439,10 @@ CODE;
  * This form is submitted by javascript when facebook session is detected.
  */
 function fbconnect_autoconnect_form() {
-  if (arg(0) != 'user' || !in_array(arg(1), array('login', 'register', 'password'))) {
+  if (arg(0) == 'user' && in_array(arg(1), array('login', 'register', 'password')) && isset($_REQUEST['destination'])) {
+    $form['#action'] = url('user');
+  }
+  else {
     $form['#action'] = url($_GET['q'], array('query' => drupal_get_destination()));
   }
   
@@ -453,8 +455,16 @@ function fbconnect_autoconnect_form() {
 }
 
 function fbconnect_autoconnect_form_submit($form, &$form_state) {
+  $fbuid = fbconnect_get_fbuid();  
+  if (!$fbuid) {
+    $error_msg = 'fbconnect_autoconnect_form_submit has been called without valid facebook session. ' 
+               . 'Check your Application Secret on fbconnect settings page';
+               
+    watchdog('fbconnect', $error_msg, array(), WATCHDOG_ALERT, l(t('configure'), 'admin/settings/fbconnect'));
+    return ;
+  }
+  
   if (user_is_anonymous()) {
-    $fbuid = fbconnect_get_fbuid();
     if ($fbuid) {
       $uid = _is_fbconnect_user($fbuid);
       $form_state['values']['uid']   = $uid;
@@ -495,7 +505,7 @@ function _is_fbconnect_user($fbuid) {
     $query = <<<SQL
       SELECT u.uid FROM {users} u 
       INNER JOIN {fbconnect_users} f ON u.uid = f.uid 
-      WHERE fbuid = '%s' AND u.status = 1
+      WHERE fbuid = '%s'
 SQL;
     return db_result(db_query($query, $fbuid));
   }
@@ -607,19 +617,18 @@ function fbconnect_unregister($fbuid) {
 }
 
 /**
- * Query information from facebook user table.
+ * Make FQL Query.
  *
  * @return array
  */
-function fbconnect_get_info_from_fb($fbuid, $fields) {
-  if (facebook_client() && $fields) {
+function fbconnect_fql_query($query) {
+  if (facebook_client() && $query) {
     try {
       try {
-        $result = facebook_client()->api(array(
+        return facebook_client()->api(array(
           'method' => 'fql.query',
-          'query'  => "SELECT $fields FROM user WHERE uid = $fbuid",
+          'query'  => $query,
         ));
-        return $result[0];
       } 
       catch (FacebookApiException $e) {
         drupal_set_message($e->getMessage(), 'error');
@@ -627,10 +636,70 @@ function fbconnect_get_info_from_fb($fbuid, $fields) {
       }
     }
     catch (Exception $e) {
-      $msg = 'Exception thrown while using fbconnect_get_info_from_fb : @code';
+      $msg = 'Exception thrown while using fbconnect_fql_query : @code';
       watchdog('fbconnect', $msg, array('@code' => $e->getMessage()), WATCHDOG_WARNING);
     }
+  }  
+}
+
+/**
+ * Make Graph Query.
+ *
+ * @param string $path
+ * @return array
+ */
+function fbconnect_graph_query($path, $params = array()) {
+  if (facebook_client() && $path) {
+    try {
+      try {
+        return facebook_client()->api($path, $params);
+      } 
+      catch (FacebookApiException $e) {
+        drupal_set_message($e->getMessage(), 'error');
+        throw $e;
+      }
+    }
+    catch (Exception $e) {
+      $msg = 'Exception thrown while using fbconnect_graph_query : @code';
+      watchdog('fbconnect', $msg, array('@code' => $e->getMessage()), WATCHDOG_WARNING);
+    }
+  }  
+}
+
+
+/**
+ * Query information from facebook user table.
+ *
+ * @return array
+ */
+function fbconnect_get_user_info($fields = array(), $fbuid = null) {
+  $params = array();
+  
+  if (!$fbuid) {
+    $fbuid = fbconnect_get_fbuid();
   }
+  
+  if (is_array($fields) && count($fields)) {
+    $params['fields'] = join(',', $fields);
+  }
+  elseif ($fields) {
+    $params['fields'] = $fields;
+  }
+
+  if ($fbuid) {
+    return fbconnect_graph_query("/". $fbuid, $params);
+  }
+}
+
+/**
+ * Query information from facebook user table.
+ *
+ * @deprecated
+ * @see fbconnect_get_user_info
+ * @return array
+ */
+function fbconnect_get_info_from_fb($fbuid, $fields) {
+  return fbconnect_sql_query("SELECT $fields FROM user WHERE fbuid = $fbuid");
 }
 
 /**
@@ -698,4 +767,8 @@ function fbconnect_post_remove_callback() {
 //      );
 //    }
 //  }
+}
+
+function theme_fbconnect_login_button($text, $attr) {
+  return '<fb:login-button ' . drupal_attributes($attr) . '>' . $text . '</fb:login-button>';
 }

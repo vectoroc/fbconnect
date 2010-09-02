@@ -11,3 +11,22 @@ function fbconnect_fb_social_enable() {
     }
   }
 }
+
+/**
+ * Implementation of hook_requirements(). 
+ */
+function fbconnect_fb_social_requirements() {
+  $fb_social_beta4_datestamp = "1281323474";
+  $info_query = 'SELECT info FROM {system} WHERE name = "%s" AND type = "%s"';
+  $t = get_t();
+  
+  $info = unserialize(db_result(db_query($info_query, 'fb_social', 'module')));
+  if ($info['datestamp'] < $fb_social_beta4_datestamp) {
+    $requirements['curl']['title'] = $t('FB Social Plugins');
+    $requirements['curl']['value'] = $t('Incompatible');
+    $requirements['curl']['severity'] = REQUIREMENT_ERROR;
+    $requirements['curl']['description'] = $t('Version of fb_social module you used is incomapible with fbconnect module. You must install at least fb_social-6.x-1.0-beta4');
+  }
+  
+  return $requirements;
+}
