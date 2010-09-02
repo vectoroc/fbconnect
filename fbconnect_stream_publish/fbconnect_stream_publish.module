@@ -51,10 +51,17 @@ function fbconnect_stream_publish_form_alter(&$form, $form_state, $form_id) {
         if (in_array($publishing_mode, array(FBCONNECT_STREAM_PUBLISH_ALL, FBCONNECT_STREAM_PUBLISH_COMMENTS))) {
 
 //          if ($form['uid']['#value'] == 0 || $form['uid']['#value'] == $user->uid) {
+            $form['fbconnect_stream_publish'] = array(
+              '#type' => 'fieldset',
+              '#title' => t('Facebook Stream Publish'),
+              '#collapsible' => TRUE,
+              '#collapsed' => TRUE,
+            );
+                      
             $favicon = '<img src="http://wiki.developers.facebook.com/images/1/17/Connect_light_small_short.gif" />';
-            $form['fbconnect_feed'] = array(
+            $form['fbconnect_stream_publish']['fbconnect_feed'] = array(
               '#type' => 'checkbox',
-              '#title' => $favicon .' '. t('Publish To Facebook'),
+              '#title' => $favicon .' '. t('Publish to Facebook'),
               '#default_value' => 1,
               '#weight' => 9,
             );
@@ -79,9 +86,17 @@ function fbconnect_stream_publish_form_alter(&$form, $form_state, $form_id) {
       if (in_array($publishing_mode, array(FBCONNECT_STREAM_PUBLISH_ALL, FBCONNECT_STREAM_PUBLISH_NODES))) {
         if ($form['nid']['#value'] == NULL) {
           $favicon = '<img src="http://wiki.developers.facebook.com/images/1/17/Connect_light_small_short.gif" />';
-          $form['fbconnect_feed'] = array(
+          
+          $form['fbconnect_stream_publish'] = array(
+            '#type' => 'fieldset',
+            '#title' => t('Facebook Stream Publish'),
+            '#collapsible' => TRUE,
+            '#collapsed' => TRUE,
+          );
+          
+          $form['fbconnect_stream_publish']['fbconnect_feed'] = array(
             '#type' => 'checkbox',
-            '#title' => $favicon .' '. t('Publish To Facebook'),
+            '#title' => $favicon .' '. t('Publish to Facebook'),
             '#default_value' => 1,
             '#weight' => 9,
           );
@@ -89,7 +104,7 @@ function fbconnect_stream_publish_form_alter(&$form, $form_state, $form_id) {
       }
       break;
     
-    // admin settings for enabling/disabling the ability to publish to facebook, per node type
+    // admin settings for enabling/disabling the ability to publish to Facebook, per node type
     case 'node_type_form':
       $form['fbconnect_settings'] = array(
         '#type' => 'fieldset',
@@ -99,7 +114,7 @@ function fbconnect_stream_publish_form_alter(&$form, $form_state, $form_id) {
       );
       $form['fbconnect_settings']['onoff'] = array(
         '#type' => 'select',
-        '#title' => t('Allow this content type to publish to facebook'),
+        '#title' => t('Allow this content type to publish to Facebook'),
         '#options' => array(
           FBCONNECT_STREAM_PUBLISH_NONE => t('Disable publishing'),
           FBCONNECT_STREAM_PUBLISH_ALL => t('Publish nodes on comments'),
