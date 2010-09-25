@@ -67,7 +67,8 @@ libraries[facebook-php-sdk][destination] = "modules/fbconnect"
 Q: How to skip linking local account to FB account?
 A: Enable "Disable linking accounts during registration" checkbox on admin/settings/fbconnect/apperance page 
 
-Q: Connect button does not appear
+Q: Why the connect button does not appear?
+Q: Facebook Connect dialog says: "Invalid Argument: Given URL is not allowed by the Application configuration".
 A: Check 5th step of installation instructions. Check for error messages on page admin/reports/status.
 
 Q: Fbconnect redirects to the Facebook homepage in popup
