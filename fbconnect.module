@@ -238,6 +238,7 @@ function fbconnect_render_button($attr = array()) {
   );
   
   $attr = array_merge($default_attr, $attr);
+  $text = $attr['text'];
   unset($attr['text']);
 
   return theme('fbconnect_login_button', $text, $attr);
@@ -398,7 +399,7 @@ function fbconnect_footer() {
   
     $footer['fb-init-code'] = <<<CODE
       <div id="fb-root"></div>
-      <script>
+      <script type="text/javascript">
         window.fbAsyncInit = function() {
           FB.init({
             appId  : '$config[app_id]',
@@ -439,7 +440,7 @@ CODE;
  * This form is submitted by javascript when facebook session is detected.
  */
 function fbconnect_autoconnect_form() {
-  if (arg(0) == 'user' && in_array(arg(1), array('login', 'register', 'password')) && isset($_REQUEST['destination'])) {
+  if (arg(0) == 'user' && in_array(arg(1), array('login', 'register', 'password')) && !isset($_REQUEST['destination'])) {
     $form['#action'] = url('user');
   }
   else {

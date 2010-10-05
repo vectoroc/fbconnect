@@ -67,9 +67,15 @@ libraries[facebook-php-sdk][destination] = "modules/fbconnect"
 Q: How to skip linking local account to FB account?
 A: Enable "Disable linking accounts during registration" checkbox on admin/settings/fbconnect/apperance page 
 
-Q: Connect button does not appear
+Q: Why the connect button does not appear?
+Q: Facebook Connect dialog says: "Invalid Argument: Given URL is not allowed by the Application configuration".
 A: Check 5th step of installation instructions. Check for error messages on page admin/reports/status.
 
 Q: Fbconnect redirects to the Facebook homepage in popup
 Q: I'm getting error "Application Unavailable - The application you are trying to access is unavailable or restricted"
 A: Try to disable all other facebook* modules. If you're using fb_social you have to enable fbconnect_fb_social.
+
+Q: Cannot login to drupal site after sucessully logged in to facebook.
+A: Check your Application Secret on admin/settings/fbconnect page.
+
+Still did not solve problem ? Check admin/reports/dblog, php logs, post issue on http://drupal.org/project/issues/fbconnect
