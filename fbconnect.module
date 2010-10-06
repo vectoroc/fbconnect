@@ -273,7 +273,7 @@ function _facebook_client_load_include() {
     }
   }
   
-  return class_exists('Facebook') && constant('Facebook::VERSION');
+  return class_exists('Facebook') && defined('Facebook::VERSION');
 }
 
 /**
