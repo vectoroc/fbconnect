@@ -57,8 +57,8 @@ function fbconnect_stream_publish_form_alter(&$form, $form_state, $form_id) {
               '#collapsible' => TRUE,
               '#collapsed' => TRUE,
             );
-                      
-            $favicon = '<img src="http://wiki.developers.facebook.com/images/1/17/Connect_light_small_short.gif" />';
+            
+            $favicon = theme('image', drupal_get_path('module', 'fbconnect_stream_publish') .'/connect_white_small_short.gif');
             $form['fbconnect_stream_publish']['fbconnect_feed'] = array(
               '#type' => 'checkbox',
               '#title' => $favicon .' '. t('Publish to Facebook'),
@@ -85,8 +85,7 @@ function fbconnect_stream_publish_form_alter(&$form, $form_state, $form_id) {
       $publishing_mode = variable_get('fbconnect_' . $ctype . '_onoff', FBCONNECT_STREAM_PUBLISH_NONE);
       if (in_array($publishing_mode, array(FBCONNECT_STREAM_PUBLISH_ALL, FBCONNECT_STREAM_PUBLISH_NODES))) {
         if ($form['nid']['#value'] == NULL) {
-          $favicon = '<img src="http://wiki.developers.facebook.com/images/1/17/Connect_light_small_short.gif" />';
-          
+          $favicon = theme('image', drupal_get_path('module', 'fbconnect_stream_publish') .'/connect_white_small_short.gif');
           $form['fbconnect_stream_publish'] = array(
             '#type' => 'fieldset',
             '#title' => t('Facebook Stream Publish'),
