@@ -700,7 +700,7 @@ function fbconnect_get_user_info($fields = array(), $fbuid = null) {
  * @return array
  */
 function fbconnect_get_info_from_fb($fbuid, $fields) {
-  return fbconnect_sql_query("SELECT $fields FROM user WHERE fbuid = $fbuid");
+  return fbconnect_fql_query("SELECT $fields FROM user WHERE uid = $fbuid");
 }
 
 /**
