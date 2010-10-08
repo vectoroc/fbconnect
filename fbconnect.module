@@ -96,12 +96,14 @@ function fbconnect_theme() {
 function fbconnect_init() {
   fbconnect_render_js();
   $conf  = fbconnect_get_config();
-  if ($conf['loginout_mode'] == 'auto' && user_is_anonymous()) {
-    $fbuid = fbconnect_get_fbuid();
-    if ($fbuid && _is_fbconnect_user($fbuid)) { 
-      $form_state = array('values' => array('op' => 'connect'));
-      drupal_execute('fbconnect_autoconnect_form', $form_state);
-      drupal_goto($form_state['redirect']);
+  if ($conf && facebook_client() && user_is_anonymous()) {
+    if ($conf['loginout_mode'] == 'auto') {
+      $fbuid = fbconnect_get_fbuid();
+      if ($fbuid && _is_fbconnect_user($fbuid)) { 
+        $form_state = array('values' => array('op' => 'connect'));
+        drupal_execute('fbconnect_autoconnect_form', $form_state);
+        drupal_goto($form_state['redirect']);
+      }
     }
   } 
   // During registration the cache is disabled
@@ -177,7 +179,7 @@ function fbconnect_form_alter(&$form, $form_state, $form_id) {
 
     // Render fbconnect on login block.
     case 'user_login_block':
-      if (@$_REQUEST['destination'] != 'fbconnect' && fbconnect_get_config()) {
+      if (@$_REQUEST['destination'] != 'fbconnect' && facebook_client()) {
         
         #848354 : ask user for email permission when account linking is disabled
         $attr = array();
@@ -394,7 +396,8 @@ function fbconnect_render_js() {
  * Implementation of hook_footer().
  */
 function fbconnect_footer() {
-  if ($config = fbconnect_get_config()) {
+  if (facebook_client()) {
+    $config = fbconnect_get_config();
     $footer = array();    
     $footer['fb-init-code'] = <<<CODE
       <div id="fb-root"></div>
