@@ -311,13 +311,13 @@ function fbconnect_get_config() {
   static $config;
   
   if (!$config) {
-    $config['app_id'] = variable_get('fbconnect_appid', NULL);
-    $config['secret_api_key'] = variable_get('fbconnect_skey', NULL);
-    $config['xd_path'] = 'fbconnect/receiver';
-    $config['debug'] = variable_get('fbconnect_debug', FALSE);
-    
     $config['user_pictures'] = variable_get('fbconnect_pic_allow', 'allow');
     $config['language_code'] = variable_get('fbconnect_language_code', 'en_US');
+    
+    $config['app_id'] = variable_get('fbconnect_appid', NULL);
+    $config['secret_api_key'] = variable_get('fbconnect_skey', NULL);
+    $config['debug'] = variable_get('fbconnect_debug', FALSE);
+    $config['connect_js'] = "document.location.protocol + '//connect.facebook.net/$config[language_code]/all.js'";
     
     if (module_exists('i18n')) {
       global $language;
@@ -395,8 +395,7 @@ function fbconnect_render_js() {
  */
 function fbconnect_footer() {
   if ($config = fbconnect_get_config()) {
-    $footer = array();
-  
+    $footer = array();    
     $footer['fb-init-code'] = <<<CODE
       <div id="fb-root"></div>
       <script type="text/javascript">
@@ -405,6 +404,7 @@ function fbconnect_footer() {
             appId  : '$config[app_id]',
             status : true, // check login status
             cookie : true, // enable cookies to allow the server to access the session
+            xfbml  : true,
             logging: '$config[debug]'
           });
           
@@ -413,7 +413,7 @@ function fbconnect_footer() {
       
         (function() {
           var e = document.createElement('script');
-          e.src = document.location.protocol + '//connect.facebook.net/$config[language_code]/all.js';
+          e.src = $config[connect_js];
           e.async = true;
           document.getElementById('fb-root').appendChild(e);
         }());
@@ -700,7 +700,7 @@ function fbconnect_get_user_info($fields = array(), $fbuid = null) {
  * @return array
  */
 function fbconnect_get_info_from_fb($fbuid, $fields) {
-  return fbconnect_sql_query("SELECT $fields FROM user WHERE fbuid = $fbuid");
+  return fbconnect_fql_query("SELECT $fields FROM user WHERE uid = $fbuid");
 }
 
 /**

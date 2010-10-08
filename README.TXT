@@ -78,4 +78,7 @@ A: Try to disable all other facebook* modules. If you're using fb_social you hav
 Q: Cannot login to drupal site after sucessully logged in to facebook.
 A: Check your Application Secret on admin/settings/fbconnect page.
 
+Q: Fbconnect Causes W3C XHTML Validation To Fail
+A: http://drupal.org/node/365584#comment-3539890
+
 Still did not solve problem ? Check admin/reports/dblog, php logs, post issue on http://drupal.org/project/issues/fbconnect
