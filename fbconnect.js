@@ -3,7 +3,9 @@
 Drupal.fbconnect = Drupal.fbconnect || {};
 Drupal.fbconnect.init = function () {
   Drupal.behaviors.fbconnect = function(context) {
-    jQuery(context).each(function() { FB.XFBML.parse(this); });
+    if (context != document) {
+      jQuery(context).each(function() { FB.XFBML.parse(this); });
+    }
     Drupal.fbconnect.initLogoutLinks(context);
   }
   
