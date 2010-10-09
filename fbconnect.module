@@ -621,18 +621,28 @@ function fbconnect_unregister($fbuid) {
 }
 
 /**
- * Make FQL Query.
+ * Make FQL Query. Uses fql.multiquery if $query is array of queries
  *
+ * @param string|array $query
  * @return array
  */
 function fbconnect_fql_query($query) {
   if (facebook_client() && $query) {
+    if (is_array($query)) {
+      $params = array(
+        'method' => 'fql.multiquery',
+        'queries'  => $query,
+      );
+    }
+    else {
+      $params = array(
+        'method' => 'fql.query',
+        'query'  => $query,
+      );
+    }
     try {
       try {
-        return facebook_client()->api(array(
-          'method' => 'fql.query',
-          'query'  => $query,
-        ));
+        return facebook_client()->api($params);
       } 
       catch (FacebookApiException $e) {
         drupal_set_message($e->getMessage(), 'error');
