@@ -135,7 +135,7 @@ function fbconnect_stream_publish_form_alter(&$form, $form_state, $form_id) {
 function fbconnect_stream_publish_content_extra_fields($type_name) {
   $extra = array();
   if (variable_get('fbconnect_'. $type_name .'_onoff', 0)) {
-    $extra['fbconnect'] = array(
+    $extra['fbconnect_stream_publish'] = array(
       'label' => t('Facebook Connect'),
       'description' => t('Facebook Connect Confirmation'),
       'weight' => 100,
@@ -245,7 +245,7 @@ function fbconnect_stream_publish_render_js($feed) {
    */
   $method = 'stream.publish';    
   $user_message_prompt = t('Share your thoughts');
-  $streamPublishArgs = compact('method', 'message', 'attachment', 'action_links', 'user_management_promt');
+  $streamPublishArgs = compact('method', 'message', 'attachment', 'action_links', 'user_message_prompt');
     
 //  drupal_alter('fbconnect_stream_publish', $streamPublishArgs);
   drupal_add_js(array('FB.streamPublish' => $streamPublishArgs), 'setting');
