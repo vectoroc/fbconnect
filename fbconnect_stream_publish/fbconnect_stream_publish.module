@@ -17,6 +17,17 @@ function fbconnect_stream_publish_init() {
 }
 
 /**
+ * Impletementation of hook_theme(). 
+ */
+function fbconnect_stream_publish_theme() {
+  return array(
+    'stream_publish_favicon' => array(
+      'arguments' => array(),
+    ),
+  );
+}
+
+/**
  * Implementation of hook_nodeapi()
  */
 function fbconnect_stream_publish_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
@@ -58,7 +69,8 @@ function fbconnect_stream_publish_form_alter(&$form, $form_state, $form_id) {
               '#collapsed' => TRUE,
             );
             
-            $favicon = theme('image', drupal_get_path('module', 'fbconnect_stream_publish') .'/connect_white_small_short.gif');
+            
+            $favicon = theme('stream_publish_favicon');
             $form['fbconnect_stream_publish']['fbconnect_feed'] = array(
               '#type' => 'checkbox',
               '#title' => $favicon .' '. t('Publish to Facebook'),
@@ -85,7 +97,6 @@ function fbconnect_stream_publish_form_alter(&$form, $form_state, $form_id) {
       $publishing_mode = variable_get('fbconnect_' . $ctype . '_onoff', FBCONNECT_STREAM_PUBLISH_NONE);
       if (in_array($publishing_mode, array(FBCONNECT_STREAM_PUBLISH_ALL, FBCONNECT_STREAM_PUBLISH_NODES))) {
         if ($form['nid']['#value'] == NULL) {
-          $favicon = theme('image', drupal_get_path('module', 'fbconnect_stream_publish') .'/connect_white_small_short.gif');
           $form['fbconnect_stream_publish'] = array(
             '#type' => 'fieldset',
             '#title' => t('Facebook Stream Publish'),
@@ -93,6 +104,7 @@ function fbconnect_stream_publish_form_alter(&$form, $form_state, $form_id) {
             '#collapsed' => TRUE,
           );
           
+          $favicon = theme('stream_publish_favicon');
           $form['fbconnect_stream_publish']['fbconnect_feed'] = array(
             '#type' => 'checkbox',
             '#title' => $favicon .' '. t('Publish to Facebook'),
@@ -250,4 +262,12 @@ function fbconnect_stream_publish_render_js($feed) {
 //  drupal_alter('fbconnect_stream_publish', $streamPublishArgs);
   drupal_add_js(array('FB.streamPublish' => $streamPublishArgs), 'setting');
   drupal_add_js(drupal_get_path('module', 'fbconnect_stream_publish') .'/fbconnect_stream_publish.js');
+}
+
+function theme_stream_publish_favicon() {
+  $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on'
+    ? 'https://'
+    : 'http://';
+    
+  return '<img src="'. $protocol .'"facebook.com/images/connect_favicon.png" />';
 }
