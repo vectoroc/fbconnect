@@ -87,6 +87,14 @@ function fbconnect_theme() {
     'fbconnect_login_button' => array(
       'arguments' => array('text' => '', 'attr' => ''),
     ),
+    'fbconnect_user_profile_tab_connected' => array(
+      'arguments' => array('account' => NULL, 'conf' => NULL, 'uid' => NULL),
+      'file'      => 'fbconnect.pages.inc',
+    ),
+    'fbconnect_user_profile_tab_unconnected' => array(
+      'arguments' => array('account' => NULL, 'conf' => NULL, 'uid' => NULL),
+      'file'      => 'fbconnect.pages.inc',
+    ),
   );
 }
 

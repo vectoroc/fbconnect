@@ -143,20 +143,10 @@ function fbconnect_user_identities($account) {
     return drupal_get_form('fbconnect_user_settings_form', $account);
   }
   elseif ($uid && $account->uid != $uid) {
-    $message = t(
-        "Your current Facebook session is associated to another account on our site.\n"
-      . "You can logout of facebook and attempt to associate another Facebook account to your "
-      . "!site_name account, or you need to disconnect the current association."
-      , array('!site_name' => $conf['invite_name'])  
-    );
-    return '<div>' . $message . '</div>';
+    return theme('fbconnect_user_profile_tab_connected', $account, $conf, $uid);
   }
   else {
-    return '<div>'
-         . t('Click here to connect your Facebook account') 
-         . '</div><div class="fbconnect-button">'
-         . fbconnect_render_button()
-         . '</div>';
+    return theme('fbconnect_user_profile_tab_unconnected', $account, $conf, $uid);
   }
 }
 
@@ -269,4 +259,26 @@ function theme_fbconnect_user_picture_override($fbuid = '', $account = NULL, $us
     </div>
 PIC;
   return $output;
+}
+
+
+/**
+ * Make rendering of facebook user profile tab themable
+ */
+function theme_fbconnect_user_profile_tab_connected($account = NULL, $conf = NULL, $uid = NULL) {
+  $site_name = $conf['invite_name'] ? $conf['invite_name'] : '';
+  return t(
+    "Your current Facebook session is associated to another account on our site.\n"
+   ."You can logout of Facebook and attempt to associate another Facebook account to your"
+   ."!site_name account, or you need to disconnect the current association."
+   , array('!site_name' => $site_name)
+  );
+}
+
+function theme_fbconnect_user_profile_tab_unconnected($account = NULL, $conf = NULL, $uid = NULL) {
+  return '<div>'
+       . t('Click here to connect your Facebook account')
+       . '</div><div class="fbconnect-button">'
+       . fbconnect_render_button()
+       . '</div>';
 }
