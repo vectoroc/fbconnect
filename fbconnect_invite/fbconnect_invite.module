@@ -16,6 +16,7 @@ function fbconnect_invite_menu() {
   $items['fbconnect/invite/accept/%user'] = array(
     'title' => 'Accept invite',
     'page callback' => 'fbconnect_invite_accept',
+    'page arguments' => array(1),
     'access callback' => TRUE,
     'type' => MENU_CALLBACK,
   );
@@ -81,9 +82,15 @@ function fbconnect_invite_block($op = 'list', $delta = 0, $edit = array()) {
             cache_set($cid, $content, 'cache_block' , time() + 3600);
           }
         }
+        
+        $link_options = array();
+        if (!drupal_is_front_page()) {
+          $link_options = array('query' => drupal_get_destination());
+        }
+        $invite_link = l(t('Invite Friends'), 'fbconnect/invite/friends', $link_options);
 
         $blocks['subject'] = t('Facebook Friends');
-        $blocks['content'] = l(t('Invite Friends'), 'fbconnect/invite/friends') . $content;
+        $blocks['content'] = $invite_link . $content;
         return $blocks;
       }
       break;
@@ -98,24 +105,25 @@ function fbconnect_invite_friends_page() {
   global $base_url;
   global $user;
   
-  $site      = variable_get('site_name', $base_url);  
-  $actiontxt = check_plain(t('Please select the Facebook friends you want to invite'));
-  $action    = check_plain(variable_get('fbconnect_invite_dest', url('<front>')));
-  $type      = check_plain(variable_get('fbconnect_invite_name', $site));
-  $join_btn  = check_plain(variable_get('fbconnect_invite_label', t('Become a Member!')));
-  $content   = check_plain(variable_get('fbconnect_invite_msg', t('Enjoy'))) 
-             . " <fb:req-choice url=\"$base_url\" label=\"$join_btn\" />";
-  
-  $accept_link = url('fbconnect/invite/accept/'. $user->uid, array(
+  $site = variable_get('site_name', $base_url);  
+  $type = check_plain(variable_get('fbconnect_invite_name', $site));
+  $join_btn = check_plain(variable_get('fbconnect_invite_label', t('Become a Member!')));
+  $invite_msg = check_plain(variable_get('fbconnect_invite_msg', t('Enjoy!')));
+  $action_txt = check_plain(t('Please select the Facebook friends you want to invite'));
+  $invite_dest = isset($_REQUEST['destination']) ? $_REQUEST['destination'] : ''; 
+  $accept_url  = url('fbconnect/invite/accept/'. $user->uid, array(
     'absolute' => TRUE, 
-    'query' => 'destionation='. urlencode($action)
+    'query' => 'destionation='. urlencode($invite_dest)
   ));
+  
+  $content = "$invite_msg <fb:req-choice url=\"$accept_url\" label=\"$join_btn\" />";
              
   $request_form_attributes = array(
     'method'  => 'POST',
-    'action'  => $accept_link,
+    'action'  => url($invite_dest, array('absolute' => TRUE)),
     'type'    => $type,
     'content' => $content,
+    'invite'  => TRUE,
   );
   
   $friends_selector_attributes = array(
@@ -123,7 +131,7 @@ function fbconnect_invite_friends_page() {
     'rows' => "6",
     'max' => "35",
     'showborder' => "false",
-    'actiontext' => $actiontxt,
+    'actiontext' => $action_txt,
     'bypass' => "cancel",
   );
   
@@ -212,12 +220,13 @@ function fbconnect_invite_settings() {
     '#default_value' => variable_get('fbconnect_invite_name', variable_get('site_name', NULL)),
   );
   
-  $form['fbconnect_invite_dest'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Destination, after user\'s valid or skip invite friend form'),
-    '#default_value' => variable_get('fbconnect_invite_dest', $base_url),
-  );
-  
+// TODO: remove it
+//  $form['fbconnect_invite_dest'] = array(
+//    '#type' => 'textfield',
+//    '#title' => t('Destination, after user\'s valid or skip invite friend form'),
+//    '#default_value' => variable_get('fbconnect_invite_dest', $base_url),
+//  );
+//  
   return system_settings_form($form);
 }
 
