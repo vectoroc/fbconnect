@@ -36,7 +36,7 @@ function fbconnect_prompt_page_links() {
   }
   
   $reg_choice  = l($reg_msg, 'fbconnect/register/create', $reg_attr);
-  $link_choice = l($link_msg, 'user', array('query' => 'destination=fbconnect'));
+  $link_choice = l($link_msg, 'user', array('query' => 'destination=fbconnect/link'));
   return array($reg_choice, $link_choice);
 }
 
@@ -87,7 +87,7 @@ function fbconnect_register_page($form_state = array()) {
     
     drupal_validate_form('user_register', $form, $form_state);
     if (form_get_errors()) {
-      $dest = array('query' => 'destination=fbconnect');
+      $dest = array('query' => 'destination=fbconnect/link');
       drupal_set_message(t('Facebook connect registration failed for the reasons listed. You may register now, or if you already have an account you can <a href="@login">log in</a> now and link your account', array('@login' => url('user/login', $dest))), 'error');
       drupal_goto('user/register');
     }
@@ -281,4 +281,12 @@ function theme_fbconnect_user_profile_tab_unconnected($account = NULL, $conf = N
        . '</div><div class="fbconnect-button">'
        . fbconnect_render_button()
        . '</div>';
+}
+
+/**
+ * Workaround to play nice with LoginDestination #786662 
+ */
+function fbconnect_link_callback() {
+  global $user;
+  drupal_goto("user/{$user->uid}/edit/fbconnect");
 }
