@@ -288,5 +288,6 @@ function theme_fbconnect_user_profile_tab_unconnected($account = NULL, $conf = N
  */
 function fbconnect_link_callback() {
   global $user;
+  drupal_get_messages('status');
   drupal_goto("user/{$user->uid}/edit/fbconnect");
 }
