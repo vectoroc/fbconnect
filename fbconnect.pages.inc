@@ -79,7 +79,7 @@ function fbconnect_register_page($form_state = array()) {
   // Fast registration mode, we by pass std drupal reg form.
   if ($conf['fast_reg_mode']) {
     $form_state['values']['name']       = $data['name'];
-    $form_state['values']['mail']       = $data['proxied_email'];
+    $form_state['values']['mail']       = $data['email'];
     $form_state['values']['pass']       = user_password();
     $form_state['values']['status']     = 1;
     $form_state['values']['fb_visible'] = 1;
