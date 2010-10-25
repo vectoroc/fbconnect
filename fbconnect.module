@@ -312,6 +312,9 @@ function facebook_client() {
       );
       
       $fb = new Facebook($initParams);
+      // hack for #902542
+      Facebook::$CURL_OPTS[CURLOPT_SSL_VERIFYPEER] = false;
+      Facebook::$CURL_OPTS[CURLOPT_SSL_VERIFYHOST] = 2;
     }
   }
   
@@ -458,6 +461,8 @@ CODE;
  * This form is submitted by javascript when facebook session is detected.
  */
 function fbconnect_autoconnect_form() {
+  $form['#id'] = 'fbconnect-autoconnect-form';
+  
   if (arg(0) == 'user' && in_array(arg(1), array('login', 'register', 'password')) && !isset($_REQUEST['destination'])) {
     $form['#action'] = url('user');
   }
