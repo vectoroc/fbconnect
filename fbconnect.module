@@ -312,6 +312,9 @@ function facebook_client() {
       );
       
       $fb = new Facebook($initParams);
+      // hack for #902542
+      Facebook::$CURL_OPTS[CURLOPT_SSL_VERIFYPEER] = false;
+      Facebook::$CURL_OPTS[CURLOPT_SSL_VERIFYHOST] = 2;
     }
   }
   
@@ -458,6 +461,8 @@ CODE;
  * This form is submitted by javascript when facebook session is detected.
  */
 function fbconnect_autoconnect_form() {
+  $form['#id'] = 'fbconnect-autoconnect-form';
+  
   if (arg(0) == 'user' && in_array(arg(1), array('login', 'register', 'password')) && !isset($_REQUEST['destination'])) {
     $form['#action'] = url('user');
   }
@@ -759,6 +764,15 @@ function fbconnect_theme_registry_alter(&$theme_registry) {
  * Our replacement for theme('user_picture', ...)
  */
 function fbconnect_theme_user_picture_override($account) {
+  // manually set in nodeapi or comments
+  if (isset($account->fbconnect_picture_preset)) {
+    $preset = $account->fbconnect_picture_preset;
+  }
+  elseif (variable_get('fbconnect_pic_size', '')) {
+    // Default user picture preset.
+    $preset = variable_get('fbconnect_pic_size', 'square');
+  } 
+  
   if (!isset($account->fbuid)) {
     $user_data = unserialize(db_result(db_query('SELECT data FROM {users} WHERE uid = %d', $account->uid)));
     $account->fbuid     = @$user_data['fbuid'];
@@ -769,7 +783,7 @@ function fbconnect_theme_user_picture_override($account) {
   $user_url = url('user/' . $account->uid);
 
   if ($fbuid && $account->fb_avatar) {
-    $output = theme('fbconnect_user_picture_override', $fbuid, $account, $user_url, variable_get('fbconnect_pic_size', 'square'), variable_get('fbconnect_pic_logo', TRUE));
+    $output = theme('fbconnect_user_picture_override', $fbuid, $account, $user_url, variable_get('fbconnect_pic_size', $preset), variable_get('fbconnect_pic_logo', TRUE));
   } 
   else {  
     $output = theme('fbconnect_user_picture_orig', $account); // Markup without fb_connect.
@@ -778,6 +792,46 @@ function fbconnect_theme_user_picture_override($account) {
   return $output;
 
 }
+
+/**
+ * Implements hook_profile_alter().
+ * Change the user profile picture to use the preferred fbconnect preset.
+ */
+function fbconnect_profile_alter(&$account) {
+  if ($preset = variable_get('fbconnect_pic_size_profile', '')) {
+    $account->fbconnect_picture_preset = $preset;
+    $account->content['user_picture']['#value'] = theme('user_picture', $account);
+  }
+}
+
+/**
+ * Implements hook_comment().
+ * Change comment user pictures to use the preferred fbconnect preset.
+ */
+function fbconnect_comment(&$comment, $op) {
+  if ($op == 'view' && theme_get_setting('toggle_comment_user_picture')) {
+    // If this is a comment preview, we need to manually add $comment->picture.
+    if (!empty($comment->uid) && !isset($comment->picture)) {
+      $comment->picture = db_result(db_query("SELECT picture FROM {users} WHERE uid = %d", $comment->uid));
+    }
+    if ($preset = variable_get('fbconnect_pic_size_comments', '')) {
+      $comment->fbconnect_picture_preset = $preset;
+    }
+  }
+}
+
+/**
+ * Implements hook_nodeapi().
+ * Change node user pictures to use the preferred fbconnect preset.
+ */
+function fbconnect_nodeapi(&$node, $op) {
+  // Panels module uses $op = alter to render nodes.
+  if ($op == 'view' || $op == 'alter') {
+    if ($preset = variable_get('fbconnect_pic_size_nodes', '')) {
+      $node->fbconnect_picture_preset = $preset;
+    }
+  }
+ }
 
 /**
  * The post-remove callback for facebook. Unlinks facebook account

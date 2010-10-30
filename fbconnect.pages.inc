@@ -37,6 +37,7 @@ function fbconnect_prompt_page_links() {
   
   $reg_choice  = l($reg_msg, 'fbconnect/register/create', $reg_attr);
   $link_choice = l($link_msg, 'user', array('query' => 'destination=fbconnect/link'));
+  
   return array($reg_choice, $link_choice);
 }
 
@@ -49,6 +50,12 @@ function fbconnect_register_page($form_state = array()) {
   $data  = fbconnect_get_user_info('name, email');    
   $form  = drupal_retrieve_form('user_register', $form_state);
   $site  = $conf['invite_name'];
+  
+  // #758918 : prevent users registration if admin has blocked free registration
+  $user_reg_mode = variable_get('user_register', 0);
+  if ($user_reg_mode == 0) {
+    drupal_access_denied();
+  }
   
   drupal_prepare_form('user_register', $form, $form_state);   
   
@@ -251,10 +258,11 @@ function fbconnect_user_settings_form_submit($form, &$form_state) {
  * Make rendering of facebook user picture themeable
  */
 function theme_fbconnect_user_picture_override($fbuid = '', $account = NULL, $user_url = '', $size = 'square', $logo = TRUE) {
+  $protocol = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on') ? 'https' : 'http';
   $output = <<<PIC
     <div class="picture">
       <a href="$user_url">
-        <img src="http://graph.facebook.com/$fbuid/picture?type=$size" />
+        <img src="$protocol://graph.facebook.com/$fbuid/picture?type=$size" />
       </a>
     </div>
 PIC;

@@ -60,7 +60,9 @@ libraries[facebook-php-sdk][destination] = "modules/fbconnect"
                     lang="<?php print $language->language ?>" dir="<?php print $language->dir ?>">
        
     Note: The xmlns:fb attribute (xmlns:fb="http://www.facebook.com/2008/fbml") is required for proper rendering on IE. 
-     (Namespaces don't have to point to a valid page, they just need to be a valid Internationalized Resource Identifier (IRI).     
+     (Namespaces don't have to point to a valid page, they just need to be a valid Internationalized Resource Identifier (IRI).
+  
+  7. Also make sure that your page.tpl.php contains <?php print $closure ?>     
      
 -- FAQ --
 
