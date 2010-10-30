@@ -258,10 +258,11 @@ function fbconnect_user_settings_form_submit($form, &$form_state) {
  * Make rendering of facebook user picture themeable
  */
 function theme_fbconnect_user_picture_override($fbuid = '', $account = NULL, $user_url = '', $size = 'square', $logo = TRUE) {
+  $protocol = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on') ? 'https' : 'http';
   $output = <<<PIC
     <div class="picture">
       <a href="$user_url">
-        <img src="http://graph.facebook.com/$fbuid/picture?type=$size" />
+        <img src="$protocol://graph.facebook.com/$fbuid/picture?type=$size" />
       </a>
     </div>
 PIC;

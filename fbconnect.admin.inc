@@ -143,18 +143,42 @@ function fbconnect_appearance_settings(&$form_state) {
     ),
   );
   
+  $options_pic_size = array(
+    'thumb' => t('Thumb (50px wide)'),
+    'small' => t('Small (100px wide)'),
+    'normal' => t('Normal (200px wide)'),
+    'square' => t('Square (50px by 50px)'),
+  );
+  
   $form['display']['fbconnect_pic_size'] = array(
     '#type' => 'select',
-    '#title' => t('Facebook picture size'),
-    '#description' => t('If your user decides to use his facebook picture, choose its size here.'),
+    '#title' => t('Default Facebook picture size'),
+    '#description' => t('This will set the default user picture size throughout the site. If your user decides to use his facebook picture, choose its size here.'),
     '#default_value' => variable_get('fbconnect_pic_size', 'square'),
-    '#options' => array(
-      'thumb' => t('Thumb'),
-      'small' => t('Small'),
-      'normal' => t('Normal'),
-      'square' => t('square'),
-    ),
+    '#options' => $options_pic_size,
   );
+  
+  $form['display']['fbconnect_pic_size_nodes'] = array(
+    '#type' => 'select',
+    '#title' => t('Node Facebook picture size'),
+    '#description' => t('This will set the picture size when viewing a node post. If your user decides to use his facebook picture, choose its size here.'),
+    '#default_value' => variable_get('fbconnect_pic_size_nodes', 'square'),
+    '#options' => $options_pic_size,
+  );
+  $form['display']['fbconnect_pic_size_comments'] = array(
+    '#type' => 'select',
+    '#title' => t('Comments Facebook picture size'),
+    '#description' => t('This will set the picture size when viewing a comment post. If your user decides to use his facebook picture, choose its size here.'),
+    '#default_value' => variable_get('fbconnect_pic_size_comments', 'square'),
+    '#options' => $options_pic_size,
+  );
+  $form['display']['fbconnect_pic_size_profile'] = array(
+    '#type' => 'select',
+    '#title' => t('Profile Facebook picture size'),
+    '#description' => t('This will set the picture size when viewing a user\'s profile page. If your user decides to use his facebook picture, choose its size here.'),
+    '#default_value' => variable_get('fbconnect_pic_size_profile', 'small'),
+    '#options' => $options_pic_size,
+  );  
 
   $form['display']['fbconnect_pic_logo'] = array(
     '#type' => 'checkbox',
