@@ -429,7 +429,7 @@ function fbconnect_footer() {
             logging: '$config[debug]'
           });
           
-          jQuery.event.trigger('fb:init');
+          jQuery(document).trigger('fb:init');
         };
       
         (function() {

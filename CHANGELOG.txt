@@ -1,3 +1,6 @@
+2010/11
+ - Removed fbconnect_fb_social submodule due to #852582 (temporary available at http://github.com/downloads/vectoroc/fbconnect/fbconnect_fb_social.zip)
+
 2010/10
  - Added rule for friend invite (#923268)
 
