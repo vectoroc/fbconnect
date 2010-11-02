@@ -52,9 +52,10 @@ function fbconnect_register_page($form_state = array()) {
   $site  = $conf['invite_name'];
   
   // #758918 : prevent users registration if admin has blocked free registration
-  $user_reg_mode = variable_get('user_register', 0);
+  $user_reg_mode = variable_get('user_register', 1);
   if ($user_reg_mode == 0) {
     drupal_access_denied();
+    return;
   }
   
   drupal_prepare_form('user_register', $form, $form_state);   
