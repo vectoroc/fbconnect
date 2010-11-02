@@ -94,10 +94,17 @@ function fbconnect_register_page($form_state = array()) {
     $form_state['values']['fb_avatar']  = 1;
     
     drupal_validate_form('user_register', $form, $form_state);
-    if (form_get_errors()) {
+    $success = !form_get_errors();
+    if (!$success) {
       $dest = array('query' => 'destination=fbconnect/link');
-      drupal_set_message(t('Facebook connect registration failed for the reasons listed. You may register now, or if you already have an account you can <a href="@login">log in</a> now and link your account', array('@login' => url('user/login', $dest))), 'error');
-      drupal_goto('user/register');
+      drupal_set_message(t('Facebook connect registration failed for the reasons listed. You may register now, or if you already have an account you can <a href="@login">log in</a> now and link your account', array('@login' => url('user/login', $dest))), 'warning');
+      // Append form validation errors below the above warning.
+      $messages = drupal_get_messages('error');
+      foreach ($messages['error'] as $message) {
+        drupal_set_message( $message, 'error');
+      }
+      
+      drupal_goto('user/register', $dest['query']);
     }
     
     fbconnect_register_form_submit($form, $form_state);
