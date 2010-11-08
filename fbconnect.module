@@ -135,6 +135,7 @@ function fbconnect_user($op, &$edit, &$user, $category = NULL) {
     case 'delete':
       db_query('DELETE FROM {fbconnect_users} WHERE uid = %d', $user->uid);
       break;
+      
     case 'categories':
       return array(
         array(
@@ -143,6 +144,12 @@ function fbconnect_user($op, &$edit, &$user, $category = NULL) {
           'weight' => 3,
         ),
       );
+      
+    case 'form':
+      if ($category == 'fbconnect') {
+//        $form = fbconnect_user_settings_form($user);
+      }
+      break;
   }
 }
 
@@ -854,4 +861,13 @@ function fbconnect_post_remove_callback() {
 
 function theme_fbconnect_login_button($text, $attr) {
   return '<fb:login-button ' . drupal_attributes($attr) . '>' . $text . '</fb:login-button>';
+}
+
+/**
+ * Implementation of hook_menu_alter().
+ */
+function fbconnect_menu_alter(&$callbacks) {
+  $callbacks['user/%user_category/edit/fbconnect']['page callback'] = 'fbconnect_user_identities';
+  $callbacks['user/%user_category/edit/fbconnect']['module'] = 'fbconnect';
+  $callbacks['user/%user_category/edit/fbconnect']['file'] = 'fbconnect.pages.inc';
 }
