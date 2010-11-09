@@ -38,16 +38,16 @@ function fbconnect_menu() {
     'weight' => 3,
   );
   
-  $items['user/%user_category/edit/fbconnect'] = array(
-    'title' => 'Facebook',
-    'page callback' => 'fbconnect_user_identities',
-    'page arguments' => array(1),
-    'access callback' => 'user_edit_access',
-    'access arguments' => array(1),
-    'load arguments' => array('%map', '%index'),
-    'type' => MENU_LOCAL_TASK,
-    'file' => 'fbconnect.pages.inc',
-  );
+//  $items['user/%user_category/edit/fbconnect'] = array(
+//    'title' => 'Facebook',
+//    'page callback' => 'fbconnect_user_identities',
+//    'page arguments' => array(1),
+//    'access callback' => 'user_edit_access',
+//    'access arguments' => array(1),
+//    'load arguments' => array('%map', '%index'),
+//    'type' => MENU_LOCAL_TASK,
+//    'file' => 'fbconnect.pages.inc',
+//  );
 
   $items['fbconnect/register/prompt'] = array(
     'title' => 'Facebook connect',  
