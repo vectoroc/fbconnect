@@ -694,7 +694,8 @@ function fbconnect_graph_query($path, $params = array()) {
   if (facebook_client() && $path) {
     try {
       try {
-        return facebook_client()->api($path, $params);
+        $args = func_get_args();
+        return call_user_func_array(array(facebook_client(), 'api'), $args);
       } 
       catch (FacebookApiException $e) {
         drupal_set_message($e->getMessage(), 'error');
