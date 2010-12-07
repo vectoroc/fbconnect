@@ -86,7 +86,8 @@ function fbconnect_register_page($form_state = array()) {
 
   // Fast registration mode, we by pass std drupal reg form.
   if ($conf['fast_reg_mode']) {
-    $form_state['values']['name']       = $data['name'];
+    $newname = $conf['fast_reg_autoname']? _fbconnect_get_username($data['name']) : $data['name'];
+    $form_state['values']['name']       = $newname;
     $form_state['values']['mail']       = $data['email'];
     $form_state['values']['pass']       = user_password();
     $form_state['values']['status']     = 1;
@@ -112,6 +113,20 @@ function fbconnect_register_page($form_state = array()) {
   }
     
   return $form;
+}
+
+function _fbconnect_get_username($name_suggestion) {
+  $query = "SELECT COUNT(name) FROM users WHERE name = '%s'";
+  $result = db_result(db_query($query, $name_suggestion));
+  if ($result['name'] != 0) {
+    $counter = variable_get('fbconnect_namecounter', 1);
+    $newname = 'fbuser'.$counter;
+    $counter++;
+    variable_set('fbconnect_namecounter', $counter);
+  } else {
+    $newname = $name_suggestion;
+  }
+  return $newname;
 }
 
 function fbconnect_register_form_submit($form, &$form_state) {
