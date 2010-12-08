@@ -1,0 +1,4 @@
+name = FBConnect Test
+package = 'Test'
+core = 6.x
+dependencies[] = fbconnect

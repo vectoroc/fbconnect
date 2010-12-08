@@ -18,7 +18,7 @@ class FbconnectTestCase extends DrupalWebTestCase {
     return array(
       'name' => t('FBConnect functionality'),
       'description' => t('Test FBConnect.'),
-      'group' => t('Authentication'),
+      'group' => t('FBConnect'),
     );
   }
   
@@ -34,25 +34,7 @@ class FbconnectTestCase extends DrupalWebTestCase {
     $this->_fb_users[] = $fb_user;
     
     $this->verbose('_createFbTestUser: fb_user='. var_export($fb_user, TRUE));
-    $this->assertTrue(isset($fb_user['id']), 'created test FB user');
-    
-    if (isset($fb_user['access_token'])) {
-      $session = array(
-        'uid' => $fb_user['id'],
-        'access_token' => $fb_user['access_token'], 
-      );
-      ksort($session);
-
-      // generate the base string
-      $base_string = '';
-      foreach($session as $key => $value) {
-        $base_string .= $key . '=' . $value;
-      }
-      $base_string .= facebook_client()->getApiSecret();
-  
-      $session['sig'] = md5($base_string);
-      facebook_client()->setSession($session, false);
-    }
+    $this->assertTrue(isset($fb_user['id']), 'created test FB user', 'FBConnect');
     
     return $fb_user;
   }  
@@ -61,10 +43,20 @@ class FbconnectTestCase extends DrupalWebTestCase {
    * Implementation of setUp().
    */
   function setUp() {
-    parent::setUp('fbconnect');
-    
     if (!facebook_client()) {
       $this->error('fbconnect is not properly installed. See README.txt');
+      return;
+    }
+    
+    $this->settings_keys = array('fbconnect_appid', 'fbconnect_skey');
+    foreach ($this->settings_keys as $key) {
+      $this->settings[$key] = variable_get($key, NULL);
+    }
+    
+    parent::setUp('libraries', 'fbconnect', 'fbconnect_test');
+    
+    foreach ($this->settings as $key => $value) {
+      variable_set($key, $value);
     }
   }
   
@@ -73,33 +65,26 @@ class FbconnectTestCase extends DrupalWebTestCase {
     
     facebook_client()->setSession(null, false);
     foreach ($this->_fb_users as $fb_user) {
-      $this->assertEqual(fbconnect_graph_query('/'. $fb_user['id'], 'DELETE'), '1', 'deleted test FB user');
+      $this->assertEqual(fbconnect_graph_query('/'. $fb_user['id'], 'DELETE'), '1', 'deleted test FB user', 'FBConnect');
     }
     
     $this->_fb_users = array();
   }
   
   function testLogin() {
-    $fb_user = $this->_createFbTestUser('true');
-    $this->assertNotNull(fbconnect_get_fbuid(), 'FB Session is valid');
+    $account = $this->drupalCreateUser();
+    $fb_user = $this->_createFbTestUser();
     
-    $account = $this->drupalCreateUser();    
-    $this->drupalLogin($account);
-    $this->drupalGet("user/$account->uid/edit/fbconnect");
+    $this->drupalPost('fbconnect-test/init-fb-session', array(
+      'fbuid' => $fb_user['id'],
+      'access_token' => $fb_user['access_token'],
+    ), 'Submit');
+    $this->assertFieldByName('fbuid', $fb_user['id'], 'FB Session inited', 'FBConnect');
     
-    $this->assertTrue(fbconnect_register($account->uid, $fb_user['id']), 'fbconnect_register returned true');
-    $this->assertNotNull(_get_user_fbuid($account->uid), 'FB Account is connected');
-
-    $this->drupalGet("user/$account->uid/edit/fbconnect");
-//    $this->drupalGet('');
-//    $this->assertField('connect', 'AutoConnectForm is rendered');
+    $this->assertTrue(fbconnect_register($account->uid, $fb_user['id']), 'fbconnect_register returned true', 'FBConnect');
+    $this->assertNotNull(_get_user_fbuid($account->uid), 'FB Account is connected', 'FBConnect');
     
-    
-//    $form_state = array('values' => array('op' => 'connect'));
-//    drupal_execute('fbconnect_autoconnect_form', $form_state);
-//    $this->verbose('fbconnect_autoconnect_form form_state: '. var_export($form_state, TRUE));
-//    $this->assertEqual($this->loggedInUser ? $this->loggedInUser->uid : 0, $account->uid, 'created user logged');
-    $this->verbose('user: '. var_export($this->loggedInUser, TRUE));
+    $this->drupalPost('', array(), 'Connect');
+    $this->assertLink('My account', 0, 'User is logged in', 'FBConnect');
   }
-
 }
