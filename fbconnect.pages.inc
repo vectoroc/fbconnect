@@ -169,7 +169,7 @@ function fbconnect_user_identities($account) {
   
   drupal_set_title(check_plain($account->name));
   
-  if ($account->fbuid) { 
+  if (isset($account->fbuid) && $account->fbuid) { 
     return drupal_get_form('fbconnect_user_settings_form', $account);
   }
   elseif ($uid && $account->uid != $uid) {
@@ -194,7 +194,7 @@ function fbconnect_user_settings_form($form_state, $account) {
     '#type' => 'checkbox',
     '#title' => t('Let my Facebook friends see me on @site', array('@site' => $conf['invite_name'])),
     '#description' => t('My Facebook friends will be able to see that I own an account on this website.'),
-    '#default_value' => $account->fb_visible,
+    '#default_value' => isset($account->fb_visible) ? $account->fb_visible : NULL,
   );
 
   // Whether user picture is enabled, 
@@ -203,7 +203,7 @@ function fbconnect_user_settings_form($form_state, $account) {
     $form['fb_avatar'] = array(
       '#type' => 'checkbox',
       '#title' => t('Use my Facebook picture as user picture'),
-      '#default_value' => $account->fb_avatar,
+      '#default_value' => isset($account->fb_avatar) ? $account->fb_avatar : NULL,
     );
   }
   

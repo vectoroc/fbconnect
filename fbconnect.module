@@ -252,7 +252,8 @@ function fbconnect_user_edit_submit($form, &$form_state) {
  * Render a custom button to log in via Facebook.
  */
 function fbconnect_render_button($attr = array()) {
-  list($size, $length) = explode('_', variable_get('fbconnect_button', NULL));
+  // @todo: remove $length variable
+  list($size/*, $length*/) = explode('_', variable_get('fbconnect_button', NULL));
   $default_attr = array(
     'text'       => variable_get('fbconnect_button_text', t('Connect')),
     'size'       => $size,
@@ -310,7 +311,6 @@ function facebook_client() {
   
   if (is_null($fb)) {
     $conf = fbconnect_get_config();
-    
     if ($conf && _facebook_client_load_include()) {
       $initParams = array(
         'appId'  => $conf['app_id'],
@@ -404,7 +404,6 @@ function fbconnect_render_js() {
   global $user;
   
   $module_path = drupal_get_path('module', 'fbconnect');
-  
   if ($config = fbconnect_get_config()) {
     unset($config['secret_api_key']);
     $config['fbuid'] = fbconnect_get_fbuid();
@@ -791,7 +790,7 @@ function fbconnect_theme_user_picture_override($account) {
   $fbuid    = $account->fbuid;
   $user_url = url('user/' . $account->uid);
 
-  if ($fbuid && $account->fb_avatar) {
+  if ($fbuid && isset($account->fb_avatar) && $account->fb_avatar) {
     $output = theme('fbconnect_user_picture_override', $fbuid, $account, $user_url, variable_get('fbconnect_pic_size', $preset), variable_get('fbconnect_pic_logo', TRUE));
   } 
   else {  
