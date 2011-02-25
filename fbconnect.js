@@ -1,4 +1,3 @@
-// $Id$
 
 Drupal.fbconnect = Drupal.fbconnect || {};
 Drupal.fbconnect.init = function () {

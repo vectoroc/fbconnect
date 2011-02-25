@@ -1,4 +1,3 @@
-; $Id$
 name = Fbconnect
 description = Allows users to connect with Facebook account
 package = "Authentication"

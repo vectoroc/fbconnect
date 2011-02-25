@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 define('FBCONNECT_STREAM_PUBLISH_NONE', 0);
 define('FBCONNECT_STREAM_PUBLISH_ALL', 1);
