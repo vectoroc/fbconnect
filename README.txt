@@ -83,4 +83,5 @@ A: Check your Application Secret on admin/settings/fbconnect page.
 Q: Fbconnect Causes W3C XHTML Validation To Fail
 A: http://drupal.org/node/365584#comment-3539890
 
-Still did not solve problem ? Check admin/reports/status, php logs, post issue on http://drupal.org/project/issues/fbconnect
+Still did not solve problem ? Disable other facebook* related modules, check admin/reports/status page, php logs,
+post issue on http://drupal.org/project/issues/fbconnect
