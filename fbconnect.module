@@ -1,4 +1,5 @@
 <?php
+// $Id: fbconnect.module,v 1.32.2.4 2010/09/02 13:11:16 vectoroc Exp $
 
 /**
  * Implementation of hook_menu().
@@ -37,16 +38,16 @@ function fbconnect_menu() {
     'weight' => 3,
   );
   
-  $items['user/%user_category/edit/fbconnect'] = array(
-    'title' => 'Facebook',
-    'page callback' => 'fbconnect_user_identities',
-    'page arguments' => array(1),
-    'access callback' => 'user_edit_access',
-    'access arguments' => array(1),
-    'load arguments' => array('%map', '%index'),
-    'type' => MENU_LOCAL_TASK,
-    'file' => 'fbconnect.pages.inc',
-  );
+//  $items['user/%user_category/edit/fbconnect'] = array(
+//    'title' => 'Facebook',
+//    'page callback' => 'fbconnect_user_identities',
+//    'page arguments' => array(1),
+//    'access callback' => 'user_edit_access',
+//    'access arguments' => array(1),
+//    'load arguments' => array('%map', '%index'),
+//    'type' => MENU_LOCAL_TASK,
+//    'file' => 'fbconnect.pages.inc',
+//  );
 
   $items['fbconnect/register/prompt'] = array(
     'title' => 'Facebook connect',  
@@ -134,6 +135,7 @@ function fbconnect_user($op, &$edit, &$user, $category = NULL) {
     case 'delete':
       db_query('DELETE FROM {fbconnect_users} WHERE uid = %d', $user->uid);
       break;
+      
     case 'categories':
       return array(
         array(
@@ -142,6 +144,12 @@ function fbconnect_user($op, &$edit, &$user, $category = NULL) {
           'weight' => 3,
         ),
       );
+      
+    case 'form':
+      if ($category == 'fbconnect') {
+//        $form = fbconnect_user_settings_form($user);
+      }
+      break;
   }
 }
 
@@ -244,7 +252,8 @@ function fbconnect_user_edit_submit($form, &$form_state) {
  * Render a custom button to log in via Facebook.
  */
 function fbconnect_render_button($attr = array()) {
-  list($size, $length) = explode('_', variable_get('fbconnect_button', NULL));
+  // @todo: remove $length variable
+  list($size/*, $length*/) = explode('_', variable_get('fbconnect_button', NULL));
   $default_attr = array(
     'text'       => variable_get('fbconnect_button_text', t('Connect')),
     'size'       => $size,
@@ -302,7 +311,6 @@ function facebook_client() {
   
   if (is_null($fb)) {
     $conf = fbconnect_get_config();
-    
     if ($conf && _facebook_client_load_include()) {
       $initParams = array(
         'appId'  => $conf['app_id'],
@@ -350,6 +358,7 @@ function fbconnect_get_config() {
     $config['loginout_mode'] = variable_get('fbconnect_loginout_mode', 'manual');
     $config['invite_name'] = variable_get('fbconnect_invite_name', variable_get('site_name', $base_url));
     $config['fast_reg_mode'] = variable_get('fbconnect_fast_reg', NULL);
+    $config['fast_reg_autoname'] = variable_get('fbconnect_fast_reg_autoname', 1);
 
     // allow third party modules to change settings
     drupal_alter('fbconnect_config', $config);
@@ -395,7 +404,6 @@ function fbconnect_render_js() {
   global $user;
   
   $module_path = drupal_get_path('module', 'fbconnect');
-  
   if ($config = fbconnect_get_config()) {
     unset($config['secret_api_key']);
     $config['fbuid'] = fbconnect_get_fbuid();
@@ -685,7 +693,8 @@ function fbconnect_graph_query($path, $params = array()) {
   if (facebook_client() && $path) {
     try {
       try {
-        return facebook_client()->api($path, $params);
+        $args = func_get_args();
+        return call_user_func_array(array(facebook_client(), 'api'), $args);
       } 
       catch (FacebookApiException $e) {
         drupal_set_message($e->getMessage(), 'error');
@@ -781,7 +790,7 @@ function fbconnect_theme_user_picture_override($account) {
   $fbuid    = $account->fbuid;
   $user_url = url('user/' . $account->uid);
 
-  if ($fbuid && $account->fb_avatar) {
+  if ($fbuid && isset($account->fb_avatar) && $account->fb_avatar) {
     $output = theme('fbconnect_user_picture_override', $fbuid, $account, $user_url, variable_get('fbconnect_pic_size', $preset), variable_get('fbconnect_pic_logo', TRUE));
   } 
   else {  
@@ -853,4 +862,13 @@ function fbconnect_post_remove_callback() {
 
 function theme_fbconnect_login_button($text, $attr) {
   return '<fb:login-button ' . drupal_attributes($attr) . '>' . $text . '</fb:login-button>';
+}
+
+/**
+ * Implementation of hook_menu_alter().
+ */
+function fbconnect_menu_alter(&$callbacks) {
+  $callbacks['user/%user_category/edit/fbconnect']['page callback'] = 'fbconnect_user_identities';
+  $callbacks['user/%user_category/edit/fbconnect']['module'] = 'fbconnect';
+  $callbacks['user/%user_category/edit/fbconnect']['file'] = 'fbconnect.pages.inc';
 }

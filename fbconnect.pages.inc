@@ -1,4 +1,5 @@
 <?php
+// $Id: fbconnect.pages.inc,v 1.18 2010/03/21 16:26:03 vectoroc Exp $
 
 /** 
  * @file 
@@ -85,7 +86,8 @@ function fbconnect_register_page($form_state = array()) {
 
   // Fast registration mode, we by pass std drupal reg form.
   if ($conf['fast_reg_mode']) {
-    $form_state['values']['name']       = $data['name'];
+    $newname = $conf['fast_reg_autoname']? _fbconnect_get_username($data['name']) : $data['name'];
+    $form_state['values']['name']       = $newname;
     $form_state['values']['mail']       = $data['email'];
     $form_state['values']['pass']       = user_password();
     $form_state['values']['status']     = 1;
@@ -113,6 +115,20 @@ function fbconnect_register_page($form_state = array()) {
   return $form;
 }
 
+function _fbconnect_get_username($name_suggestion) {
+  $query = "SELECT COUNT(name) FROM users WHERE name = '%s'";
+  $result = db_result(db_query($query, $name_suggestion));
+  if ($result['name'] != 0) {
+    $counter = variable_get('fbconnect_namecounter', 1);
+    $newname = 'fbuser'.$counter;
+    $counter++;
+    variable_set('fbconnect_namecounter', $counter);
+  } else {
+    $newname = $name_suggestion;
+  }
+  return $newname;
+}
+
 function fbconnect_register_form_submit($form, &$form_state) {
   $fbuid = fbconnect_get_fbuid();
   if (_is_fbconnect_user($fbuid)) {
@@ -135,7 +151,7 @@ function fbconnect_register_form_submit($form, &$form_state) {
   }
   
   fbconnect_register($user->uid, $fbuid);  
-  $data['fb_avatar']  = $form_state['values']['fb_avatar'];
+  $data['fb_avatar']  = isset($form_state['values']['fb_avatar']) ? $form_state['values']['fb_avatar'] : 0;
   $data['fb_visible'] = $form_state['values']['fb_visible'];
   
   user_save($user, $data);   
@@ -153,7 +169,7 @@ function fbconnect_user_identities($account) {
   
   drupal_set_title(check_plain($account->name));
   
-  if ($account->fbuid) { 
+  if (isset($account->fbuid) && $account->fbuid) { 
     return drupal_get_form('fbconnect_user_settings_form', $account);
   }
   elseif ($uid && $account->uid != $uid) {
@@ -178,7 +194,7 @@ function fbconnect_user_settings_form($form_state, $account) {
     '#type' => 'checkbox',
     '#title' => t('Let my Facebook friends see me on @site', array('@site' => $conf['invite_name'])),
     '#description' => t('My Facebook friends will be able to see that I own an account on this website.'),
-    '#default_value' => $account->fb_visible,
+    '#default_value' => isset($account->fb_visible) ? $account->fb_visible : NULL,
   );
 
   // Whether user picture is enabled, 
@@ -187,7 +203,7 @@ function fbconnect_user_settings_form($form_state, $account) {
     $form['fb_avatar'] = array(
       '#type' => 'checkbox',
       '#title' => t('Use my Facebook picture as user picture'),
-      '#default_value' => $account->fb_avatar,
+      '#default_value' => isset($account->fb_avatar) ? $account->fb_avatar : NULL,
     );
   }
   

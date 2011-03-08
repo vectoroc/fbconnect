@@ -1,4 +1,5 @@
 <?php
+// $Id$
 
 define('FBCONNECT_STREAM_PUBLISH_NONE', 0);
 define('FBCONNECT_STREAM_PUBLISH_ALL', 1);
@@ -151,7 +152,7 @@ function fbconnect_stream_publish_content_extra_fields($type_name) {
  * Stock informations used by the facebook feed javascript function.
  */
 function fbconnect_stream_publish_comment_feed_submit($form, &$form_state) {
-  if (isset($form_state['values']['fbconnect_feed'])) {
+  if (isset($form_state['values']['fbconnect_feed']) && $form_state['values']['fbconnect_feed'] == 1) {
     $node = node_load($form_state['values']['nid']);
 
     $feed = array(

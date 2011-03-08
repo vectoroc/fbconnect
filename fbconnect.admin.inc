@@ -1,4 +1,5 @@
 <?php
+// $Id: fbconnect.admin.inc,v 1.15 2010/03/21 16:26:03 vectoroc Exp $
 
 /** 
  * @file 
@@ -83,7 +84,12 @@ function fbconnect_appearance_settings(&$form_state) {
     '#default_value' => variable_get('fbconnect_fast_reg', NULL),
     '#description' => t('Enable this mode will bypass drupal\'s standard registration form.'),
   );
-  
+  $form['site']['fbconnect_fast_reg_autoname'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Assign new random name on name conflict during Fast Registration'),
+    '#default_value' => variable_get('fbconnect_fast_reg_autoname', NULL),
+    '#description' => t('Creates a new random name for the user if the user\'s Facebook is already taken by another user on this site. The random name will look something like fbuser123.'),
+  );
   $form['site']['fbconnect_loginout_mode'] = array(
     '#type' => 'select',
     '#title' => t('Login/logout mode'),

@@ -1,3 +1,4 @@
+// $Id$
 
 Drupal.fbconnect = Drupal.fbconnect || {}; 
 Drupal.fbconnect.stream_publish = function() {

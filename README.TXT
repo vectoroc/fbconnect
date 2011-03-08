@@ -1,3 +1,4 @@
+/* $Id: README.TXT,v 1.12 2010/03/21 16:26:03 vectoroc Exp $ */
 
 
 -- SUMMARY --
@@ -32,7 +33,7 @@ Facebook API key: http://www.facebook.com/developers/
   1. Upload the 'fbconnect' folder into your module directory and activate the module,
   
   2. Upload facebook-php-sdk (http://github.com/facebook/php-sdk/) into fbconnect module folder (or into libraries folder, 
-    if you want to use it with the libraries module)
+    if you want to use it with the libraries module, http://drupal.org/project/libraries)
     
      To ensure that you installed correctly check file : <fbconnect folder>/facebook-php-sdk/src/facebook.php must be accessible
      

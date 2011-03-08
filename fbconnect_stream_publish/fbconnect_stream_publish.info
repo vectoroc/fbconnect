@@ -1,3 +1,4 @@
-name =  Facebook Steam Publish
+; $Id$
+name =  Facebook Stream Publish
 package = "Facebook Social"
 core = 6.x

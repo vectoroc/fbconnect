@@ -1,4 +1,5 @@
 <?php
+// $Id$
 
 /**
  * @file rules integration for the fbconnect_invite module
