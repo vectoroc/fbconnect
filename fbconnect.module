@@ -421,7 +421,7 @@ function fbconnect_render_js() {
  * Implementation of hook_footer().
  */
 function fbconnect_footer() {
-  if (facebook_client()) {
+  if (facebook_client() && !_fbconnect_is_excluded_page($_GET['q'])) {
     $config = fbconnect_get_config();
     $footer = array();    
     $footer['fb-init-code'] = <<<CODE
@@ -871,4 +871,8 @@ function fbconnect_menu_alter(&$callbacks) {
   $callbacks['user/%user_category/edit/fbconnect']['page callback'] = 'fbconnect_user_identities';
   $callbacks['user/%user_category/edit/fbconnect']['module'] = 'fbconnect';
   $callbacks['user/%user_category/edit/fbconnect']['file'] = 'fbconnect.pages.inc';
+}
+
+function _fbconnect_is_excluded_page($path) {
+  return drupal_match_path($path, variable_get('fbconnect_exclude_patterns', ''));
 }

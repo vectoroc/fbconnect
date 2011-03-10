@@ -192,6 +192,24 @@ function fbconnect_appearance_settings(&$form_state) {
     '#default_value' => variable_get('fbconnect_pic_logo', TRUE),
   );
 
+  $form['excludes'] = array(
+    '#type' => 'fieldset',
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+  );
+  $form['excludes']['fbconnect_exclude_patterns'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Disable FBConnect on specified pages'),
+    '#description' => t('Enter here path patterns accepted by !drupal_match_path function. One per line.', array(
+      '!drupal_match_path' => l(
+        'drupal_match_path',
+        'http://api.drupal.org/api/drupal/includes--path.inc/function/drupal_match_path/6',
+        array('attributes' => array('target' => '_blank'))
+      ),
+    )),
+    '#default_value' => variable_get('fbconnect_exclude_patterns', ''),
+  );
+
   return system_settings_form($form);
 }
 
